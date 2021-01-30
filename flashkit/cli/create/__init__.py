@@ -35,7 +35,7 @@ options:
 
 files:
 ~/.flashkit/config.toml    User configuration.
-*/../flash.toml            Job tree configuration.
+../*/flash.toml            Job tree configuration.
 ./flash.toml               Local configuration.
 
 Use the -h/--help flag with the above commands to
