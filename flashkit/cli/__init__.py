@@ -2,12 +2,13 @@
 
 # standard libraries
 import sys
+import logging
 
 # internal libraries
 from ..__meta__ import __version__, __website__
 
 # external libraries
-from cmdkit.app import ApplicationGroup
+from cmdkit.app import Application, ApplicationGroup
 from cmdkit.cli import Interface
 
 # command groups
@@ -48,6 +49,20 @@ learn more about their usage.
 
 {EPILOG}\
 """
+
+# Configure a handler for logging
+handler = logging.StreamHandler()
+handler.setLevel(logging.WARN)
+handler.setFormatter(logging.Formatter('%(msg)s'))
+
+# Initialize flashkit logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARN)
+logger.addHandler(handler)
+
+# inject logger back into cmdkit library
+Application.log_critical = logger.critical
+Application.log_exception = logger.exception
 
 class FlashKit(ApplicationGroup):
     """Application class for flashkit entry-point."""

@@ -1,18 +1,34 @@
-from typing import Tuple, List, Set, Dict, Iterable
-from typing import NamedTuple
+"""Create an xdmf file associated with flash simulation HDF5 output."""
+
+# type annotations
+from __future__ import annotations
+from typing import Tuple, List, Set, Dict, Iterable, NamedTuple
+
+# standard libraries
 import sys
 import os
 from xml.etree import ElementTree
 from xml.dom import minidom
 
+# external libraries
 import h5py
 
-__all__ = ['create_xdmf_file', ]
+# define public interface
+__all__ = ['file', ]
 
-def create_xdmf_file(*, files: Iterable[int], basename: str, path: str='', filename: str='',
-                     plotname: str='_hdf5_plt_cnt_', gridname: str='_hdf5_grd_') -> None:
-    """ method for creating an xmdf specification for reading simulation hdf5 output """
+# define default constants
+LOW: int = 0
+HIGH: int = 0
+SKIP: int = 1
+PATH: str = ''
+OUTPUT:str = ''
+PLOT: str = '_hdf5_plt_cnt_'
+GRID: str = '_hdf5_grd_'
 
+# internal library (public) function 
+def file(*, files: Iterable[int], basename: str, path: str=PATH, 
+         filename: str=OUTPUT, plotname: str=PLOT, gridname: str=GRID) -> None:
+    """ Method for creating an xmdf specification for reading simulation hdf5 output """
     filenames = {name: os.getcwd() + '/' + path + basename + footer 
                  for name, footer in zip(('plot', 'grid', 'xmf'), 
                                          (plotname, gridname, filename))}
