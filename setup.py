@@ -38,6 +38,6 @@ setup(
                             'Programming Language :: Python :: 3.8',
                             'Programming Language :: Python :: 3.9',
                             'License :: OSI Approved :: MIT License', ],
-    entry_points         = {'console_scripts': ['flashkit=flashkit.cli:main', ]},
+    entry_points         = {'console_scripts': ['flashkit=flashkit.application:main', ]},
     install_requires     = DEPENDANCIES,
 )

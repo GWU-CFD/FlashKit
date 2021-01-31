@@ -11,7 +11,8 @@ import re
 from functools import partial
 
 # internal libraries
-from ...lib import create_xdmf
+from ...library import create_xdmf
+from ...resources import CONFIG, DEFAULTS 
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -33,7 +34,6 @@ BASENAME    Basename for flash simulation, will be guessed if not provided
             (e.g., INS_Rayleigh for files INS_Rayleigh_hdf5_plt_cnt_xxxx)
 
 options:
-                    
 -b, --low    INT     Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
 -e, --high   INT     Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
 -s, --skip   INT     Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
@@ -42,18 +42,18 @@ options:
 -o, --out    FILE    Output XDMF file name follower; defaults to no footer.
 -i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
--h, --help           Show this message and exit.\
+-h, --help           Show this message and exit.
 
 notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
         the --path will be searched for FLASH simulation files and all
-        such files identified will be used in sorted order.
+        such files identified will be used in sorted order.\
 """
 
 # default constants
-STR_INCLUDE = re.compile('_hdf5_plt_cnt_')
-STR_EXCLUDE = re.compile('forced')
+STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
+STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
 STR_FAILED = 'Unable to create xdmf file!'
-BAR_SWITCH = 20
+BAR_SWITCH = CONFIG['create']['xdmf']['switch']
 
 # Create argpase List custom types
 IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
@@ -61,7 +61,7 @@ IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)]
 def log_exception(exception: Exception, status: int = exit_status.runtime_error) -> int:
     """Custom exception handler for this module."""
     message, *_ = exception.args
-    Application.log_critical(f'\n{STR_FAILED}\n{message}')
+    Application.log_critical('\n'.join([STR_FAILED, message]))
     return status
 
 def error(message: str) -> None:
@@ -107,7 +107,8 @@ class XdmfCreateApp(Application):
     grid: str = create_xdmf.GRID
     interface.add_argument('-g', '--grid', default=grid)
 
-    exceptions = {AutoError: partial(log_exception, status=exit_status.runtime_error)} 
+    exceptions = {AutoError: partial(log_exception, status=exit_status.runtime_error),
+                  OSError: partial(log_exception, status=exit_status.runtime_error)}
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
@@ -115,7 +116,7 @@ class XdmfCreateApp(Application):
         # prepare conditions in order to arrang a list of files to process
         range_given = any({self.low, self.high, self.skip})
         if (self.files is None and not range_given) or self.basename is None:
-            files = os.listdir(os.getcwd() + '/' + '')
+            files = os.listdir(os.getcwd() + '/' + self.path + '')
             condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
 
         # create the filelist
@@ -153,6 +154,7 @@ class XdmfCreateApp(Application):
             f'  plotfiles = {self.path}{self.basename}{self.plot}xxxx',
             f'  gridfiles = {self.path}{self.basename}{self.grid}xxxx',
             f'  xdmf_file = {self.path}{self.basename}{self.output}.xmf',
+            f'',
             ])
         if len(self.files) >= BAR_SWITCH and sys.stdout.isatty():
             arguments['context'] = alive_bar

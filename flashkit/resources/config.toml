@@ -1,0 +1,6 @@
+# Library specified default literals for FlashKit.
+
+[create]
+
+  [create.xdmf]
+  switch = 20

@@ -11,3 +11,6 @@ import toml
 
 with pkg_resources.path(resources, 'defaults.toml') as file:
     DEFAULTS = toml.load(file)
+
+with pkg_resources.path(resources, 'config.toml') as file:
+    CONFIG = toml.load(file)
