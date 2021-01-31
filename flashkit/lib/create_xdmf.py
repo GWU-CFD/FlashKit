@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, List, Set, Dict, Iterable, NamedTuple
+from typing import Tuple, List, Set, Dict, Iterable, Callable, NamedTuple
 
 # standard libraries
 import sys

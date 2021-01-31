@@ -6,6 +6,7 @@ from typing import List, Optional
 
 # standard libraries
 import os
+import sys
 import re
 from functools import partial
 
@@ -17,34 +18,35 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError 
 from alive_progress import alive_bar, config_handler
 
-PROGRAM = f'flash create xdmf'
+PROGRAM = f'flashkit create xdmf'
 
 USAGE = f"""\
-usage: {PROGRAM} BASENAME [[<opt> <arg(s)>]...]
+usage: {PROGRAM} BASENAME [--low INT] [--high INT] [--skip INT] [<opt>...]
 {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-BASENAME            Basename for flash simulation, will be guessed if not provided
-                    (e.g., INS_Rayleigh for files INS_Rayleigh_hdf5_plt_cnt_xxxx)
-
-note:               If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
-                    the --path will be searched for FLASH simulation files and all
-                    such files identified will be used in sorted order.
+arguments:  
+BASENAME    Basename for flash simulation, will be guessed if not provided
+            (e.g., INS_Rayleigh for files INS_Rayleigh_hdf5_plt_cnt_xxxx)
 
 options:
--b, --low           Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
--e, --high          Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
--s, --skip          Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
--f, --files         List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
--p, --path          Path to timeseries hdf5 simulation output files; defaults to cwd.
--o, --out           Output XDMF file name follower; defaults to no footer.
--i, --plot          Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
--g, --grid          Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
--h, --help          Show this message and exit.\
+                    
+-b, --low    INT     Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
+-e, --high   INT     Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
+-s, --skip   INT     Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
+-f, --files  LIST    List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
+-p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
+-o, --out    FILE    Output XDMF file name follower; defaults to no footer.
+-i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
+-g, --grid   STRING  Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
+-h, --help           Show this message and exit.\
+
+notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
+        the --path will be searched for FLASH simulation files and all
+        such files identified will be used in sorted order.
 """
 
 # default constants
@@ -56,19 +58,19 @@ BAR_SWITCH = 20
 # Create argpase List custom types
 IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
 
-# Custom exception handler for this module
 def log_exception(exception: Exception, status: int = exit_status.runtime_error) -> int:
+    """Custom exception handler for this module."""
     message, *_ = exception.args
     Application.log_critical(f'\n{STR_FAILED}\n{message}')
     return status
 
-# Override simple raise w/ formatted message
 def error(message: str) -> None:
+    """Override simple raise w/ formatted message."""
     print(f'\n{STR_FAILED}')
     raise ArgumentError(message)
 
 class AutoError(Exception):
-    """Raised when cannot automatically determine files"""
+    """Raised when cannot automatically determine files."""
 
 class XdmfCreateApp(Application):
     """Application class for create xdmf command."""
@@ -130,30 +132,32 @@ class XdmfCreateApp(Application):
             else:
                 self.files = sorted([int(file[-4:]) for file in files if condition(file)])
                 if not self.files:
-                    raise AutoError(f'cannot automatically identify simulation files on path {self.path}')
+                    raise AutoError(f'Cannot automatically identify simulation files on path {self.path}')
         else:
             pass
 
         # create the basename
         if self.basename is None:
             try:
-                self.basename = next(filter(condition, (file for file in files))).split(STR_INCLUDE.pattern)[0]
+                self.basename, *_ = next(filter(condition, (file for file in files))).split(STR_INCLUDE.pattern)
             except StopIteration:
-                raise AutoError(f'cannot automatically parse basename for simulation files on path {self.path}')
+                raise AutoError(f'Cannot automatically parse basename for simulation files on path {self.path}')
         else:
             pass
 
         # Create xdmf file using core library, w/ useful messages and progress bar
         arguments = {'files': self.files, 'basename': self.basename, 'path': self.path, 
                      'filename': self.output, 'plotname': self.plot, 'gridname': self.grid}
-        message = f'Creating xdmf file from {len(self.files)} simulation files\n'
-        message += f'  plotfiles = {self.path}{self.basename}{self.plot}xxxx\n'
-        message += f'  gridfiles = {self.path}{self.basename}{self.grid}xxxx\n'
-        message += f'  xdmf_file = {self.path}{self.basename}{self.output}.xmf\n'
-        if len(self.files) >= BAR_SWITCH:
+        message = '\n'.join([
+            f'Creating xdmf file from {len(self.files)} simulation files',
+            f'  plotfiles = {self.path}{self.basename}{self.plot}xxxx',
+            f'  gridfiles = {self.path}{self.basename}{self.grid}xxxx',
+            f'  xdmf_file = {self.path}{self.basename}{self.output}.xmf',
+            ])
+        if len(self.files) >= BAR_SWITCH and sys.stdout.isatty():
             arguments['context'] = alive_bar
             config_handler.set_global(theme='smooth', unknown='horizontal')
         else:
-            message = message + '\nWriting xdmf data out to file ...'
+            message += '\nWriting xdmf data out to file ...'
         print(message)
         create_xdmf.file(**arguments)

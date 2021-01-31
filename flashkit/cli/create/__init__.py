@@ -35,7 +35,7 @@ options:
 
 files:
 ~/.flashkit/config.toml    User configuration.
-../*/flash.toml            Job tree configuration.
+../**/flash.toml           Job tree configuration.
 ./flash.toml               Local configuration.
 
 Use the -h/--help flag with the above commands to
@@ -46,7 +46,8 @@ class CreateApp(ApplicationGroup):
     """Application class for create command group."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
+    
+    command = None
     interface.add_argument('command')
 
-    command= None
     commands = COMMANDS
