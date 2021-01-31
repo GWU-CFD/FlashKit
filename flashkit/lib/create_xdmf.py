@@ -11,6 +11,9 @@ from xml.etree import ElementTree
 from xml.dom import minidom
 from contextlib import nullcontext
 
+# internal libraries
+from ..resources import DEFAULTS 
+
 # external libraries
 import h5py
 
@@ -18,13 +21,13 @@ import h5py
 __all__ = ['file', ]
 
 # define default constants
-LOW: int = 0
-HIGH: int = 0
-SKIP: int = 1
-PATH: str = ''
-OUTPUT:str = ''
-PLOT: str = '_hdf5_plt_cnt_'
-GRID: str = '_hdf5_grd_'
+LOW: int = DEFAULTS['create']['xdmf']['low']
+HIGH: int = DEFAULTS['create']['xdmf']['high']
+SKIP: int = DEFAULTS['create']['xdmf']['skip']
+PATH: str = DEFAULTS['general']['paths']['working']
+OUTPUT: str = DEFAULTS['general']['files']['output']
+PLOT: str = DEFAULTS['general']['files']['plot']
+GRID: str = DEFAULTS['general']['files']['grid']
 CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
 # internal library (public) function 
