@@ -12,7 +12,8 @@ from functools import partial
 
 # internal libraries
 from ...library import create_xdmf
-from ...resources import CONFIG, DEFAULTS 
+from ...resources import CONFIG, DEFAULTS
+from ..core import get_arguments, get_defaults
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -22,7 +23,7 @@ from alive_progress import alive_bar, config_handler
 PROGRAM = f'flashkit create xdmf'
 
 USAGE = f"""\
-usage: {PROGRAM} BASENAME [--low INT] [--high INT] [--skip INT] [<opt>...]
+usage: {PROGRAM} BASENAME [--low INT] [--high INT] [--skip INT] [<opt>...] [<flg>...]
 {__doc__}\
 """
 
@@ -31,7 +32,7 @@ HELP = f"""\
 
 arguments:  
 BASENAME    Basename for flash simulation, will be guessed if not provided
-            (e.g., INS_Rayleigh for files INS_Rayleigh_hdf5_plt_cnt_xxxx)
+            (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
 
 options:
 -b, --low    INT     Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
@@ -42,6 +43,10 @@ options:
 -o, --out    FILE    Output XDMF file name follower; defaults to no footer.
 -i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
+
+flags:
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
 -h, --help           Show this message and exit.
 
 notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
@@ -84,28 +89,34 @@ class XdmfCreateApp(Application):
     interface.add_argument('basename', nargs='?', default=basename)
 
     low: Optional[int] = None 
-    interface.add_argument('-b', '--low', type=int, default=low) 
+    interface.add_argument('-b', '--low', type=int) 
 
     high: Optional[int] = None 
-    interface.add_argument('-e', '--high', type=int, default=high) 
+    interface.add_argument('-e', '--high', type=int) 
 
     skip: Optional[int] = None
-    interface.add_argument('-s', '--skip', type=int, default=skip) 
+    interface.add_argument('-s', '--skip', type=int) 
 
     files: Optional[List[int]] = None
-    interface.add_argument('-f', '--files', type=IntListType, default=files)
+    interface.add_argument('-f', '--files', type=IntListType)
 
-    path: str = create_xdmf.PATH
-    interface.add_argument('-p', '--path', default=path)
+    path: Optional[str] = None
+    interface.add_argument('-p', '--path')
 
-    output: str = create_xdmf.OUTPUT
-    interface.add_argument('-o', '--out', default=output)
+    output: Optional[str] = None
+    interface.add_argument('-o', '--out')
 
-    plot: str = create_xdmf.PLOT
-    interface.add_argument('-i', '--plot', default=plot)
+    plot: Optional[str] = None
+    interface.add_argument('-i', '--plot')
 
-    grid: str = create_xdmf.GRID
-    interface.add_argument('-g', '--grid', default=grid)
+    grid: Optional[str] = None
+    interface.add_argument('-g', '--grid')
+
+    ignore: Optional[bool] = None
+    interface.add_argument('-I', '--ignore', action='store_true')
+
+    auto: Optional[bool] = None
+    interface.add_argument('-A', '--auto', action='store_true')
 
     exceptions = {AutoError: partial(log_exception, status=exit_status.runtime_error),
                   OSError: partial(log_exception, status=exit_status.runtime_error)}
@@ -113,14 +124,40 @@ class XdmfCreateApp(Application):
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
 
+        # determine if arguments passed (assumed values if parsing config files)
+        if self.ignore:
+            range_given = any({self.low, self.high, self.skip})
+            files_given = self.files is not None
+            bname_given = self.basename is not None
+        else:
+            range_given = True
+            files_given = False
+            bname_given = False
+
+        # force automatic if desired
+        if self.auto:
+            range_given = False
+            file_given = False
+            bname_given = False
+        
+        # optionally use configuration files
+        options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'out', 'plot', 'grid'}
+        local = {key: getattr(self, key) for key in options}
+        local = {'create': {'xdmf': {key: value for key, value in local.items() if value is not None}}} 
+        if self.ignore:
+            arguments = get_defaults(local=local)['create']['xdmf']
+        else:
+            arguments = get_arguments(local=local)['create']['xdmf']
+        for key, value in arguments.items():
+            setattr(self, key, value)
+
         # prepare conditions in order to arrang a list of files to process
-        range_given = any({self.low, self.high, self.skip})
-        if (self.files is None and not range_given) or self.basename is None:
+        if (not files_given and not range_given) or not bname_given:
             files = os.listdir(os.getcwd() + '/' + self.path + '')
             condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
 
         # create the filelist
-        if self.files is None: 
+        if not files_given: 
             if range_given:
                 if self.low is None:
                     self.low = create_xdmf.LOW
@@ -138,7 +175,7 @@ class XdmfCreateApp(Application):
             pass
 
         # create the basename
-        if self.basename is None:
+        if not bname_given:
             try:
                 self.basename, *_ = next(filter(condition, (file for file in files))).split(STR_INCLUDE.pattern)
             except StopIteration:
@@ -146,20 +183,23 @@ class XdmfCreateApp(Application):
         else:
             pass
 
-        # Create xdmf file using core library, w/ useful messages and progress bar
-        arguments = {'files': self.files, 'basename': self.basename, 'path': self.path, 
-                     'filename': self.output, 'plotname': self.plot, 'gridname': self.grid}
+        # Prepare useful messages
         message = '\n'.join([
             f'Creating xdmf file from {len(self.files)} simulation files',
             f'  plotfiles = {self.path}{self.basename}{self.plot}xxxx',
             f'  gridfiles = {self.path}{self.basename}{self.grid}xxxx',
-            f'  xdmf_file = {self.path}{self.basename}{self.output}.xmf',
+            f'  xdmf_file = {self.path}{self.basename}{self.out}.xmf',
             f'',
             ])
+
+        # Create xdmf file using core library; optionally w/ progress bar
         if len(self.files) >= BAR_SWITCH and sys.stdout.isatty():
-            arguments['context'] = alive_bar
             config_handler.set_global(theme='smooth', unknown='horizontal')
+            print(message)
+            create_xdmf.file(files=self.files, basename=self.basename, path=self.path, filename=self.out, 
+                             plotname=self.plot, gridname=self.grid, context=alive_bar)
         else:
             message += '\nWriting xdmf data out to file ...'
-        print(message)
-        create_xdmf.file(**arguments)
+            print(message)
+            create_xdmf.file(files=self.files, basename=self.basename, path=self.path, filename=self.out, 
+                             plotname=self.plot, gridname=self.grid)

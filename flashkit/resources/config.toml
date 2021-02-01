@@ -15,7 +15,8 @@
 [core]
 
   [core.configure]
+  base  = 'jobs'
   file  = 'flash.toml'
   label = 'base'
   max   = 99
-  root  = 'jobs'
+  path  = ''

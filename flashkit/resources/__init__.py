@@ -14,3 +14,6 @@ with pkg_resources.path(resources, 'defaults.toml') as file:
 
 with pkg_resources.path(resources, 'config.toml') as file:
     CONFIG = toml.load(file)
+
+with pkg_resources.path(resources, 'mapping.toml') as file:
+    MAPPING = toml.load(file)
