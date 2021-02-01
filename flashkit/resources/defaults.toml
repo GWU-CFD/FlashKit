@@ -6,16 +6,20 @@
   working = ''
 
   [general.files]
-  output = ''
-  plot = '_hdf5_plt_cnt_'
-  grid = '_hdf5_grd_'
   checkpoint = '_hdf5_chk_'
-  forced = 'forced'
+  forced     = 'forced'
+  grid       = '_hdf5_grd_'
+  output     = ''
+  plot       = '_hdf5_plt_cnt_'
 
 [create]
 
   [create.xdmf]
-  low  = 0
   high = 0
+  low  = 0
   skip = 1
+
+  [create.grid]
+  ndim = 2 
+  size = 1
 

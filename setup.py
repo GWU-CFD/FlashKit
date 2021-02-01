@@ -17,7 +17,7 @@ with open('flashkit/__meta__.py', mode='r') as source:
 
 # core dependancies
 DEPENDANCIES = ['cmdkit>=2.1.2', 'toml>=0.10.2', 'alive_progress>=1.6.2',
-                'h5py>=3.1.0']
+                'h5py>=3.1.0', 'numpy>=1.14.5', ]
 
 setup(
     name                 = metadata['__pkgname__'],

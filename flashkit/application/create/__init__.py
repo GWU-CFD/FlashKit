@@ -5,13 +5,15 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # commands
-from . import xdmf, par, run, init
+from . import xdmf, par, run, grid, block, intrp
 
 COMMANDS = {
     'xdmf': xdmf.XdmfCreateApp,
 #    'par': par.ParCreateApp,
 #    'run': run.RunCreateApp,
-#    'init': init.InitCreateApp,
+#    'grid': grid.GridCreateApp,
+#    'block': block.BlockCreateApp,
+#    'intrp': intrp.IntrpCreateApp,
 }
 
 PROGRAM = f'flashkit create'
@@ -24,14 +26,16 @@ usage: {PROGRAM} [-h] <command> [<args>...]
 HELP = f"""\
 {USAGE}
 
-commands:
-xdmf                {xdmf.__doc__}
-par                 {par.__doc__}
-run                 {run.__doc__}
-init                {init.__doc__}
+commands:   
+xdmf        {xdmf.__doc__}
+par         {par.__doc__}
+run         {run.__doc__}
+grid        {grid.__doc__}
+block       {block.__doc__}
+intrp       {intrp.__doc__}
 
 options:
--h, --help          Show this message and exit.
+-h, --help  Show this message and exit.
 
 files:
 ~/.flashkit/config.toml    User configuration.
