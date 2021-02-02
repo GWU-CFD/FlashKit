@@ -42,7 +42,7 @@ def prepare(trees: Dict[str, Dict[str, Any]], book: Optional[Dict[str, Any]] = N
                 
 def harvest(*, trees: Dict[str, Dict[str, Any]] = {}, system: Dict[str, Any] = {}, local: Dict[str, Any] = {}) -> Configuration:
     """Harvest the fruit of local and system, and the fruit of knowlege from the trees on the path."""
-    return Configuration(system=system, **{where: tree for where, tree in trees.items()}, local=local)
+    return Configuration(system=system, **trees, local=local)
 
 def find_the_leaves(tree: Dict[str, Any]) -> Dict[str, List[str]]:
     """return the leaves (and their stems) of the tree."""
@@ -57,7 +57,8 @@ def plant_a_tree(tree: Dict[str, Any], book: Optional[Dict[str, Any]] = None) ->
     pages = find_the_leaves(book)
     for page in pages:
         leaf = read_a_leaf(page.leaf, tree)
-        if leaf is not None:
+        root = read_a_leaf(page.stem, tree)
+        if leaf is not None and root is None:
             for step in reversed(page.stem):
                 leaf = {step: leaf}
             plant.update(leaf)
@@ -99,7 +100,7 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Tuple[s
         yield step
 
 def walk_the_tree(tree: Dict[str, Any], stem: List[str] = []) -> List[List[str]]:
-    """return the leaves of the branches."""
+    """Return the leaves of the branches."""
     leaves = []
     for branch, branches in tree.items():
         leaf = stem + [branch, ]
