@@ -124,21 +124,10 @@ class XdmfCreateApp(Application):
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
 
-        # determine if arguments passed (assumed values if parsing config files)
-        if self.ignore:
-            range_given = any({self.low, self.high, self.skip})
-            files_given = self.files is not None
-            bname_given = self.basename is not None
-        else:
-            range_given = True
-            files_given = False
-            bname_given = False
-
-        # force automatic if desired
-        if self.auto:
-            range_given = False
-            file_given = False
-            bname_given = False
+        # determine if arguments passed
+        range_given = any({self.low, self.high, self.skip})
+        files_given = self.files is not None
+        bname_given = self.basename is not None
         
         # optionally use configuration files
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'out', 'plot', 'grid'}
@@ -151,6 +140,17 @@ class XdmfCreateApp(Application):
         for key, value in arguments.items():
             setattr(self, key, value)
 
+        # Update the assessment of argument existance
+        range_given = any({self.low, self.high, self.skip})
+        files_given = self.files is not None
+        bname_given = self.basename is not None
+        
+        # force automatic if desired
+        if self.auto:
+            range_given = False
+            file_given = False
+            bname_given = False
+        
         # prepare conditions in order to arrang a list of files to process
         if (not files_given and not range_given) or not bname_given:
             files = os.listdir(os.getcwd() + '/' + self.path + '')
