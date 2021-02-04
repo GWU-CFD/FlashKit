@@ -103,7 +103,7 @@ class XdmfCreateApp(Application):
     path: Optional[str] = None
     interface.add_argument('-p', '--path')
 
-    output: Optional[str] = None
+    out: Optional[str] = None
     interface.add_argument('-o', '--out')
 
     plot: Optional[str] = None
@@ -167,12 +167,14 @@ class XdmfCreateApp(Application):
                     self.skip = create_xdmf.SKIP
                 self.high = self.high + 1
                 self.files = range(self.low, self.high, self.skip)
+                msg_files = f'range({self.low}, {self.high}, {self.skip})'
             else:
                 self.files = sorted([int(file[-4:]) for file in files if condition(file)])
+                msg_files = f'[{",".join(str(f) for f in self.files[:(min(5, len(self.files)))])}{", ..." if len(self.files) > 5 else ""}]'
                 if not self.files:
                     raise AutoError(f'Cannot automatically identify simulation files on path {self.path}')
         else:
-            pass
+            msg_files = f'[{",".join(str(f) for f in self.files)}]'
 
         # create the basename
         if not bname_given:
@@ -189,6 +191,7 @@ class XdmfCreateApp(Application):
             f'  plotfiles = {self.path}{self.basename}{self.plot}xxxx',
             f'  gridfiles = {self.path}{self.basename}{self.grid}xxxx',
             f'  xdmf_file = {self.path}{self.basename}{self.out}.xmf',
+            f'       xxxx = {msg_files}',
             f'',
             ])
 

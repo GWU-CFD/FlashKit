@@ -19,6 +19,8 @@ from cmdkit.config import Configuration, Namespace
 PATH = CONFIG['core']['configure']['path']
 BASE = CONFIG['core']['configure']['base']
 FILE = CONFIG['core']['configure']['file']
+ROOT = CONFIG['core']['configure']['root']
+USER = CONFIG['core']['configure']['user']
 LABEL = CONFIG['core']['configure']['label']
 MAX = CONFIG['core']['configure']['max']
 PAD = f'0{len(str(MAX))}'
@@ -34,7 +36,7 @@ class WalkError(Exception):
 def gather(first_step: str = PATH) -> Dict[str, Dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
     trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
-    return {f'user_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
+    return {f'{TREE}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
 def prepare(trees: Dict[str, Dict[str, Any]], book: Optional[Dict[str, Any]] = None) -> Dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
@@ -78,13 +80,13 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Tuple[s
     try:
         first_step = os.path.realpath(first_step)
         tree = toml.load(os.path.join(first_step, FILE))
-        root = tree.get('root', None)
+        root = tree.get(ROOT, None)
     except PermissionError as error:
         print(error)
-        raise WalkError('Unable to walk the path (... of the trees of knowlege?)!')
+        raise WalkError('Unable to walk the path (... of night in pursuit of knowlege?)!')
     except toml.TomlDecodeError as error:
         print(error)
-        raise WalkError('Unable to read from the tree (... of knowlege?)!')
+        raise WalkError('Unable to read from the tree (... of good and evil?)!')
     except FileNotFoundError:
         tree = None
     yield first_step, tree

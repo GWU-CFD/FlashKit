@@ -37,11 +37,6 @@ intrp       {intrp.__doc__}
 options:
 -h, --help  Show this message and exit.
 
-files:
-~/.flashkit/config.toml    User configuration.
-../**/flash.toml           Job tree configuration.
-./flash.toml               Local configuration.
-
 Use the -h/--help flag with the above commands to
 learn more about their usage.\
 """

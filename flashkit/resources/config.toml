@@ -3,20 +3,22 @@
 [create]
 
   [create.xdmf]
-  switch = 20
+  switch = 20		# number of files before showing progress
 
   [create.grid]
-  mdim   = 3
-  method = 'uniform'
-  name   = 'initGrid.h5'
-  smax   = 1.0
-  smin   = 0.0
+  mdim   = 3		  # maximum dimensions supported
+  method = 'uniform'	  # default grid algorithm
+  name   = 'initGrid.h5'  # filename holding initial grid data
+  smax   = 1.0		  # SHOULD MAKE THIS A 'DEFAULT'
+  smin   = 0.0		  # SHOULD MAKE THIS A 'DEFAULT'
 
 [core]
 
   [core.configure]
-  base  = 'jobs'
-  file  = 'flash.toml'
-  label = 'base'
-  max   = 99
-  path  = ''
+  base  = 'jobs'	# default root of the tree
+  file  = 'flash.toml'	# name of file holding user options
+  label = 'base'	# label for path var written to tree options
+  max   = 99		# maximum levels to walk building tree
+  path  = ''		# relative path to begin directory walk
+  root  = 'root'	# variable in flash.toml for root of tree
+  user  = 'user'	# label for tree options in Configuration
