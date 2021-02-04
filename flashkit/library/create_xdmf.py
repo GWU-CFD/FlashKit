@@ -2,13 +2,17 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, List, Set, Dict, Iterable, NamedTuple
+from typing import Tuple, List, Set, Dict, Iterable, Callable, NamedTuple
 
 # standard libraries
 import sys
 import os
 from xml.etree import ElementTree
 from xml.dom import minidom
+from contextlib import nullcontext
+
+# internal libraries
+from ..resources import DEFAULTS 
 
 # external libraries
 import h5py
@@ -17,22 +21,24 @@ import h5py
 __all__ = ['file', ]
 
 # define default constants
-LOW: int = 0
-HIGH: int = 0
-SKIP: int = 1
-PATH: str = ''
-OUTPUT:str = ''
-PLOT: str = '_hdf5_plt_cnt_'
-GRID: str = '_hdf5_grd_'
+LOW: int = DEFAULTS['create']['xdmf']['low']
+HIGH: int = DEFAULTS['create']['xdmf']['high']
+SKIP: int = DEFAULTS['create']['xdmf']['skip']
+PATH: str = DEFAULTS['general']['paths']['working']
+OUTPUT: str = DEFAULTS['general']['files']['output']
+PLOT: str = DEFAULTS['general']['files']['plot']
+GRID: str = DEFAULTS['general']['files']['grid']
+CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
 # internal library (public) function 
-def file(*, files: Iterable[int], basename: str, path: str=PATH, 
-         filename: str=OUTPUT, plotname: str=PLOT, gridname: str=GRID) -> None:
+def file(*, files: Iterable[int], basename: str, path: str = PATH, 
+         filename: str = OUTPUT, plotname: str = PLOT, gridname: str = GRID,
+         context: Callable[[int], Callable[[], None]] = CONTEXT) -> None:
     """ Method for creating an xmdf specification for reading simulation hdf5 output """
     filenames = {name: os.getcwd() + '/' + path + basename + footer 
                  for name, footer in zip(('plot', 'grid', 'xmf'), 
                                          (plotname, gridname, filename))}
-    _write_xmf(_create_xmf(filenames, files), filenames['xmf'])
+    _write_xmf(_create_xmf(filenames, files, context), filenames['xmf'], context)
 
 class _SimulationInfo(NamedTuple):
     "Necessary information to extract from a plot or checkpoint file"
@@ -48,53 +54,54 @@ class _SimulationInfo(NamedTuple):
 def _first_true(iterable, predictor):
     return next(filter(predictor, iterable))
 
-def _create_xmf(filenames: Dict[str, str], filesteps: List[int]) -> ElementTree.Element:
+def _create_xmf(filenames: Dict[str, str], filesteps: List[int], context: Callable[[int], Callable[[], None]]) -> ElementTree.Element:
     root = ElementTree.Element(*_get_root_element())
     domain = ElementTree.SubElement(root, *_get_domain_element())
 
     collection = ElementTree.SubElement(domain, *_get_temporal_collection())
-    for step, number in enumerate(filesteps):
-        plotname = filenames['plot'] + f'{number:04}'
-        info = _get_simulation_info(plotname)
-        gridname = filenames['grid'] + (f'{number:04}' if info.grid == 'pm' else '0000')
-        simulation = ElementTree.SubElement(collection, *_get_spatial_collection(step))
-        temporal = ElementTree.SubElement(simulation, *_get_time_element(info.time))
+    with context(len(filesteps)) as progress:
+        for step, number in enumerate(filesteps):
+            plotname = filenames['plot'] + f'{number:04}'
+            info = _get_simulation_info(plotname)
+            gridname = filenames['grid'] + (f'{number:04}' if info.grid == 'pm' else '0000')
+            simulation = ElementTree.SubElement(collection, *_get_spatial_collection(step))
+            temporal = ElementTree.SubElement(simulation, *_get_time_element(info.time))
 
-        leaves = [block for block, ntype in enumerate(info.types) if ntype == 1] 
-        for block in leaves:
-            grid = ElementTree.SubElement(simulation, *_get_grid_element(block))
-            topology = ElementTree.SubElement(grid, *_get_topology_element(info.sizes))
+            leaves = [block for block, ntype in enumerate(info.types) if ntype == 1] 
+            for block in leaves:
+                grid = ElementTree.SubElement(simulation, *_get_grid_element(block))
+                topology = ElementTree.SubElement(grid, *_get_topology_element(info.sizes))
 
-            geometry = ElementTree.SubElement(grid, *_get_geometry_element())
-            for axis in ('x', 'y', 'z'):
-                hyperslab = ElementTree.SubElement(geometry, *_get_geometry_hyperslab_header(info.sizes, axis))
-                tag, attribute, text = _get_geometry_hyperslab_slab(info.sizes, axis, block)
-                ElementTree.SubElement(hyperslab, tag, attribute).text = text
-                tag, attribute, text = _get_geometry_hyperslab_data(info.sizes, info.blocks, axis, gridname)
-                ElementTree.SubElement(hyperslab, tag, attribute).text = text
+                geometry = ElementTree.SubElement(grid, *_get_geometry_element())
+                for axis in ('x', 'y', 'z'):
+                    hyperslab = ElementTree.SubElement(geometry, *_get_geometry_hyperslab_header(info.sizes, axis))
+                    tag, attribute, text = _get_geometry_hyperslab_slab(info.sizes, axis, block)
+                    ElementTree.SubElement(hyperslab, tag, attribute).text = text
+                    tag, attribute, text = _get_geometry_hyperslab_data(info.sizes, info.blocks, axis, gridname)
+                    ElementTree.SubElement(hyperslab, tag, attribute).text = text
 
-            for field in info.fields:
-                attribute = ElementTree.SubElement(grid, *_get_attribute_element(field))
-                hyperslab = ElementTree.SubElement(attribute, *_get_attribute_hyperslab_header(info.sizes))
-                tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
-                ElementTree.SubElement(hyperslab, tag, attr).text = text
-                tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
-                ElementTree.SubElement(hyperslab, tag, attr).text = text
+                for field in info.fields:
+                    attribute = ElementTree.SubElement(grid, *_get_attribute_element(field))
+                    hyperslab = ElementTree.SubElement(attribute, *_get_attribute_hyperslab_header(info.sizes))
+                    tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
+                    ElementTree.SubElement(hyperslab, tag, attr).text = text
+                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
+                    ElementTree.SubElement(hyperslab, tag, attr).text = text
 
-            if len(info.velflds):
-                attribute = ElementTree.SubElement(grid, *_get_attribute_element('velc', 'Vector'))
-                func_join = ElementTree.SubElement(attribute, *_get_attribute_join_header(info.sizes, info.dims))
-            for field in info.velflds:
-                hyperslab = ElementTree.SubElement(func_join, *_get_attribute_hyperslab_header(info.sizes))
-                tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
-                ElementTree.SubElement(hyperslab, tag, attr).text = text
-                tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
-                ElementTree.SubElement(hyperslab, tag, attr).text = text
-
+                if len(info.velflds):
+                    attribute = ElementTree.SubElement(grid, *_get_attribute_element('velc', 'Vector'))
+                    func_join = ElementTree.SubElement(attribute, *_get_attribute_join_header(info.sizes, info.dims))
+                for field in info.velflds:
+                    hyperslab = ElementTree.SubElement(func_join, *_get_attribute_hyperslab_header(info.sizes))
+                    tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
+                    ElementTree.SubElement(hyperslab, tag, attr).text = text
+                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
+                    ElementTree.SubElement(hyperslab, tag, attr).text = text
+            progress()
     return root
 
-def _write_xmf(root: ElementTree.Element, filename: str) -> None:
-    with open(filename + '.xmf', 'wb') as file:
+def _write_xmf(root: ElementTree.Element, filename: str, context: Callable[[int], Callable[[], None]]) -> None:
+    with open(filename + '.xmf', 'wb') as file, context() as progress:
         file.write('<?xml version="1.0" ?>\n<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>\n'.encode('utf-8'))
         file.write(minidom.parseString(ElementTree.tostring(root, short_empty_elements=False)
                                       ).toprettyxml(indent="    ").replace('<?xml version="1.0" ?>\n', '').encode('utf-8'))

@@ -16,7 +16,8 @@ with open('flashkit/__meta__.py', mode='r') as source:
                             '__license__', '__website__', '__description__']}
 
 # core dependancies
-DEPENDANCIES = ['cmdkit>=2.1.2', ]
+DEPENDANCIES = ['cmdkit>=2.1.2', 'toml>=0.10.2', 'alive_progress>=1.6.2',
+                'h5py>=3.1.0', 'numpy>=1.14.5', ]
 
 setup(
     name                 = metadata['__pkgname__'],
@@ -28,7 +29,7 @@ setup(
     keywords             = 'flash code skd and cli',
     url                  = metadata['__website__'],
     packages             = find_packages(),
-    include_package_data = False,
+    include_package_data = True,
     long_description     = long_description,
     classifiers          = ['Development Status :: 2 - Pre-Alpha',
                             'Topic :: Utilities',
@@ -37,6 +38,6 @@ setup(
                             'Programming Language :: Python :: 3.8',
                             'Programming Language :: Python :: 3.9',
                             'License :: OSI Approved :: MIT License', ],
-    entry_points         = {'console_scripts': ['flashkit=flashkit.cli:main', ]},
+    entry_points         = {'console_scripts': ['flashkit=flashkit.application:main', ]},
     install_requires     = DEPENDANCIES,
 )

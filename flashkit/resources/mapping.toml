@@ -1,0 +1,10 @@
+# Library specified mappings for default literals in FlashKit.
+
+[create]
+  
+  [create.xdmf]
+  grid = ['general', 'files', 'grid']
+  path = ['general', 'paths', 'working']
+  plot = ['general', 'files', 'plot']
+  out  = ['general', 'files', 'output']
+

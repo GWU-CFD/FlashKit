@@ -1,0 +1,25 @@
+# Library specified default literals for FlashKit.
+
+[general]
+
+  [general.paths]
+  working = ''
+
+  [general.files]
+  checkpoint = '_hdf5_chk_'
+  forced     = 'forced'
+  grid       = '_hdf5_grd_'
+  output     = ''
+  plot       = '_hdf5_plt_cnt_'
+
+[create]
+
+  [create.xdmf]
+  high = 0
+  low  = 0
+  skip = 1
+
+  [create.grid]
+  ndim = 2 
+  size = 1
+

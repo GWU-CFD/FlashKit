@@ -44,6 +44,11 @@ options:
 -h, --help          Show this message and exit.
 -v, --version       Show the version and exit.
 
+files:      (Options are also pulled from files)
+../**/flash.toml           Job tree configuration.
+./flash.toml               Local configuration.
+
+
 Use the -h/--help flag with the above commands to
 learn more about their usage.
 
