@@ -25,14 +25,13 @@ LOW: int = DEFAULTS['create']['xdmf']['low']
 HIGH: int = DEFAULTS['create']['xdmf']['high']
 SKIP: int = DEFAULTS['create']['xdmf']['skip']
 PATH: str = DEFAULTS['general']['paths']['working']
-OUTPUT: str = DEFAULTS['general']['files']['output']
+OUT: str = DEFAULTS['general']['files']['output']
 PLOT: str = DEFAULTS['general']['files']['plot']
 GRID: str = DEFAULTS['general']['files']['grid']
 CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
 # internal library (public) function 
-def file(*, files: Iterable[int], basename: str, path: str = PATH, 
-         filename: str = OUTPUT, plotname: str = PLOT, gridname: str = GRID,
+def file(*, files: Iterable[int], basename: str, path: str, filename: str, plotname: str, gridname: str,
          context: Callable[[int], Callable[[], None]] = CONTEXT) -> None:
     """ Method for creating an xmdf specification for reading simulation hdf5 output """
     filenames = {name: os.getcwd() + '/' + path + basename + footer 
@@ -193,10 +192,3 @@ def _get_attribute_hyperslab_data(sizes: Dict[str, int], blocks: int, field: str
     filename = filename + ':/' + field
     return ('DataItem', {'Format': 'HDF', 'Dimensions': dimensions, 'Name': field,
                          'NumberType': 'Float', 'Precision': '4'}, filename)
-
-# TEMPORARY -- REMOVE WHEN PACKAGED
-def main() -> None:
-    _command_line()
-if __name__ == "__main__":
-    main()
-

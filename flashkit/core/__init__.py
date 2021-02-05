@@ -1,10 +1,10 @@
-"""Config file initialization for FlashKit."""
+"""Core (sub-library) initialization for FlashKit."""
 
 # standard libraries
 from functools import partial 
 
 # internal libraries
-from ...resources import DEFAULTS, MAPPING
+from ..resources import DEFAULTS, MAPPING
 from .configure import gather, harvest, prepare
 
 # initialize argument factory for commandline routines

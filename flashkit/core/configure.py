@@ -9,7 +9,7 @@ import os
 from functools import reduce
 
 # internal libraries
-from ...resources import CONFIG, DEFAULTS, MAPPING
+from ..resources import CONFIG, DEFAULTS, MAPPING
 
 # external libraries
 import toml
@@ -47,7 +47,7 @@ def harvest(*, trees: Dict[str, Dict[str, Any]] = {}, system: Dict[str, Any] = {
     return Configuration(system=system, **trees, local=local)
 
 def find_the_leaves(tree: Dict[str, Any]) -> Dict[str, List[str]]:
-    """return the leaves (and their stems) of the tree."""
+    """Return the leaves (and their stems) of the tree; bearing their fruits and knowlege."""
     leaves = []
     if tree is not None:
         leaves = [Leaf(read_a_leaf(stem, tree), stem) for stem in walk_the_tree(tree)]
