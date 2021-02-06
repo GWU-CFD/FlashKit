@@ -3,7 +3,7 @@
 [create]
 
   [create.xdmf]
-  switch = 20		# number of files before showing progress
+  switch = 10		# number of files before showing progress
 
   [create.grid]
   mdim   = 3		  # maximum dimensions supported
@@ -22,3 +22,6 @@
   path  = ''		# relative path to begin directory walk
   root  = 'root'	# variable in flash.toml for root of tree
   user  = 'user'	# label for tree options in Configuration
+
+  [core.stream]
+  ignore = 'ignore'	# specific providable flag to ignore configuration tree

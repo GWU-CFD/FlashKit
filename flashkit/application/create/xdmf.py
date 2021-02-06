@@ -13,7 +13,6 @@ from functools import partial
 # internal libraries
 from ...library.create_xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...api.create import xdmf
-from ...resources import CONFIG, DEFAULTS
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -39,6 +38,7 @@ options:
 -s, --skip   INT     Number of files to skip for timeseries hdf5 files; defaults to {SKIP}.
 -f, --files  LIST    List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
 -p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
+-d, --dest   PATH    Path to xdmf (contains relative paths to sim data); defaults to cwd.
 -o, --out    FILE    Output XDMF file name follower; defaults to a footer '{OUT}'.
 -i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{PLOT}'.
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{GRID}'.
@@ -99,6 +99,9 @@ class XdmfCreateApp(Application):
     path: Optional[str] = None
     interface.add_argument('-p', '--path')
 
+    dest: Optional[str] = None
+    interface.add_argument('-d', '--dest')
+
     out: Optional[str] = None
     interface.add_argument('-o', '--out')
 
@@ -121,7 +124,8 @@ class XdmfCreateApp(Application):
         """Buisness logic for creating xdmf from command line."""
         
         # package up local command line arguments
-        options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'out', 'plot', 'grid', 'auto', 'ignore'}
+        options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
+                   'out', 'plot', 'grid', 'auto', 'ignore'}
         local = {key: getattr(self, key) for key in options}
 
         xdmf(**local)

@@ -5,6 +5,7 @@
   [create.xdmf]
   grid = ['general', 'files', 'grid']
   path = ['general', 'paths', 'working']
+  dest = ['general', 'paths', 'working']
   plot = ['general', 'files', 'plot']
   out  = ['general', 'files', 'output']
 
