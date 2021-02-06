@@ -84,16 +84,16 @@ def adapt_arguments(**args: Dict[str, Any]) -> Dict[str, Any]:
         if range_given:
             high = high + 1
             files = range(low, high, skip)
-            args['msg_files'] = f'range({low}, {high}, {skip})'
+            args['message'] = f'range({low}, {high}, {skip})'
         else:
             files = sorted([int(file[-4:]) for file in listdir if condition(file)])
-            args['msg_files'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
+            args['message'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
             if not files:
                 raise AutoError(f'Cannot automatically identify simulation files on path {source}')
         args['files'] = files
     else:
         files = args['files']
-        args['msg_files'] = f'[{",".join(str(f) for f in files)}]'
+        args['message'] = f'[{",".join(str(f) for f in files)}]'
 
     # create the basename
     if not bname_given:
@@ -110,14 +110,14 @@ def attach_context(**args: Dict[str, Any]) -> Dict[str, Any]:
         config_handler.set_global(theme='smooth', unknown='horizontal')
         args['context'] = alive_bar
     else:
-        args['message'] = '\nWriting xdmf data out to file ...'
+        print('\nWriting xdmf data out to file ...')
     return args
 
 def log_messages(**args: Dict[str, Any]) -> Dict[str, Any]:
     """Log screen messages to logger; will throw if defaults corrupted."""
     labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
     basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
-    msg_files = args.pop('msg_files', '')
+    msg_files = args.pop('message', '')
     source = os.path.relpath(source)
     dest = os.path.relpath(dest)
     message = '\n'.join([
@@ -128,7 +128,6 @@ def log_messages(**args: Dict[str, Any]) -> Dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    message += args.pop('message', '')
     print(message)
     return args
 

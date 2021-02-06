@@ -48,6 +48,15 @@ def patch(function):
         return function(**stream)
     return patched
 
+def prune(labels, mapping):
+    """Prepare the stream; applies strip-translate"""
+    def pruner(function):
+        @wraps(function)
+        def pruned(**stream):
+            return strip(labels)(translate(mapping)(function))(**stream)
+        return pruned
+    return pruner
+
 def unpack(labels, route, priority):
     """Open shiped packages from route along with priority packages"""
     def unpacker(function):
@@ -85,6 +94,17 @@ def strap(buckle):
         @wraps(function)
         def strapped(**stream):
             return function(**buckle(**stream))
+        return strapped
+    return strapper
+
+def straps(buckles):
+    """Apply the buckles to the stream."""
+    def strapper(function):
+        @wraps(function)
+        def strapped(**stream):
+            for buckle in buckles:
+                stream = buckle(**stream)
+            return function(**stream)
         return strapped
     return strapper
 
