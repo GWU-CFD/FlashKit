@@ -6,7 +6,7 @@ from typing import Any, Dict, List, NamedTuple, Optional
 
 # standard libraries
 import os
-from functools import reduce
+from functools import partial, reduce
 
 # internal libraries
 from ..resources import CONFIG, DEFAULTS, MAPPING
@@ -36,7 +36,7 @@ class WalkError(Exception):
 def gather(first_step: str = PATH) -> Dict[str, Dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
     trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
-    return {f'{TREE}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
+    return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
 def prepare(trees: Dict[str, Dict[str, Any]], book: Optional[Dict[str, Any]] = None) -> Dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
@@ -112,3 +112,6 @@ def walk_the_tree(tree: Dict[str, Any], stem: List[str] = []) -> List[List[str]]
             leaves.append(leaf)
     return leaves
 
+# initialize argument factory for commandline routines
+get_arguments = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING), trees=prepare(gather(), MAPPING))
+get_defaults = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING))

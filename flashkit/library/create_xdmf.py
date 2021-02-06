@@ -31,16 +31,17 @@ GRID: str = DEFAULTS['general']['files']['grid']
 CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
 # internal library (public) function 
-def file(*, files: Iterable[int], basename: str, path: str, filename: str, plotname: str, gridname: str,
+def file(*, files: Iterable[int], basename: str, dest: str = PATH, source: str = PATH, 
+         filename: str = OUT, plotname: str = PLOT, gridname: str = GRID,
          context: Callable[[int], Callable[[], None]] = CONTEXT) -> None:
-    """ Method for creating an xmdf specification for reading simulation hdf5 output """
-    filenames = {name: os.getcwd() + '/' + path + basename + footer 
-                 for name, footer in zip(('plot', 'grid', 'xmf'), 
-                                         (plotname, gridname, filename))}
-    _write_xmf(_create_xmf(filenames, files, context), filenames['xmf'], context)
+    filenames = {'plot-source': source + '/' + basename + plotname,
+                 'plot-dest': os.path.relpath(source, dest) + '/' + basename + plotname,
+                 'grid-source': source + '/' + basename + gridname,
+                 'grid-dest': os.path.relpath(source, dest) + '/' + basename + gridname,
+                 'filename': dest + '/' + basename + filename}
+    _write_xmf(_create_xmf(filenames, files, context), filenames['filename'], context)
 
 class _SimulationInfo(NamedTuple):
-    "Necessary information to extract from a plot or checkpoint file"
     time: float
     grid: str
     dims: int
@@ -53,16 +54,19 @@ class _SimulationInfo(NamedTuple):
 def _first_true(iterable, predictor):
     return next(filter(predictor, iterable))
 
-def _create_xmf(filenames: Dict[str, str], filesteps: List[int], context: Callable[[int], Callable[[], None]]) -> ElementTree.Element:
+def _create_xmf(filenames: Dict[str, str], filesteps: List[int], 
+                context: Callable[[int], Callable[[], None]]) -> ElementTree.Element:
     root = ElementTree.Element(*_get_root_element())
     domain = ElementTree.SubElement(root, *_get_domain_element())
 
     collection = ElementTree.SubElement(domain, *_get_temporal_collection())
     with context(len(filesteps)) as progress:
         for step, number in enumerate(filesteps):
-            plotname = filenames['plot'] + f'{number:04}'
-            info = _get_simulation_info(plotname)
-            gridname = filenames['grid'] + (f'{number:04}' if info.grid == 'pm' else '0000')
+            plotsource = filenames['plot-source'] + f'{number:04}'
+            plotdest = filenames['plot-dest'] + f'{number:04}'
+            info = _get_simulation_info(plotsource)
+            gridsource = filenames['grid-source'] + (f'{number:04}' if info.grid == 'pm' else '0000')
+            griddest = filenames['grid-dest'] + (f'{number:04}' if info.grid == 'pm' else '0000')
             simulation = ElementTree.SubElement(collection, *_get_spatial_collection(step))
             temporal = ElementTree.SubElement(simulation, *_get_time_element(info.time))
 
@@ -76,7 +80,7 @@ def _create_xmf(filenames: Dict[str, str], filesteps: List[int], context: Callab
                     hyperslab = ElementTree.SubElement(geometry, *_get_geometry_hyperslab_header(info.sizes, axis))
                     tag, attribute, text = _get_geometry_hyperslab_slab(info.sizes, axis, block)
                     ElementTree.SubElement(hyperslab, tag, attribute).text = text
-                    tag, attribute, text = _get_geometry_hyperslab_data(info.sizes, info.blocks, axis, gridname)
+                    tag, attribute, text = _get_geometry_hyperslab_data(info.sizes, info.blocks, axis, griddest)
                     ElementTree.SubElement(hyperslab, tag, attribute).text = text
 
                 for field in info.fields:
@@ -84,7 +88,7 @@ def _create_xmf(filenames: Dict[str, str], filesteps: List[int], context: Callab
                     hyperslab = ElementTree.SubElement(attribute, *_get_attribute_hyperslab_header(info.sizes))
                     tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
                     ElementTree.SubElement(hyperslab, tag, attr).text = text
-                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
+                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotdest)
                     ElementTree.SubElement(hyperslab, tag, attr).text = text
 
                 if len(info.velflds):
@@ -94,7 +98,7 @@ def _create_xmf(filenames: Dict[str, str], filesteps: List[int], context: Callab
                     hyperslab = ElementTree.SubElement(func_join, *_get_attribute_hyperslab_header(info.sizes))
                     tag, attr, text = _get_attribute_hyperslab_slab(info.sizes, block)
                     ElementTree.SubElement(hyperslab, tag, attr).text = text
-                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotname)
+                    tag, attr, text = _get_attribute_hyperslab_data(info.sizes, info.blocks, field, plotdest)
                     ElementTree.SubElement(hyperslab, tag, attr).text = text
             progress()
     return root
@@ -160,7 +164,8 @@ def _get_geometry_hyperslab_slab(sizes: Dict[str, int], axis: str, block: int) -
     dimensions = ' '.join(map(str, [block, 0, 1, 1, 1, size]))
     return ('DataItem', {'Dimensions': '3 2', 'NumberType': 'Int', 'Format': 'XML'}, dimensions)
 
-def _get_geometry_hyperslab_data(sizes: Dict[str, int], blocks: int, axis: str, filename: str) -> Tuple[str, Dict[str, str], str]:
+def _get_geometry_hyperslab_data(sizes: Dict[str, int], blocks: int, axis: str, 
+                                 filename: str) -> Tuple[str, Dict[str, str], str]:
     size = sizes[axis] + 1
     dimensions = ' '.join(map(str, [blocks, size]))
     filename = filename + ':/' + {'x': 'xxxf', 'y': 'yyyf', 'z': 'zzzf'}[axis]
@@ -186,7 +191,8 @@ def _get_attribute_hyperslab_slab(sizes: Dict[str, int], block: int) -> Tuple[st
     dimensions = ' '.join(map(str, [block, 0, 0, 0, 1, 1, 1, 1, 1] + sizes))
     return ('DataItem', {'Dimensions': '3 4', 'NumberType': 'Int', 'Format': 'XML'}, dimensions)
 
-def _get_attribute_hyperslab_data(sizes: Dict[str, int], blocks: int, field: str, filename: str) -> Tuple[str, Dict[str, str], str]:
+def _get_attribute_hyperslab_data(sizes: Dict[str, int], blocks: int, field: str, 
+                                  filename: str) -> Tuple[str, Dict[str, str], str]:
     sizes = [sizes[axis] for axis in ('z', 'y', 'x')]
     dimensions = ' '.join(map(str, [blocks, ] + sizes))
     filename = filename + ':/' + field
