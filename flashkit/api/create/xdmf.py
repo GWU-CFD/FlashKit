@@ -132,11 +132,8 @@ def log_messages(**args: Dict[str, Any]) -> Dict[str, Any]:
     return args
 
 @stream.ship_clean(LABELS, ROUTE, PRIORITY)
-@stream.strap(adapt_arguments)
-@stream.strap(attach_context)
-@stream.strap(log_messages)
-@stream.strip(UNLOAD)
-@stream.translate(TRANSLATE)
+@stream.straps((adapt_arguments, log_messages, attach_context))
+@stream.prune(UNLOAD, TRANSLATE)
 def dispatch(**args):
     """Dispatch transformed args to library method."""
     create_xdmf.file(**args)

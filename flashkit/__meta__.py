@@ -2,7 +2,7 @@
 
 
 __pkgname__     = 'flashkit'
-__version__     = '0.0.5'
+__version__     = '0.0.6'
 __authors__     = 'Aaron Lentner'
 __contact__     = 'aaronlentner@gwu.edu'
 __license__     = 'MIT License'
