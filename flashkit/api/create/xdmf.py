@@ -11,7 +11,7 @@ import re
 
 # internal libraries
 from ...library import create_xdmf
-from ...core import stream
+from ...core import stream, parallel
 from ...resources import CONFIG, DEFAULTS
 
 # external libraries
@@ -131,6 +131,7 @@ def log_messages(**args: Dict[str, Any]) -> Dict[str, Any]:
     print(message)
     return args
 
+@parallel.squash
 @stream.ship_clean(LABELS, ROUTE, PRIORITY)
 @stream.straps((adapt_arguments, log_messages, attach_context))
 @stream.prune(UNLOAD, TRANSLATE)

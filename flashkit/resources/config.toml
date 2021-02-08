@@ -23,5 +23,10 @@
   root  = 'root'	# variable in flash.toml for root of tree
   user  = 'user'	# label for tree options in Configuration
 
+  [core.parallel]
+  commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi
+  distribution = 'mpi4py'               # python distribution supporting mpi
+  keyword      = 'parallel'		# default keyword for passed instance			
+
   [core.stream]
   ignore = 'ignore'	# specific providable flag to ignore configuration tree
