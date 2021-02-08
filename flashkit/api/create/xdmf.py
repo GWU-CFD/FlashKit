@@ -106,7 +106,7 @@ def adapt_arguments(**args: Dict[str, Any]) -> Dict[str, Any]:
 
 def attach_context(**args: Dict[str, Any]) -> Dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if defaults corrupted."""
-    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
+    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty() and parallel.Parallel.is_serial():
         config_handler.set_global(theme='smooth', unknown='horizontal')
         args['context'] = alive_bar
     else:

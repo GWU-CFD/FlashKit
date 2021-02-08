@@ -126,11 +126,11 @@ class Parallel:
         """Attemt to load Python MPI interface; will throw if unsupported and will load even if in serial enviornment."""
         if not cls.is_registered(): 
             cls.assert_supported()
-            logged = cls.is_unloaded():
+            first = cls.is_unloaded()
             from mpi4py import MPI
             cls._MPI = MPI
-            if logged and MPI.COMM_WORLD.Get_rank == 0:
-                print(f'Loaded Python MPI interface, using the {MPIDIST} library.')
+            if first and MPI.COMM_WORLD.Get_rank() == 0:
+                print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
     @property
     def MPI(self) -> ModuleType:
