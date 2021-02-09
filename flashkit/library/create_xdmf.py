@@ -13,6 +13,7 @@ from contextlib import nullcontext
 
 # internal libraries
 from ..resources import DEFAULTS 
+from ..core import parallel
 
 # external libraries
 import h5py
@@ -30,7 +31,8 @@ PLOT: str = DEFAULTS['general']['files']['plot']
 GRID: str = DEFAULTS['general']['files']['grid']
 CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
-# internal library (public) function 
+# internal library (public) function
+@parallel.squash
 def file(*, files: Iterable[int], basename: str, dest: str = PATH, source: str = PATH, 
          filename: str = OUT, plotname: str = PLOT, gridname: str = GRID,
          context: Callable[[int], Callable[[], None]] = CONTEXT) -> None:
