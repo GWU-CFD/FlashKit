@@ -6,6 +6,8 @@ import importlib.resources as pkg_resources
 # external libraries
 import toml
 
+__all__ = ['DEFAULTS', 'CONFIG', 'MAPPING', ]
+
 with pkg_resources.path(__package__, 'defaults.toml') as file:
     DEFAULTS = toml.load(file)
 

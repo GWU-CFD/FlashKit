@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 # system libraries
 import sys
@@ -16,216 +16,223 @@ from ..resources import CONFIG
 # external libraries
 import psutil
 
+# static analysis
 if TYPE_CHECKING:
     from types import ModuleType
+    Intracomm = TypeVar('Intracomm', bound = Any)
+    F = TypeVar('F', bound = Callable[..., Any])
+    D = TypeVar('D', bound = Callable[[F], F])
+
+# module access and module level @property(s)
+SELF = sys.modules[__name__]
+PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', ) 
+
+# define public interface
+__all__ = list(PROPERTIES) + [
+        'ParallelError', 'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
+        'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
 
 # default constants
 MPICMDS = CONFIG['core']['parallel']['commands']
 MPIDIST = CONFIG['core']['parallel']['distribution']
-KEYWORD = CONFIG['core']['parallel']['keyword']
+ROOT = CONFIG['core']['parallel']['root']
+SIZE = CONFIG['core']['parallel']['size']
+
+# python MPI interface access member
+_MPI: ModuleType = None
+
+def __getattr__(name: str) -> Any:
+    """Provide module level @property behavior."""
+    if name in PROPERTIES: return globals()[get_property(name)]()
+    raise AttributeError(f'module {__name__} has no attribute {name}')
 
 class ParallelError(Exception):
-    pass
+    """Available for handling errors raised by parallel module"""
 
-def assertion(method: str, message: str):
-    """Usefull decorater to implement supported assertions."""
-    def asserter(function):
+def assertion(method: str, message: str) -> D:
+    """Usefull decorater factory to implement supported assertions."""
+    def decorator(function: F) -> F:
         @wraps(function)
-        def asserted(cls):
+        def wrapper() -> None:
             try:
-                assert(getattr(cls, method)())
+                assert(getattr(SELF, method)())
             except AssertionError as error:
                 raise ParallelError(message) from error
-        return asserted
-    return asserter
+        return wrapper
+    return decorator
 
-class Parallel:
-    _MPI: ModuleType = None
+def inject_property(name: str) -> D:
+    """Usefull decorator factory to provide access to module properties."""
+    def decorator(function: F) -> F:
+        @wraps(function)
+        def wrapper(*args, **kwargs) -> Any:
+            return function(getattr(SELF, get_property(name)), *args, **kwargs)
+        return wrapper
+    return decorator
 
-    @classmethod
-    @assertion('is_loaded', 'Python MPI interface appears unloaded; asserted loaded!')
-    def assert_loaded(cls) -> None:
-        pass
+@assertion('is_loaded', 'Python MPI interface appears unloaded; asserted loaded!')
+def assert_loaded() -> None:
+    pass
 
-    @classmethod
-    @assertion('is_parallel', 'Enviornment appears serial; asserted parallel!')
-    def assert_parallel(cls) -> None:
-        pass
+@assertion('is_parallel', 'Enviornment appears serial; asserted parallel!')
+def assert_parallel() -> None:
+    pass
 
-    @assertion('is_registered', 'Unable to access python MPI interface; module may not be loaded!')
-    def assert_registered(cls) -> None:
-        pass
+@assertion('is_registered', 'Unable to access python MPI interface; module may not be loaded!')
+def assert_registered() -> None:
+    pass
 
-    @classmethod
-    @assertion('is_serial', 'Enviornment appears parallel; asserted serial!')
-    def assert_serial(cls) -> None:
-        pass
+@assertion('is_serial', 'Enviornment appears parallel; asserted serial!')
+def assert_serial() -> None:
+    pass
 
-    @classmethod
-    @assertion('is_supported', 'Python MPI interface unsupported; asserted supported!')
-    def assert_supported(cls) -> None:
-        pass
+@assertion('is_supported', 'Python MPI interface unsupported; asserted supported!')
+def assert_supported() -> None:
+    pass
 
-    @classmethod
-    @assertion('is_unloaded', 'Python MPI interface appears loaded; asserted unloaded!')
-    def assert_unloaded(cls) -> None:
-        pass
+@assertion('is_unloaded', 'Python MPI interface appears loaded; asserted unloaded!')
+def assert_unloaded() -> None:
+    pass
 
-    @classmethod
-    def is_loaded(cls) -> bool:
-        """Identify whether the python MPI interface is already loaded."""
-        return MPIDIST in sys.modules
+def get_property(name: str) -> str:
+    """Provide lookup support for module properties."""
+    return f'property_{name}'
 
-    @classmethod
-    def is_parallel(cls) -> bool:
-        """Attempt to identify if the python runtime was executed in parallel."""
-        return psutil.Process(os.getppid()).name() in MPICMDS
+def is_loaded() -> bool:
+    """Identify whether the python MPI interface is already loaded."""
+    return MPIDIST in sys.modules
 
-    @classmethod
-    def is_registered(cls) -> bool:
-        """Identify if the python MPI interface is accessable from Parallel class instances."""
-        return cls._MPI is not None 
+@inject_property('rank')
+def is_lower(rank: F, limit: int) -> bool:
+    """Determine if execution path is on a process within the processor limit; true if serial execution."""
+    return rank() < limit
 
-    @classmethod
-    def is_root(cls) -> bool:
-        """Determine if execution path is on the root process; true if serial execution."""
-        if cls.is_serial():
-            return True
-        cls.load()
-        return cls._MPI.COMM_WORLD.Get_rank() == 0
+def is_parallel() -> bool:
+    """Attempt to identify if the python runtime was executed in parallel."""
+    return psutil.Process(os.getppid()).name() in MPICMDS
 
-    @classmethod
-    def is_lower(cls, limit: int) -> bool:
-        """Determine if execution path is on a process within the processor limit; true if serial execution."""
-        if cls.is_serial():
-            return True
-        cls.load()
-        return cls._MPI.COMM_WORLD.Get_rank() < limit
+@inject_property('rank')
+def is_root(rank: F) -> bool:
+    """Determine if local execution process is the root process; true is serial."""
+    return rank() == ROOT
 
-    @classmethod
-    def is_serial(cls) -> bool:
-        """Attemt to identify whether the python runtime was executed serially."""
-        return not cls.is_parallel()
+def is_registered() -> bool:
+    """Identify if the python MPI interface is accessable from Parallel class instances."""
+    return _MPI is not None 
 
-    @classmethod
-    def is_supported(cls) -> bool:
-        """Identify if the python MPI interface is provided in the enviornment."""
-        try:
-            pkg_resources.get_distribution(MPIDIST)
-            return True
-        except pkg_resources.DistributionNotFound:
-            return False
+def is_serial() -> bool:
+    """Attemt to identify whether the python runtime was executed serially."""
+    return not is_parallel()
 
-    @classmethod
-    def is_unloaded(cls) -> bool:
-        """Identify if the python MPI interface is not loaded."""
-        return not cls.is_loaded()
+def is_supported() -> bool:
+    """Identify if the python MPI interface is provided in the enviornment."""
+    try:
+        pkg_resources.get_distribution(MPIDIST)
+        return True
+    except pkg_resources.DistributionNotFound:
+        return False
 
-    @classmethod
-    def load(cls) -> None:
-        """Attemt to load Python MPI interface; will throw if unsupported and will load even if in serial enviornment."""
-        if not cls.is_registered(): 
-            cls.assert_supported()
-            first = cls.is_unloaded()
-            from mpi4py import MPI
-            cls._MPI = MPI
-            if first and MPI.COMM_WORLD.Get_rank() == 0:
-                print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
+def is_unloaded() -> bool:
+    """Identify if the python MPI interface is not loaded."""
+    return not is_loaded()
 
-    @property
-    def MPI(self) -> ModuleType:
-        """Retrive the python MPI interface; will throw if unsupported."""
-        self.load()
-        return self._MPI
+def load() -> None:
+    """Attemt to load Python MPI interface; will throw if unsupported and will load even if in serial enviornment."""
+    if is_registered(): return 
+    assert_supported()
+    first = is_unloaded()
+    from mpi4py import MPI
+    SELF._MPI = MPI
+    if first and MPI.COMM_WORLD.Get_rank() == 0:
+        print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
-    @property
-    def COMM_WORLD(self) -> ANY:
-        """Retrive World communicator from python MPI interface; will throw if unsupported."""
-        return self.MPI.COMM_WORLD
+@inject_property('MPI')
+def property_COMM_WORLD(mpi: F) -> Intracomm:
+    """MPI python interface world communicator."""
+    return mpi().COMM_WORLD
 
-    @property
-    def size(self) -> int:
-        """Retrive number of parallel processes; does not load python MPI interface if serial."""
-        if self.is_parallel():
-            return self.COMM_WORLD.Get_size()
-        else:
-            return 1
+def property_MPI() -> ModuleType:
+    """MPI python interface access handle."""
+    load()
+    return SELF._MPI
 
-    @property
-    def rank(self) -> int:
-        """Retrive rank of execution process (root if serial); does not load pythin MPI interface if serial."""
-        if self.is_parallel():
-            return self.COMM_WORLD.Get_rank()
-        else:
-            return 0
+@inject_property('COMM_WORLD')
+def property_rank(comm: F) -> int:
+    """Rank of local execution process."""
+    if is_parallel(): return comm().Get_rank()
+    return ROOT
 
-def guard(function):
+@inject_property('COMM_WORLD')
+def property_size(comm: F) -> int:
+    """Number of parallel execution processes (serial defined as {SIZE})."""
+    if is_parallel(): return comm().Get_size()
+    return SIZE
+
+def guard(function: F) -> F:
     """Decorator which assures that neither the python MPI interface is loaded or the python runtime is 
     executed in parallel; this should be used when it is unsafe to run in a parallel enviornment."""
     @warps(function)
-    def guarded(*args, **kwargs):
-        Parallel.assert_unloaded()
-        Parallel.assert_serial()
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        assert_unloaded()
+        assert_serial()
         return function(*args, **kwargs)
-    return guarded
+    return wrapper
 
-def guarantee(*, strict: bool = False):
+def guarantee(*, strict: bool = False) -> D:
     """Decorator which assures that the python MPI interface is loaded prior to the call, and parallel if strict; 
     this should be used in cases were the wrapped function uses the provided infrastructure and also requires 
     access to the underlying MPI object or communicators. If only rank and size are needed should consider using 
     just the support decorator instead, as decorated fuction can likely be run in either parallel or serial naively."""
-    def guaranteer(function):
+    def decorator(function: F) -> F:
         @wraps(function)
-        def guaranteed(*args, **kwargs):
-            Parallel.load()
-            if strict:
-                Parallel.assert_parallel()
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if strict: assert_parallel()
+            load()
             return function(*args, **kwargs)
-        return guaranteed
-    return guaranteer
+        return wrapper
+    return decorator
 
-def limit(number: int):
+def limit(number: int) -> D:
     """Decorator which assures that only processes less than the limit execute the decorated funtion; 
     this should be used when it is acceptable to run in a parallel enviornment but is unsafe for more 
     than limit processes to run the function. Decorator will throw if enviornment is parallel
     and python MPI interface unsupported."""
-    def limiter(function):
+    def decorator(function: F) -> F:
         @wraps(function)
-        def limited(*args, **kwargs):
-            if Parallel.is_lower(number):
-                return function(*args, **kwargs)
-            else:
-                return None
-        return limited
-    return limiter
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not is_lower(number): return 
+            return function(*args, **kwargs)
+        return wrapper
+    return decorator
 
-def safe(function):
+def safe(function: F) -> F:
     """Decorator which passes straight through to decorated function; this should be used
     in cases were the wrapped fuction does not use the provided infrastructure but is
     safe (and sensical) to call in both parallel and serial enviornments."""
     @wraps(function)
-    def safed(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return function(*args, **kwargs)
-    return safed
+    return wrapper
 
-def squash(function):
-    """Decorator which passess instance of the Parallel Class, while assuring that only the 
-    root processes executes the decorated funtion; this should be used when it is acceptable to
-    run in a parallel enviornment but is unsafe for processes other than root to run the function.
+def squash(function: F) -> F:
+    """Decorator which assures that only the root processes executes the decorated funtion; this should be used 
+    when it is acceptable to run in a parallel enviornment but is unsafe for processes other than root to run the function.
     Decorator will throw if enviornment is parallel and python MPI interface unsupported."""
     @wraps(function)
-    def squashed(*args, **kwargs):
-        if Parallel.is_root():
-            return function(*args, **kwargs)
-        else:
-            return None
-    return squashed
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if not is_root(): return
+        return function(*args, **kwargs)
+    return wrapper
 
-def support(function):
-    """Decorator which passes instance of the Parallel Class; this should be used
-    in cases were the wrapped fuction uses the provided infrastructure and supports
-    both parallel and serial execution. Does not guarantee MPI is loaded during call."""
+def single(function: F) -> F:
+    """Decorator like squash, but joins the parallel execution back together by broadcasting result of root."""
     @wraps(function)
-    def supported(*args, **kwargs):
-        return function(*args, **kwargs, **{KEYWORD: Parallel()})
-    return supported
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if is_serial(): return function(*args, **kwargs)
+        load()
+        if is_root():
+            result = function(*args, **kwargs)
+        else:
+            result = None
+        return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
+    return wrapper

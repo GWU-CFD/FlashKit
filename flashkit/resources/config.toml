@@ -26,7 +26,8 @@
   [core.parallel]
   commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi
   distribution = 'mpi4py'               # python distribution supporting mpi
-  keyword      = 'parallel'		# default keyword for passed instance			
+  root         = 0			# root process number
+  size         = 1			# number of processes in serial execution 			
 
   [core.stream]
   ignore = 'ignore'	# specific providable flag to ignore configuration tree
