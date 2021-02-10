@@ -15,7 +15,7 @@
 [core]
 
   [core.configure]
-  base  = 'jobs'        # default root of the tree
+  base  = ['jobs', 'FLASH'] # default root of the tree
   file  = 'flash.toml'  # name of file holding user options
   label = 'base'        # label for path var written to tree options
   max   = 99            # maximum levels to walk building tree
@@ -25,9 +25,9 @@
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi
-  distribution = 'mpi4py'               # python distribution supporting mpi
-  root         = 0                      # root process number
-  size         = 1                      # number of processes in serial execution 			
+  distribution = 'mpi4py'  # python distribution supporting mpi
+  root         = 0         # root process number
+  size         = 1         # number of processes in serial execution 			
 
   [core.stream]
   ignore = 'ignore'  # specific providable flag to ignore configuration tree
