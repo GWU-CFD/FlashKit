@@ -30,7 +30,7 @@ PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', )
 # define public interface
 __all__ = list(PROPERTIES) + [
         'ParallelError', 'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
-        'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
+        'is_loaded', 'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
 
 # default constants
 MPICMDS = CONFIG['core']['parallel']['commands']
