@@ -16,8 +16,8 @@ with open('flashkit/__meta__.py', mode='r') as source:
                             '__license__', '__website__', '__description__']}
 
 # core dependancies
-DEPENDANCIES = ['cmdkit>=2.1.2', 'toml>=0.10.2', 'alive_progress>=1.6.2',
-                'h5py>=3.1.0', 'numpy>=1.14.5', ]
+DEPENDANCIES = ['cmdkit>=2.1.2', 'toml', 'alive_progress', 'psutil', 'h5py', 'numpy', ]
+OPTIONAL_PKG = {'mpi' : ['mpi4py', ], }
 
 setup(
     name                 = metadata['__pkgname__'],
@@ -40,4 +40,4 @@ setup(
                             'License :: OSI Approved :: MIT License', ],
     entry_points         = {'console_scripts': ['flashkit=flashkit.application:main', ]},
     install_requires     = DEPENDANCIES,
-)
+    extras_require       = OPTIONAL_PKG, )
