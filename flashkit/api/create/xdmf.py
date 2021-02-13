@@ -11,7 +11,7 @@ import re
 
 # internal libraries
 from ...library import create_xdmf
-from ...core import stream, parallel
+from ...core import error, logging, parallel, progress, stream
 from ...resources import CONFIG, DEFAULTS
 
 # external libraries
@@ -76,17 +76,20 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         try:
             args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
         except StopIteration:
-            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+            raise error.AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     
     return args
 
 def attach_context(**args: dict[str, Any]) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty() and parallel.is_serial():
-        config_handler.set_global(theme='smooth', unknown='horizontal')
-        args['context'] = alive_bar
+    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
+        if parallel.is_parallel():
+            args['context'] = progress.Simple
+        else:
+            config_handler.set_global(theme='smooth', unknown='horizontal')
+            args['context'] = alive_bar
     else:
-        print('\nWriting xdmf data out to file ...')
+        logging.logger.info('\nWriting xdmf data out to file ...')
     return args
 
 def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
@@ -104,7 +107,7 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    print(message)
+    logging.logger.info(message)
     return args
 
 # default constants for handling the argument stream

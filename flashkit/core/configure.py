@@ -94,7 +94,8 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Tuple[s
     # have we reached the end of our journey?
     next_step = os.path.realpath(os.path.join(first_step, '..'))
     last_step = None if (root is None) else os.path.realpath(os.path.expanduser(root))
-    if next_step == first_step or first_step == last_step or first_step.endswith(f'/{BASE}'):
+    is_base_step = any(first_step.endswith(f'/{base}') for base in BASE)
+    if next_step == first_step or first_step == last_step or is_base_step:
         return
     
     # walk the path

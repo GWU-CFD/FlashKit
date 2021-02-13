@@ -15,7 +15,7 @@
 [core]
 
   [core.configure]
-  base  = 'jobs'        # default root of the tree
+  base  = ['jobs', 'FLASH'] # default root of the tree
   file  = 'flash.toml'  # name of file holding user options
   label = 'base'        # label for path var written to tree options
   max   = 99            # maximum levels to walk building tree
@@ -23,11 +23,23 @@
   root  = 'root'        # variable in flash.toml for root of tree
   user  = 'user'        # label for tree options in Configuration
 
+  [core.logger]
+  format = '%(msg)s'   # logging handler format
+  logger = 'FlashKit'  # name of the flashkit logger
+
   [core.parallel]
   commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi
-  distribution = 'mpi4py'               # python distribution supporting mpi
-  root         = 0                      # root process number
-  size         = 1                      # number of processes in serial execution 			
+  distribution = 'mpi4py'  # python distribution supporting mpi
+  root         = 0         # root process number
+  size         = 1         # number of processes in serial execution 			
+
+  [core.progress]
+  blanking = ' '     # blank character for bar
+  cyclings = 5.0     # seconds per cycle of unknown bar
+  entrance = '    '  # entrance characters prior to bar
+  progress = 36      # width of progress bar itself
+  sentinal = '█'     # filled character for bar
+  terminal = 120     # width of progress bar message
 
   [core.stream]
   ignore = 'ignore'  # specific providable flag to ignore configuration tree
