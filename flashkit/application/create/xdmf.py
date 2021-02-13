@@ -13,6 +13,7 @@ from functools import partial
 # internal libraries
 from ...library.create_xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...api.create import xdmf
+from ...core.error import AutoError
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -54,7 +55,7 @@ notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
 """
 
 # default constants
-STR_FAILED = 'Unable to create xdmf file!'
+STR_FAILED = '\nUnable to create xdmf file!'
 
 # Create argpase List custom types
 IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
@@ -67,11 +68,7 @@ def log_exception(exception: Exception, status: int = exit_status.runtime_error)
 
 def error(message: str) -> None:
     """Override simple raise w/ formatted message."""
-    print(f'\n{STR_FAILED}')
-    raise ArgumentError(message)
-
-class AutoError(Exception):
-    """Raised when cannot automatically determine files."""
+    raise ArgumentError('\n'.join((STR_FAILED, message)))
 
 class XdmfCreateApp(Application):
     """Application class for create xdmf command."""
