@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Callable, Dict, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 # standard libraries
 from dataclasses import dataclass, field, InitVar
@@ -10,6 +10,10 @@ from functools import partial
 
 # external libraries
 import numpy
+
+# static analysis
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, Union
 
 # define public interface
 __all__ = ['Parameters', 'Stretching', 'tanh_mid', 'uniform', ]
