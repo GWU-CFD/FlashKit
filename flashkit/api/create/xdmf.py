@@ -11,7 +11,7 @@ import re
 
 # internal libraries
 from ...library import create_xdmf
-from ...core import stream, parallel, logging, error, progress
+from ...core import error, logging, parallel, progress, stream
 from ...resources import CONFIG, DEFAULTS
 
 # external libraries

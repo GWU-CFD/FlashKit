@@ -13,7 +13,7 @@ from functools import partial
 # internal libraries
 from ...library.create_xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...api.create import xdmf
-from ...core.error import AutoError
+from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -114,8 +114,8 @@ class XdmfCreateApp(Application):
     auto: Optional[bool] = None
     interface.add_argument('-A', '--auto', action='store_true')
 
-    exceptions = {AutoError: partial(log_exception, status=exit_status.runtime_error),
-                  OSError: partial(log_exception, status=exit_status.runtime_error)}
+    exceptions = {error: partial(log_exception, status=exit_status.runtime_error) 
+        for error in {AutoError, StreamError, OSError}}
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""

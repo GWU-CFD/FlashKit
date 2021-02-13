@@ -1,4 +1,4 @@
 """Package initialization for FlashKit python interface."""
 
-# gather public interfaces
+# public interfaces
 from . import create
