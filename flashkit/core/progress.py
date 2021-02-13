@@ -1,94 +1,92 @@
+"""Povides a simple progress bar for use in FlashKit."""
 
 # type annotations
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # standard libraries
-import sys
 import time
-from contextlib import contextmanager 
- 
+import threading
+
+# internal libraries
+from ..resources import CONFIG
+
+# static analysis
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Callable, Optional
 
-@contextmanager
-def simple_bar(total: Optional[int] = None):
-    """Provides a simple progress bar, for when alive_bar fails."""
-    if total is None: return Progress.unknown()
-    return Progress.definite(total)
+# define public interface
+__all__ = ['Simple', ]
 
-class Progress:
-    terminal: int = 36
-    progress: int = 0
-    sentinal: str = '█'
-    blanking: str = ' '
-    entrance: str = '    '
-    cyclings: float = 5.0  
-    total: Optional[int] = None
-    start_time: Optional[float] = None
+# default constants
+BLANKING = CONFIG['core']['progress']['blanking']
+CYCLINGS = CONFIG['core']['progress']['cyclings']
+ENTRANCE = CONFIG['core']['progress']['entrance']
+PROGRESS = CONFIG['core']['progress']['progress']
+SENTINAL = CONFIG['core']['progress']['sentinal']
+TERMINAL = CONFIG['core']['progress']['terminal']
+
+class Simple(threading.Thread):
+    """Implements a simple, threaded, context manager for a progress bar."""
+    progress: int = PROGRESS
+    terminal: int = TERMINAL
+    sentinal: str = SENTINAL
+    blanking: str = BLANKING
+    entrance: str = ENTRANCE
+    cyclings: float = CYCLINGS 
     
-    def __init__(self):
-        raise NotImplementedError('Cannot create a naked Progress instance!') 
+    def __enter__(self) -> Callable[[], None]:
+        self.start()
+        return self.update
 
-    @classmethod
-    def definite(cls, total):
-        cls.total = total
-        cls.start_time = time.time()
-        yield cls.step_known
-        cls.end_known()
+    def __exit__(self, *args, **kwargs) -> None:
+        self.calculate()
+        self.flush(self.final())
+        self.stop_event.set()
 
-    @classmethod
-    def unknown(cls):
-        cls.start_time = time.time()
-        yield cls.step_unknown
-        cls.end_unknown()
+    def __init__(self, total: Optional[int] = None, *, fps: float  = 30.0) -> None:
+        threading.Thread.__init__(self, name='Progress')
+        self.stop_event = threading.Event()
+        self.sleep = 1.0 / fps 
+        self.known = total is not None
+        self.total = total if self.known else 1
+        self.write = self.write_known if self.known else self.write_unknown
+        self.final = self.final_known if self.known else self.final_unknown
+        self.clock = time.time()
+        self.click = 0
 
-    @classmethod
-    def step_known(cls):
-        cls.progress += 1
-        part = cls.progress
-        total = cls.total
-        done = int(min(1, part / total) * cls.terminal)
-        togo = cls.terminal - done
-        frac = part / total * 100.0
-        last = time.time() - cls.start_time
-        rate = part / last if last > 1.0 else 0.0
-        done_str = cls.sentinal * done
-        togo_str = cls.blanking * togo
-        message = f'{cls.entrance}|{done_str}{togo_str}| {part}/{total} [{frac:.0f}%] in {last:.1f}s ({rate:.2f}/s)'
-        print(message, end='\r')
+    def calculate(self) -> None:
+        self.last = time.time() - self.clock
+        self.rate = self.click / self.last if self.last > 1.0 else 0.0
+        self.frac = self.click / self.total * 100
+        if self.known:
+            done = int(min(1, self.click / self.total) * self.progress)
+        else:
+            done = int((self.last %  self.cyclings) / self.cyclings * self.progress)
+        self.done = self.sentinal * done 
+        self.left = self.blanking * (self.progress - done)
 
-    @classmethod
-    def step_unknown(cls):
-        cls.progress += 1
-        part = cls.progress
-        last = time.time() - cls.start_time
-        rate = part / last if last > 1.0 else 0.0
-        done = int((last % cls.cyclings) / cls.cyclings * cls.terminal)
-        togo = cls.terminal - done
-        done_str = cls.sentinal * done
-        togo_str = cls.blanking * togo
-        message = f'{cls.entrance}|{done_str}{togo_str}| {part} in {last:.1f}s ({rate:.2f}/s)'
-        print(message, end='\r')
+    def final_known(self) -> str:
+        return f'{self.entrance}|{self.done}| {self.click}/{self.total} [{100.0:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s)\n'
 
-    @classmethod
-    def end_known(cls):
-        part = cls.progress
-        last = time.time() - cls.start_time
-        rate = part / last
-        done_str = '█' * cls.terminal
-        print(f'{cls.entrance}|{done_str}| {part}/{part} [{100.0:.0f}%] in {last:.1f}s ({rate:.2f}/s)'.ljust(120))
-        cls.progress = 0
-        cls.total = None
-        cls.start_time = None
+    def final_unknown(self) -> str:
+        done = self.sentinal * self.progress
+        return f'{self.entrance}|{done}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)\n'
 
-    @classmethod
-    def end_unknown(cls):
-        part = cls.progress
-        last = time.time() - cls.start_time
-        rate = part / last
-        done_str = '█' * cls.terminal
-        print(f'{cls.entrance}|{done_str}| {part} in {last:.1f}s ({rate:.2f}/s)'.ljust(120))
-        cls.progress = 0
-        cls.total = None
-        cls.start_time = None
+    def flush(self, message: str) -> None:
+        print(message.ljust(self.terminal), end='\r')
+    
+    def update(self) -> None:
+        self.click += 1
+
+    def run(self) -> None:
+        while not self.stop_event.is_set():
+            time.sleep(self.sleep)
+            self.calculate()
+            self.flush(self.write())
+   
+    def write_known(self) -> str:
+        return f'{self.entrance}|{self.done}{self.left}| {self.click}/{self.total} [{self.frac:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s)'
+               
+    def write_unknown(self) -> str:
+        return f'{self.entrance}|{self.done}{self.left}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)'

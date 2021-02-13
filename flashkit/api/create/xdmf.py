@@ -84,7 +84,7 @@ def attach_context(**args: dict[str, Any]) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
         if parallel.is_parallel():
-            args['context'] = progress.simple_bar
+            args['context'] = progress.Simple
         else:
             config_handler.set_global(theme='smooth', unknown='horizontal')
             args['context'] = alive_bar
