@@ -205,6 +205,24 @@ def limit(number: int) -> D:
         return wrapper
     return decorator
 
+def many(number: Optional[int] = None, *, root: bool = True) -> D:
+    """Decorator like limit, but joins the parallel execution back together by broadcasting result of each process;
+    this should be used when either (root == False) each process needs to know what the other returned,
+    or many processes are needed for the decorated function but only the result or root is desired on return."""
+    def decorator(function: F) -> F:
+        @wraps(function)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if is_serial(): return function(*args, **kwargs)
+            load()
+            if number is None or is_lower(number):
+                result = function(*args, **kwargs)
+            else:
+                result = None
+            if root: return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
+            return SELF._MPI.COMM_WORLD.allgather(result)
+        return wrapper
+    return decorator
+
 def safe(function: F) -> F:
     """Decorator which passes straight through to decorated function; this should be used
     in cases were the wrapped fuction does not use the provided infrastructure but is
