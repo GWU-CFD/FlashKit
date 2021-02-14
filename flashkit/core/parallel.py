@@ -18,7 +18,7 @@ import psutil
 
 # static analysis
 if TYPE_CHECKING:
-    from types import ModuleType
+    from types import ModuleType, TypeVar
     Intracomm = TypeVar('Intracomm', bound = Any)
     F = TypeVar('F', bound = Callable[..., Any])
     D = TypeVar('D', bound = Callable[[F], F])

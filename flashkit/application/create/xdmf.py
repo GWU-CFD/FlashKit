@@ -119,10 +119,7 @@ class XdmfCreateApp(Application):
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
-        
-        # package up local command line arguments
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
                    'out', 'plot', 'grid', 'auto', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-
         xdmf(**local)

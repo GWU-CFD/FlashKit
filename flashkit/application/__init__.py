@@ -2,10 +2,11 @@
 
 # standard libraries
 import sys
-import logging
+import argparse
 
 # internal libraries
 from ..__meta__ import __version__, __website__
+from ..core import logging
 
 # external libraries
 from cmdkit.app import Application, ApplicationGroup
@@ -55,28 +56,23 @@ learn more about their usage.
 {EPILOG}\
 """
 
-# Configure a handler for logging
-handler = logging.StreamHandler()
-handler.setLevel(logging.WARN)
-handler.setFormatter(logging.Formatter('%(msg)s'))
-
-# Initialize flashkit logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARN)
-logger.addHandler(handler)
-
 # inject logger back into cmdkit library
-Application.log_critical = logger.critical
-Application.log_exception = logger.exception
+Application.log_critical = logging.logger.critical
+Application.log_exception = logging.logger.exception
+
+# create custom action for setting debug logging
+class DebugLogging(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, True)
+        logging.logger.setLevel(logging.DEBUG)
 
 class FlashKit(ApplicationGroup):
     """Application class for flashkit entry-point."""
-
+    ALLOW_PARSE = True
     interface = Interface(PROGRAM, USAGE, HELP)
-    interface.add_argument('-v', '--version', version=__version__, action='version')
     interface.add_argument('command')
-
-    command = None
+    interface.add_argument('-V', '--version', version=__version__, action='version')
+    interface.add_argument('-v', '--verbose', nargs=0, action=DebugLogging)
     commands = COMMANDS
 
 def main() -> int:
