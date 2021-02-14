@@ -15,6 +15,7 @@ __all__ = ['console', 'debugger', 'logger', 'printer',
 CONSOLE = CONFIG['core']['logger']['console']
 LOGGER = CONFIG['core']['logger']['logger']
 PRINTER = CONFIG['core']['logger']['printer']
+SIMPLE = CONFIG['core']['logger']['simple']
 VERBOSE = CONFIG['core']['logger']['verbose']
 
 # provide logging constants
@@ -22,15 +23,38 @@ DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARN = logging.WARN
 
+class Simple:
+    """Interface consistant but uses print.""" 
+    def __init__(self):
+        self.level = INFO
+
+    def setLevel(self, level):
+        self.level = level
+
+    def debug(self, message):
+        self.write(message)
+
+    def info(self, message):
+        self.write(message)
+    
+    def warn(self, message):
+        self.write(message)
+
+    def write(self, message):
+        print(message)
+
 # Configure a console handler
 console = logging.StreamHandler(sys.stdout)
 console.setLevel(INFO)
 console.setFormatter(logging.Formatter(CONSOLE))
 
 # Initialize flashkit printer (console logging)
-printer = logging.getLogger(PRINTER)
-printer.setLevel(INFO)
-printer.addHandler(console)
+if SIMPLE:
+    printer = Simple()
+else:
+    printer = logging.getLogger(PRINTER)
+    printer.addHandler(console)
+printer.setLevel(INFO)  
 
 # Configure a stderr handler
 debugger = logging.StreamHandler(sys.stderr)

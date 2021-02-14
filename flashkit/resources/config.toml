@@ -25,8 +25,9 @@
 
   [core.logger]
   console = '%(msg)s'  # default logging handler format
-  logger = 'FlashKit'  # name of the flashkit logger
+  logger  = 'FlashKit' # name of the flashkit logger
   printer = 'console'  # name of the flashkit logger
+  simple  = true       # use print() vice logger
   verbose = '%(name)s - %(message)s'  # verbose logging handler format
 
   [core.parallel]

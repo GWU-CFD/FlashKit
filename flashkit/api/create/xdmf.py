@@ -108,7 +108,7 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
 PACKAGES = {'auto', 'basename', 'dest', 'files', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
 ROUTE = ('create', 'xdmf')
 PRIORITY = {'ignore'}
-CRATES = (adapt_arguments, log_messages, attach_context)
+CRATES = (adapt_arguments, attach_context, log_messages)
 DROPS = {'auto', 'high', 'ignore', 'low', 'skip'}
 MAPPING = {'grid': 'gridname', 'out': 'filename', 'plot': 'plotname', 'path': 'source'}
 INSTRUCTIONS = stream.Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
