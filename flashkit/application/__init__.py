@@ -24,7 +24,7 @@ COMMANDS = {
 PROGRAM = f'flashkit'
 
 USAGE = f"""\
-usage: flashkit [-h] [-v] <command> [<args>...]
+usage: flashkit [-h] [-v] [-V] <command> [<args>...]
 Command-line tools for FlashKit.\
 """
 
@@ -43,7 +43,8 @@ job                 {job.__doc__}
 
 options:
 -h, --help          Show this message and exit.
--v, --version       Show the version and exit.
+-V, --version       Show the version and exit.
+-v, --verbose       Enable debug messaging.
 
 files:      (Options are also pulled from files)
 ../**/flash.toml           Job tree configuration.
