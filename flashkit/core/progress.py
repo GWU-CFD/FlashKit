@@ -7,16 +7,19 @@ from typing import TYPE_CHECKING
 # standard libraries
 import time
 import threading
+import pkg_resources
 
 # internal libraries
 from ..resources import CONFIG
+from . import parallel
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Callable, Optional
+    from typing import Callable, Optional, TypeVar, Union
+    BAR = TypeVar('BAR', bound = Union[Simple, Any])
 
 # define public interface
-__all__ = ['Simple', ]
+__all__ = ['Simple', 'get_available']
 
 # default constants
 BLANKING = CONFIG['core']['progress']['blanking']
@@ -25,6 +28,16 @@ ENTRANCE = CONFIG['core']['progress']['entrance']
 PROGRESS = CONFIG['core']['progress']['progress']
 SENTINAL = CONFIG['core']['progress']['sentinal']
 TERMINAL = CONFIG['core']['progress']['terminal']
+
+def get_available() -> BAR:
+    if parallel.is_parallel(): return Simple
+    try:
+        pkg_resources.get_distribution('alive_progress')
+        from alive_progress import alive_bar, config_handler
+        config_handler.set_global(theme='smooth', unknown='horizontal')
+        return alive_bar
+    except pkg_resources.DistributionNotFound:
+        return Simple
 
 class Simple(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""

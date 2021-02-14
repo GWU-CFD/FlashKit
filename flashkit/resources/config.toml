@@ -24,8 +24,10 @@
   user  = 'user'        # label for tree options in Configuration
 
   [core.logger]
-  format = '%(msg)s'   # logging handler format
+  console = '%(msg)s'  # default logging handler format
   logger = 'FlashKit'  # name of the flashkit logger
+  printer = 'console'  # name of the flashkit logger
+  verbose = '%(name)s - %(message)s'  # verbose logging handler format
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi

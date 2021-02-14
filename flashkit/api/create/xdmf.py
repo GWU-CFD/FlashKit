@@ -10,12 +10,10 @@ import sys
 import re
 
 # internal libraries
+from ...core import logging, parallel, progress, stream
+from ...core.error import AutoError
 from ...library import create_xdmf
-from ...core import error, logging, parallel, progress, stream
 from ...resources import CONFIG, DEFAULTS
-
-# external libraries
-from alive_progress import alive_bar, config_handler
 
 # static analysis
 if TYPE_CHECKING:
@@ -76,27 +74,23 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         try:
             args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
         except StopIteration:
-            raise error.AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     
     return args
 
 def attach_context(**args: dict[str, Any]) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
-        if parallel.is_parallel():
-            args['context'] = progress.Simple
-        else:
-            config_handler.set_global(theme='smooth', unknown='horizontal')
-            args['context'] = alive_bar
+        args['context'] = progress.get_available()
     else:
-        logging.logger.info('\nWriting xdmf data out to file ...')
+        logging.printer.info('\nWriting xdmf data out to file ...')
     return args
 
 def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
     basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
-    msg_files = args.pop('message', '')
+    msg_files = args.pop('message')
     source = os.path.relpath(source)
     dest = os.path.relpath(dest)
     message = '\n'.join([
@@ -107,7 +101,7 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    logging.logger.info(message)
+    logging.printer.info(message)
     return args
 
 # default constants for handling the argument stream
