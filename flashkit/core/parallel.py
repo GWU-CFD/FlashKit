@@ -11,6 +11,7 @@ import pkg_resources
 from functools import wraps
 
 # internal libraries
+from ..core.error import ParallelError
 from ..resources import CONFIG
 
 # external libraries
@@ -45,9 +46,6 @@ def __getattr__(name: str) -> Any:
     """Provide module level @property behavior."""
     if name in PROPERTIES: return globals()[get_property(name)]()
     raise AttributeError(f'module {__name__} has no attribute {name}')
-
-class ParallelError(Exception):
-    """Available for handling errors raised by parallel module"""
 
 def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""

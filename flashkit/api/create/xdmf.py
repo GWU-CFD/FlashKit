@@ -10,8 +10,9 @@ import sys
 import re
 
 # internal libraries
+from ...core import logging, parallel, progress, stream
+from ...core.error import AutoError
 from ...library import create_xdmf
-from ...core import error, logging, parallel, progress, stream
 from ...resources import CONFIG, DEFAULTS
 
 # static analysis
@@ -73,7 +74,7 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         try:
             args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
         except StopIteration:
-            raise error.AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     
     return args
 
@@ -89,7 +90,7 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
     basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
-    msg_files = args.pop('message', '')
+    msg_files = args.pop('message')
     source = os.path.relpath(source)
     dest = os.path.relpath(dest)
     message = '\n'.join([
