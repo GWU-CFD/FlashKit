@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 # standard libraries
 import time
 import threading
-from functools import wraps
 import pkg_resources
 
 # internal libraries
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     BAR = TypeVar('BAR', bound = Union[Simple, Any])
 
 # define public interface
-__all__ = ['Simple', ]
+__all__ = ['Simple', 'get_available']
 
 # default constants
 BLANKING = CONFIG['core']['progress']['blanking']

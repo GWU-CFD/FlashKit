@@ -8,7 +8,7 @@ import logging
 from ..resources import CONFIG
 
 # define public interface
-__all__ = ['console', 'debugger', 'logger', 
+__all__ = ['console', 'debugger', 'logger', 'printer',  
            'CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN', ]
 
 # default constants

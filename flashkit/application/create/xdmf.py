@@ -55,7 +55,7 @@ notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
 """
 
 # default constants
-STR_FAILED = '\nUnable to create xdmf file!'
+STR_FAILED = 'Unable to create xdmf file!'
 
 # Create argpase List custom types
 IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
