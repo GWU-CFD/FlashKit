@@ -55,7 +55,7 @@ notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
 """
 
 # default constants
-STR_FAILED = '\nUnable to create xdmf file!'
+STR_FAILED = 'Unable to create xdmf file!'
 
 # Create argpase List custom types
 IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
@@ -119,10 +119,7 @@ class XdmfCreateApp(Application):
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
-        
-        # package up local command line arguments
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
                    'out', 'plot', 'grid', 'auto', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-
         xdmf(**local)

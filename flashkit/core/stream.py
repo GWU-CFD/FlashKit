@@ -6,8 +6,9 @@ from typing import NamedTuple, TYPE_CHECKING
 from functools import wraps, reduce
 
 # internal libraries
-from ..resources import CONFIG
 from .configure import get_arguments, get_defaults
+from ..core.error import StreamError
+from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
@@ -23,6 +24,8 @@ __all__ = ['Instructions', 'build', 'extract', 'mail', 'pack', 'patch',
 
 # default constants
 IGNORE = CONFIG['core']['stream']['ignore']
+MSG_EXP = 'Unknown error while processing stream!'
+MSG_KEY = 'Likely malformed or missing arguments in or crates on the stream!'
 
 class Instructions(NamedTuple):
     """Helper class to assist in using decorator factories."""
@@ -46,11 +49,24 @@ def abstract(members: Sequence[str]) -> D:
         return wrapper
     return decorator
 
+def exception_handler(function: F) -> F:
+    """Support for error handeling for the stream."""
+    @wraps(function)
+    def wrapper(*args, **kwargs) -> Any:
+        try:
+            return function(*args, **kwargs)
+        except KeyError as error:
+            raise StreamError(MSG_KEY) from error
+        except Exception as error:
+            raise StreamError(MSG_EXP) from error
+    return wrapper
+
 @abstract(('crates', ))
 def build(crates: Sequence[Callable[[S], S]]) -> D:
     """Apply (build) the crates to (onto) the stream."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             for crate in crates:
                 stream = crate(**stream)
@@ -63,6 +79,7 @@ def extract(packages: Iterable[str]) -> D:
     """Extract packages from the stream."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             return {key: value for key, value in stream.items() if key in packages}
         return wrapper
@@ -74,6 +91,7 @@ def mail(packages: Iterable[str], route: Sequence[str], priority: Iterable[str],
     """Ship crated, pruned, and translated packages; applies ship-build-prune."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             return ship(packages, route, priority)(build(crates)(prune(drops, mapping)(function)))(**stream)
         return wrapper
@@ -84,6 +102,7 @@ def pack(packages: Iterable[str], route: Sequence[str], priority: Iterable[str])
     """Ship packeges along route while, prioritizing (send through) some packages."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             holds = {key: stream.get(key, None) for key in priority}
             holds = {key: item for key, item in holds.items() if item is not None}
@@ -100,6 +119,7 @@ def patch(function: F) -> F:
     """Apply defaults and configs to the stream."""
     dispatch = {True: get_defaults, False: get_arguments}
     @wraps(function)
+    @exception_handler
     def wrapper(**stream: S) -> S:
         ignore = stream.get(IGNORE, False)
         stream = dispatch[ignore](local=stream)
@@ -111,6 +131,7 @@ def prune(drops: Iterable[str], mapping: Mapping[str, str]) -> D:
     """Prepare the stream; applies strip-translate"""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             return strip(drops)(translate(mapping)(function))(**stream)
         return wrapper
@@ -121,6 +142,7 @@ def unpack(route: Sequence[str], priority: Iterable[str]) -> D:
     """Open shiped packages from route along with priority packages"""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             holds = {key: stream.pop(key, None) for key in priority}
             holds = {key: item for key, item in holds.items() if item is not None}
@@ -135,6 +157,7 @@ def ship(packages: Iterable[str], route: Sequence[str], priority: Iterable[str])
     """Ship packages; applies pack-patch-unpack"""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             return pack(packages, route, priority)(patch(unpack(route, priority)(function)))(**stream)
         return wrapper
@@ -145,6 +168,7 @@ def strip(drops: Iterable[str]) -> D:
     """Strip some (drops) packages from the stream."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             for drop in drops:
                 stream.pop(drop, None)
@@ -157,6 +181,7 @@ def translate(mapping: Mapping[str, str]) -> D:
     """Translate stream keys according to mapping."""
     def decorator(function: F) -> F:
         @wraps(function)
+        @exception_handler
         def wrapper(**stream: S) -> S:
             for key, value in mapping.items():
                 store = stream.pop(key, None)
