@@ -14,12 +14,13 @@
 
 [create]
 
+  [create.grid]
+  ndim = 2 
+  size = 1
+  smax = 1.0
+  smin = 0.0
+
   [create.xdmf]
   high = 0
   low  = 0
   skip = 1
-
-  [create.grid]
-  ndim = 2 
-  size = 1
-

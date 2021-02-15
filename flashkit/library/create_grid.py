@@ -2,12 +2,13 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, List, Dict, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 # standard libraries
 import os
 
 # internal libraries
+from ..core import parallel
 from ..resources import CONFIG, DEFAULTS 
 from ..support.stretch import Stretching, Parameters 
 
@@ -19,25 +20,25 @@ import h5py
 __all__ = ['calc_coords', 'get_blocks', 'get_shapes', 'write_coords', ]
 
 if TYPE_CHECKING:
-    NDA = numpy.ndarray
-    COORDS = Tuple[NDA, NDA, NDA]
-    BLOCKS = Tuple[Tuple[NDA, NDA, NDA], 
-                   Tuple[NDA, NDA, NDA], 
-                   Tuple[NDA, NDA, NDA]]
+    from typing import Union
+    Vector = numpy.ndarray
+    Coords = tuple[Vector, Vector, Vector]
+    Blocks = tuple[Coords, Coords, Coords]
 
 # define default constants
-MDIM = CONFIG['create']['grid']['mdim']
+PATH = DEFAULTS['general']['paths']['working']
 NDIM = DEFAULTS['create']['grid']['ndim']
 SIZE = DEFAULTS['create']['grid']['size']
-SMIN = CONFIG['create']['grid']['smin']
-SMAX = CONFIG['create']['grid']['smax']
+SMIN = DEFAULTS['create']['grid'['smin']
+SMAX = DEFAULTS['create']['grid']['smax']
+MDIM = CONFIG['create']['grid']['mdim']
 METHOD = CONFIG['create']['grid']['method']
 NAME = CONFIG['create']['grid']['name']
-PATH = DEFAULTS['general']['paths']['working']
 
-def calc_coords(*, param: Dict[str, Dict[str, Union[int, float]]] = {}, procs: Dict[str, int] = {},
-                simmn: Dict[str, float] = {}, simmx: Dict[str, float] = {}, sizes: Dict[str, int] = {}, 
-                stype: Dict[str, str] = {}, ndims: int = NDIM) -> COORDS:
+@parallel.safe
+def calc_coords(*, param: dict[str, dict[str, Union[int, float]]] = {}, procs: dict[str, int] = {},
+                simmn: dict[str, float] = {}, simmx: dict[str, float] = {}, sizes: dict[str, int] = {}, 
+                stype: dict[str, str] = {}, ndims: int = NDIM) -> Coords:
     """Calculate global coordinate axis arrays; face data vice cell data."""
 
     # create grid init parameters
@@ -53,7 +54,8 @@ def calc_coords(*, param: Dict[str, Dict[str, Union[int, float]]] = {}, procs: D
     # Create grids
     return tuple(get_filledCoords(sizes=gr_gIndexSize, methods=gr_str, ndim=gr_ndim, smin=gr_min, smax=gr_max))
 
-def get_blocks(coordinates: COORDS, *, procs: Dict[str, int] = {}, sizes: Dict[str, int] = {}) -> BLOCKS: 
+@parallel.safe
+def get_blocks(coordinates: Coords, *, procs: dict[str, int] = {}, sizes: dict[str, int] = {}) -> Blocks: 
     """Calculate block coordinate axis arrays from global axis arrays."""
 
     # get the processor communicator layout and global arrays
@@ -84,7 +86,8 @@ def get_blocks(coordinates: COORDS, *, procs: Dict[str, int] = {}, sizes: Dict[s
 
     return (xxxl, xxxc, xxxr), (yyyl, yyyc, yyyr), (zzzl, zzzc, zzzr)
 
-def get_shapes(*, procs: Dict[str, int] = {}, sizes: Dict[str, int] = {}) -> Dict[str, Tuple[int, int, int]]:
+@parallel.safe
+def get_shapes(*, procs: dict[str, int] = {}, sizes: dict[str, int] = {}) -> dict[str, tuple[int, int, int]]:
     """Determine shape of simulation data on the relavent grids (e.g., center or facex)."""
 
     # get the processor communicator layout and global arrays
@@ -99,56 +102,49 @@ def get_shapes(*, procs: Dict[str, int] = {}, sizes: Dict[str, int] = {}) -> Dic
     
     return shapes
 
-def write_coords(coordinates: COORDS, *, path: str = PATH) -> None:
+@parallel.squash
+def write_coords(coordinates: Coords, *, path: str = PATH) -> None:
     """Write global coordinate axis arrays to an hdf5 file."""
-
-    # specify path
-    cwd = os.getcwd()
-    path = cwd + '/' + path
     filename = path + NAME
-    
-    # create file
-    with h5py.File(filename, 'w') as h5file:
-        
-        # write data to file
+    with h5py.File(filename, 'w') as file:
         for axis, coords in zip(('x', 'y', 'z'), coordinates):
             if coords is not None:
-                h5file.create_dataset(axis + 'Faces', data=coords)
+                file.create_dataset(axis + 'Faces', data=coords)
 
-def create_bounds(*, mins: Dict[str, float]={}, maxs: Dict[str, float]={}):
+def create_bounds(*, mins: dict[str, float]={}, maxs: dict[str, float]={}) -> tuple[Vector, Vector]:
     def_mins = {key: SMIN for key in ('i', 'j', 'k')}
     def_maxs = {key: SMAX for key in ('i', 'j', 'k')}
     simmn = [mins.get(key, default) for key, default in def_mins.items()]
     simmx = [maxs.get(key, default) for key, default in def_maxs.items()]
     return tuple(numpy.array(item, float) for item in (simmn, simmx))
 
-def create_indexSize_fromGlobal(*, i: int = SIZE, j: int = SIZE, k: int = SIZE, ijkProcs: NDA):
+def create_indexSize_fromGlobal(*, i: int = SIZE, j: int = SIZE, k: int = SIZE, ijkProcs: Vector) -> tuple[Vector, Vector]:
     gSizes = [i, j, k]
     blocks = [size / procs for procs, size in zip(ijkProcs, gSizes)]
     return tuple(numpy.array(item, int) for item in (blocks, gSizes))
 
-def create_indexSize_fromLocal(*, i: int = SIZE, j: int = SIZE, k: int = SIZE, ijkProcs: NDA):
+def create_indexSize_fromLocal(*, i: int = SIZE, j: int = SIZE, k: int = SIZE, ijkProcs: Vector) -> tuple[Vector, Vector]:
     blocks = [i, j, k]
     gSizes = [procs * nb for procs, nb in zip(ijkProcs, blocks)]
     return tuple(numpy.array(item, int) for item in (blocks, gSizes))
 
-def create_processor_grid(*, i: int = SIZE, j: int = SIZE, k: int = SIZE):
+def create_processor_grid(*, i: int = SIZE, j: int = SIZE, k: int = SIZE) -> tuple[Vector, Vector]:
     iProcs, jProcs, kProcs = i, j, k
     proc = [iProcs, jProcs, kProcs]
     grid = [[i, j, k] for k in range(kProcs) for j in range(jProcs) for i in range(iProcs)]
     return tuple(numpy.array(item, int) for item in (proc, grid))
 
-def create_stretching(*, methods: Dict[str, str] = {}):
+def create_stretching(*, methods: Dict[str, str] = {}) -> tuple[Vector, Vector]:
     default = METHOD
     def_methods = {key: default for key in ('i', 'j', 'k')}
     strTypes = [methods.get(key, default) for key, default in def_methods.items()]
     strBools = [method != default for method in strTypes]
     return tuple(numpy.array(item) for item in (strBools, strTypes))
 
-def get_blankCoords(sizes: NDA) -> List[NDA]:
+def get_blankCoords(sizes: Vector) -> List[Vector]:
     return [None] * len(sizes)
 
-def get_filledCoords(*, sizes: NDA, methods: Stretching, ndim: int, smin: NDA, smax: NDA) -> List[NDA]:
+def get_filledCoords(*, sizes: Vector, methods: Stretching, ndim: int, smin: Vector, smax: Vector) -> List[Vector]:
     coords = get_blankCoords(sizes)
 
     for method, func in methods.stretch.items():

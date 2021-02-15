@@ -2,15 +2,17 @@
 
 [create]
 
-  [create.xdmf]
-  switch = 10    # number of files before showing progress
-
   [create.grid]
   mdim   = 3              # maximum dimensions supported
   method = 'uniform'      # default grid algorithm
   name   = 'initGrid.h5'  # filename holding initial grid data
-  smax   = 1.0            # SHOULD MAKE THIS A 'DEFAULT'
-  smin   = 0.0            # SHOULD MAKE THIS A 'DEFAULT'
+
+  [create.init]
+  method = 'uniform'       # default block init algorithm
+  name   = 'initBlock.h5'  # filename holding initial block data
+
+  [create.xdmf]
+  switch = 10    # number of files before showing progress
 
 [core]
 

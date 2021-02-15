@@ -10,8 +10,7 @@ import sys
 import re
 
 # internal libraries
-from ...core import logging, parallel, progress, stream
-from ...core.error import AutoError
+from ...core import error, logging, parallel, progress, stream
 from ...library import create_xdmf
 from ...resources import CONFIG, DEFAULTS
 
@@ -63,7 +62,7 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
             files = sorted([int(file[-4:]) for file in listdir if condition(file)])
             args['message'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
             if not files:
-                raise AutoError(f'Cannot automatically identify simulation files on path {source}')
+                raise error.AutoError(f'Cannot automatically identify simulation files on path {source}')
         args['files'] = files
     else:
         files = args['files']
@@ -74,7 +73,7 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         try:
             args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
         except StopIteration:
-            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+            raise error.AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     
     return args
 

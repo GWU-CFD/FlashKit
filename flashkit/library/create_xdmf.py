@@ -12,8 +12,8 @@ from xml.dom import minidom
 from contextlib import nullcontext
 
 # internal libraries
-from ..resources import DEFAULTS 
 from ..core import parallel
+from ..resources import DEFAULTS 
 
 # external libraries
 import h5py
@@ -22,13 +22,13 @@ import h5py
 __all__ = ['file', ]
 
 # define default constants
-LOW: int = DEFAULTS['create']['xdmf']['low']
-HIGH: int = DEFAULTS['create']['xdmf']['high']
-SKIP: int = DEFAULTS['create']['xdmf']['skip']
-PATH: str = DEFAULTS['general']['paths']['working']
-OUT: str = DEFAULTS['general']['files']['output']
-PLOT: str = DEFAULTS['general']['files']['plot']
 GRID: str = DEFAULTS['general']['files']['grid']
+HIGH: int = DEFAULTS['create']['xdmf']['high']
+LOW: int = DEFAULTS['create']['xdmf']['low']
+OUT: str = DEFAULTS['general']['files']['output']
+PATH: str = DEFAULTS['general']['paths']['working']
+PLOT: str = DEFAULTS['general']['files']['plot']
+SKIP: int = DEFAULTS['create']['xdmf']['skip']
 CONTEXT: Callable[[int], Callable[[], None]] = lambda *_: nullcontext(lambda *_: None) 
 
 # internal library (public) function

@@ -2,6 +2,12 @@
 
 [create]
   
+  [create.grid]
+  path = ['general', 'paths', 'working']
+  
+  [create.init]
+  path = ['general', 'paths', 'working']
+  
   [create.xdmf]
   grid = ['general', 'files', 'grid']
   path = ['general', 'paths', 'working']
