@@ -45,6 +45,13 @@
   progress = 36      # width of progress bar itself
   sentinal = '█'     # filled character for bar
   terminal = 120     # width of progress bar message
+  updating = 30      # fps for updating the progress bar
 
   [core.stream]
   ignore = 'ignore'  # specific providable flag to ignore configuration tree
+
+[support]
+
+  [support.stretch]
+  alpha = [0.5, 0.5, 0.5]  # streching constant for tanh based methods
+

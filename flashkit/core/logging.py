@@ -1,5 +1,9 @@
 """Logging manager for the FlashKit library and python api."""
 
+# type annotations
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # standard libraries
 import sys
 import logging
@@ -7,9 +11,13 @@ import logging
 # internal libraries
 from ..resources import CONFIG
 
+# static analysis
+if TYPE_CHECKING:
+    from typing import Union
+
 # define public interface
-__all__ = ['console', 'debugger', 'logger', 'printer',  
-           'CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN', ]
+__all__ = ['CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN',
+           'console', 'debugger', 'logger', 'printer', ]
 
 # default constants
 CONSOLE = CONFIG['core']['logger']['console']
@@ -28,19 +36,19 @@ class Simple:
     def __init__(self):
         self.level = INFO
 
-    def setLevel(self, level):
+    def setLevel(self, level: int) -> None:
         self.level = level
 
-    def debug(self, message):
+    def debug(self, message: str) -> None:
         self.write(message)
 
-    def info(self, message):
+    def info(self, message: str) -> None:
         self.write(message)
     
-    def warn(self, message):
+    def warn(self, message: str) -> None:
         self.write(message)
 
-    def write(self, message):
+    def write(self, message: str) -> None:
         print(message)
 
 # Configure a console handler
@@ -48,18 +56,19 @@ console = logging.StreamHandler(sys.stdout)
 console.setLevel(INFO)
 console.setFormatter(logging.Formatter(CONSOLE))
 
+# Configure a stderr handler
+debugger = logging.StreamHandler(sys.stderr)
+debugger.setLevel(WARN)
+debugger.setFormatter(logging.Formatter(VERBOSE))
+
 # Initialize flashkit printer (console logging)
+printer: Union[Simple, logging.Logger]
 if SIMPLE:
     printer = Simple()
 else:
     printer = logging.getLogger(PRINTER)
     printer.addHandler(console)
 printer.setLevel(INFO)  
-
-# Configure a stderr handler
-debugger = logging.StreamHandler(sys.stderr)
-debugger.setLevel(WARN)
-debugger.setFormatter(logging.Formatter(VERBOSE))
 
 # Initialize flashkit logger
 logger = logging.getLogger(LOGGER)

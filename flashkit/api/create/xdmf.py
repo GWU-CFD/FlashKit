@@ -10,25 +10,28 @@ import sys
 import re
 
 # internal libraries
-from ...core import error, logging, parallel, progress, stream
-from ...library import create_xdmf
+from ...core.error import AutoError
+from ...core.logging import printer
+from ...core.parallel import single 
+from ...core.progress import get_bar
+from ...core.stream import mail
+from ...library.create_xdmf import create_xdmf
 from ...resources import CONFIG, DEFAULTS
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any
-    S = TypeVar('S', bound = dict[str, Any])
+    from ...core.stream import S
 
 # define public interface
 __all__ = ['xdmf', ]
 
-# default constants
+# define default constants
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
 BAR_SWITCH_XDMF = CONFIG['create']['xdmf']['switch']
 RANGES = ('low', 'high', 'skip') 
 
-def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
+def adapt_arguments(**args: S) -> S:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
 
     # determine arguments passed
@@ -62,7 +65,7 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
             files = sorted([int(file[-4:]) for file in listdir if condition(file)])
             args['message'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
             if not files:
-                raise error.AutoError(f'Cannot automatically identify simulation files on path {source}')
+                raise AutoError(f'Cannot automatically identify simulation files on path {source}')
         args['files'] = files
     else:
         files = args['files']
@@ -73,19 +76,19 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         try:
             args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
         except StopIteration:
-            raise error.AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     
     return args
 
-def attach_context(**args: dict[str, Any]) -> dict[str, Any]:
+def attach_context(**args: S) -> S:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
-        args['context'] = progress.get_available()
+        args['context'] = get_bar()
     else:
-        logging.printer.info('\nWriting xdmf data out to file ...')
+        printer.info('\nWriting xdmf data out to file ...')
     return args
 
-def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
+def log_messages(**args: S) -> S:
     """Log screen messages to logger; will throw if some defaults missing."""
     labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
     basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
@@ -100,7 +103,7 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    logging.printer.info(message)
+    printer.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -110,15 +113,15 @@ PRIORITY = {'ignore'}
 CRATES = (adapt_arguments, attach_context, log_messages)
 DROPS = {'auto', 'high', 'ignore', 'low', 'skip'}
 MAPPING = {'grid': 'gridname', 'out': 'filename', 'plot': 'plotname', 'path': 'source'}
-INSTRUCTIONS = stream.Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
+INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
-@parallel.single
-@stream.mail(INSTRUCTIONS)
+@single
+@mail(INSTRUCTIONS)
 def process_arguments(**arguments: S) -> S:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
-def xdmf(**arguments: dict[str, Any]) -> None:
+def xdmf(**arguments: S) -> None:
     """Python application interface for creating xdmf from command line or python code.
 
     Keyword arguments:  
@@ -140,4 +143,4 @@ def xdmf(**arguments: dict[str, Any]) -> None:
             the PATH will be searched for flash simulation files and all
             such files identified will be used in sorted order.\
     """
-    create_xdmf.file(**process_arguments(**arguments))
+    create_xdmf(**process_arguments(**arguments))

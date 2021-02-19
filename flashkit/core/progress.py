@@ -1,4 +1,4 @@
-"""Povides a simple progress bar for use in FlashKit."""
+"""Povides progress bar support for FlashKit library."""
 
 # type annotations
 from __future__ import annotations
@@ -8,38 +8,34 @@ from typing import TYPE_CHECKING
 import time
 import threading
 import pkg_resources
+from contextlib import nullcontext
 
 # internal libraries
+from .parallel import is_parallel
 from ..resources import CONFIG
-from . import parallel
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Callable, Optional, TypeVar, Union
-    BAR = TypeVar('BAR', bound = Union[Simple, Any])
+    from typing import Callable, Optional, Union
+    from contextlib import AbstractContextManager
+    Bar = Callable[..., AbstractContextManager]
 
 # define public interface
-__all__ = ['Simple', 'get_available']
+__all__ = ['NULL_BAR', 'SimpleBar', 'get_bar', ]
 
-# default constants
+# define default constants
 BLANKING = CONFIG['core']['progress']['blanking']
 CYCLINGS = CONFIG['core']['progress']['cyclings']
 ENTRANCE = CONFIG['core']['progress']['entrance']
 PROGRESS = CONFIG['core']['progress']['progress']
 SENTINAL = CONFIG['core']['progress']['sentinal']
 TERMINAL = CONFIG['core']['progress']['terminal']
+UPDATING = CONFIG['core']['progress']['updating']
 
-def get_available() -> BAR:
-    if parallel.is_parallel(): return Simple
-    try:
-        pkg_resources.get_distribution('alive_progress')
-        from alive_progress import alive_bar, config_handler
-        config_handler.set_global(theme='smooth', unknown='horizontal')
-        return alive_bar
-    except pkg_resources.DistributionNotFound:
-        return Simple
+# Default context manager for progress bar
+NULL_BAR: Bar = lambda *_: nullcontext(lambda *_: None) 
 
-class Simple(threading.Thread):
+class SimpleBar(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""
     progress: int = PROGRESS
     terminal: int = TERMINAL
@@ -57,12 +53,16 @@ class Simple(threading.Thread):
         self.flush(self.final())
         self.stop_event.set()
 
-    def __init__(self, total: Optional[int] = None, *, fps: float  = 30.0) -> None:
+    def __init__(self, total: Optional[int] = None, *, fps: float  = UPDATING):
         threading.Thread.__init__(self, name='Progress')
         self.stop_event = threading.Event()
         self.sleep = 1.0 / fps 
-        self.known = total is not None
-        self.total = total if self.known else 1
+        if total is not None:
+            self.known = True
+            self.total = total
+        else:
+            self.known = False
+            self.total = 1
         self.write = self.write_known if self.known else self.write_unknown
         self.final = self.final_known if self.known else self.final_unknown
         self.clock = time.time()
@@ -103,3 +103,14 @@ class Simple(threading.Thread):
                
     def write_unknown(self) -> str:
         return f'{self.entrance}|{self.done}{self.left}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)'
+
+def get_bar() -> Bar:
+    """Retrives the best supported progress bar at runtime."""
+    if is_parallel(): return SimpleBar
+    try:
+        pkg_resources.get_distribution('alive_progress')
+        from alive_progress import alive_bar, config_handler # type: ignore
+        config_handler.set_global(theme='smooth', unknown='horizontal')
+        return alive_bar
+    except pkg_resources.DistributionNotFound:
+        return SimpleBar

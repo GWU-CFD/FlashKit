@@ -8,26 +8,35 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field, InitVar
 from functools import partial
 
+# internal libraries
+from ..resources import CONFIG
+
 # external libraries
-import numpy
+import numpy # type: ignore
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Union
+    from typing import Any, Callable, Union, TypeVar
+    from collections.abc import Sequence, MutableSequence
+    D = Union[int, float]
+    S = Sequence[D]
+    M = MutableSequence[D]
+    C = MutableSequence[M]
 
 # define public interface
-__all__ = ['Parameters', 'Stretching', 'tanh_mid', 'uniform', ]
+__all__ = ['Parameters', 'Stretching', ]
 
-if TYPE_CHECKING:
-    NDA = numpy.ndarray
+# define default constants
+AXES = ('i', 'j', 'k')
+ALPHA = dict(zip(AXES, CONFIG['support']['stretch']['alpha'])) 
 
-def uniform(*, axes: NDA, coords: NDA, sizes: NDA, ndim: int, smin: NDA, smax: NDA) -> None:
+def uniform(*, axes: S, coords: C, sizes: S, ndim: int, smin: S, smax: S) -> None:
     """Method implementing a uniform grid algorithm."""
     for axis, (size, start, end) in enumerate(zip(sizes, smin, smax)):
         if axis < ndim and axis in axes:
             coords[axis] = numpy.linspace(start, end, size + 1)
 
-def tanh_mid(*, axes: NDA, coords: NDA, sizes: NDA, ndim: int, smin: NDA, smax: NDA, params: NDA) -> None:
+def tanh_mid(*, axes: S, coords: C, sizes: S, ndim: int, smin: S, smax: S, params: S) -> None:
     """Method implementing a symmetric hyperbolic tangent stretching algorithm."""
     for axis, (size, start, end, p) in enumerate(zip(sizes, smin, smax, params)):
         if axis < ndim and axis in axes:
@@ -35,20 +44,19 @@ def tanh_mid(*, axes: NDA, coords: NDA, sizes: NDA, ndim: int, smin: NDA, smax: 
 
 @dataclass
 class Parameters:
-    alpha: Union[Dict, numpy.ndarray] = field(default_factory=dict)
+    alpha: Union[dict, S] = field(default_factory=dict)
     
     def __post_init__(self):
-        def_alpha = {'i': 0.5, 'j': 0.5, 'k': 0.5}
-        self.alpha = numpy.array([self.alpha.get(key, default) for key, default in def_alpha.items()])
-        
+        self.alpha = numpy.array([self.alpha.get(key, default) for key, default in ALPHA.items()])
+
 @dataclass
 class Stretching:
-    methods: InitVar[numpy.ndarray] # length mdim specifying strType
+    methods: InitVar[Sequence[str]]
     parameters: InitVar[Parameters]
             
-    map_axes: Callable[[str], List[int]] = field(repr=False, init=False)
+    map_axes: Callable[[str], list[int]] = field(repr=False, init=False)
     any_axes: Callable[[str], bool] = field(repr=False, init=False)
-    stretch: Dict[str, Callable[[Any], None]] = field(repr=False, init=False)
+    stretch: dict[str, Callable[[Any], None]] = field(repr=False, init=False)
     default: str = 'uniform'
     
     def __post_init__(self, methods, parameters):

@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 # system libraries
 import sys
@@ -11,18 +11,19 @@ import pkg_resources
 from functools import wraps
 
 # internal libraries
-from ..core.error import ParallelError
+from .error import ParallelError
 from ..resources import CONFIG
 
 # external libraries
-import psutil
+import psutil # type: ignore
 
 # static analysis
 if TYPE_CHECKING:
-    from types import ModuleType, TypeVar
-    Intracomm = TypeVar('Intracomm', bound = Any)
+    from typing import Any, Callable, Optional, TypeVar
+    from types import ModuleType
+    Intracomm = TypeVar('Intracomm', bound=Any)
     F = TypeVar('F', bound = Callable[..., Any])
-    D = TypeVar('D', bound = Callable[[F], F])
+    D = Callable[[F], F]
 
 # module access and module level @property(s)
 SELF = sys.modules[__name__]
@@ -40,7 +41,7 @@ ROOT = CONFIG['core']['parallel']['root']
 SIZE = CONFIG['core']['parallel']['size']
 
 # python MPI interface access member
-_MPI: ModuleType = None
+_MPI: Optional[ModuleType] = None
 
 def __getattr__(name: str) -> Any:
     """Provide module level @property behavior."""
@@ -51,21 +52,21 @@ def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""
     def decorator(function: F) -> F:
         @wraps(function)
-        def wrapper() -> None:
+        def wrapper():
             try:
                 assert(getattr(SELF, method)())
             except AssertionError as error:
                 raise ParallelError(message) from error
-        return wrapper
+        return cast(F, wrapper)
     return decorator
 
 def inject_property(name: str) -> D:
     """Usefull decorator factory to provide access to module properties."""
     def decorator(function: F) -> F:
         @wraps(function)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args, **kwargs):
             return function(getattr(SELF, get_property(name)), *args, **kwargs)
-        return wrapper
+        return cast(F, wrapper)
     return decorator
 
 @assertion('is_loaded', 'Python MPI interface appears unloaded; asserted loaded!')
@@ -139,8 +140,8 @@ def load() -> None:
     if is_registered(): return 
     assert_supported()
     first = is_unloaded()
-    from mpi4py import MPI
-    SELF._MPI = MPI
+    from mpi4py import MPI # type: ignore
+    _MPI = MPI
     if first and MPI.COMM_WORLD.Get_rank() == 0:
         print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
@@ -152,7 +153,8 @@ def property_COMM_WORLD(mpi: F) -> Intracomm:
 def property_MPI() -> ModuleType:
     """MPI python interface access handle."""
     load()
-    return SELF._MPI
+    assert _MPI is not None
+    return _MPI
 
 @inject_property('COMM_WORLD')
 def property_rank(comm: F) -> int:
@@ -169,12 +171,12 @@ def property_size(comm: F) -> int:
 def guard(function: F) -> F:
     """Decorator which assures that neither the python MPI interface is loaded or the python runtime is 
     executed in parallel; this should be used when it is unsafe to run in a parallel enviornment."""
-    @warps(function)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    @wraps(function)
+    def wrapper(*args, **kwargs):
         assert_unloaded()
         assert_serial()
         return function(*args, **kwargs)
-    return wrapper
+    return cast(F, wrapper)
 
 def guarantee(*, strict: bool = False) -> D:
     """Decorator which assures that the python MPI interface is loaded prior to the call, and parallel if strict; 
@@ -183,11 +185,11 @@ def guarantee(*, strict: bool = False) -> D:
     just the support decorator instead, as decorated fuction can likely be run in either parallel or serial naively."""
     def decorator(function: F) -> F:
         @wraps(function)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args, **kwargs):
             if strict: assert_parallel()
             load()
             return function(*args, **kwargs)
-        return wrapper
+        return cast(F, wrapper)
     return decorator
 
 def limit(number: int) -> D:
@@ -197,10 +199,10 @@ def limit(number: int) -> D:
     and python MPI interface unsupported."""
     def decorator(function: F) -> F:
         @wraps(function)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args, **kwargs):
             if not is_lower(number): return 
             return function(*args, **kwargs)
-        return wrapper
+        return cast(F, wrapper)
     return decorator
 
 def many(number: Optional[int] = None, *, root: bool = True) -> D:
@@ -209,7 +211,7 @@ def many(number: Optional[int] = None, *, root: bool = True) -> D:
     or many processes are needed for the decorated function but only the result or root is desired on return."""
     def decorator(function: F) -> F:
         @wraps(function)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args, **kwargs):
             if is_serial(): return function(*args, **kwargs)
             load()
             if number is None or is_lower(number):
@@ -218,7 +220,7 @@ def many(number: Optional[int] = None, *, root: bool = True) -> D:
                 result = None
             if root: return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
             return SELF._MPI.COMM_WORLD.allgather(result)
-        return wrapper
+        return cast(F, wrapper)
     return decorator
 
 def safe(function: F) -> F:
@@ -226,24 +228,24 @@ def safe(function: F) -> F:
     in cases were the wrapped fuction does not use the provided infrastructure but is
     safe (and sensical) to call in both parallel and serial enviornments."""
     @wraps(function)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args, **kwargs):
         return function(*args, **kwargs)
-    return wrapper
+    return cast(F, wrapper)
 
 def squash(function: F) -> F:
     """Decorator which assures that only the root processes executes the decorated funtion; this should be used 
     when it is acceptable to run in a parallel enviornment but is unsafe for processes other than root to run the function.
     Decorator will throw if enviornment is parallel and python MPI interface unsupported."""
     @wraps(function)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args, **kwargs):
         if not is_root(): return
         return function(*args, **kwargs)
-    return wrapper
+    return cast(F, wrapper)
 
 def single(function: F) -> F:
     """Decorator like squash, but joins the parallel execution back together by broadcasting result of root."""
     @wraps(function)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args, **kwargs):
         if is_serial(): return function(*args, **kwargs)
         load()
         if is_root():
@@ -251,4 +253,4 @@ def single(function: F) -> F:
         else:
             result = None
         return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
-    return wrapper
+    return cast(F, wrapper)

@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import NamedTuple, TYPE_CHECKING
 
 # standard libraries
 import os
@@ -13,7 +13,16 @@ from ..resources import CONFIG, DEFAULTS, MAPPING
 
 # external libraries
 import toml
-from cmdkit.config import Configuration, Namespace
+from cmdkit.config import Configuration, Namespace # type: ignore
+
+# static analysis
+if TYPE_CHECKING:
+    from typing import Any, Iterator, Optional
+    from collections.abc import MutableMapping
+    M = MutableMapping[str, Any]
+
+# define public interface
+__all__ = ['get_arguments', 'get_defaults']
 
 # default constants
 PATH = CONFIG['core']['configure']['path']
@@ -28,32 +37,32 @@ PAD = f'0{len(str(MAX))}'
 class Leaf(NamedTuple):
     """Definiton of a tree leaf."""
     leaf: Any
-    stem: List[str]
+    stem: list[str]
 
 class WalkError(Exception):
     """Raised when there is an issue walking the path.""" 
 
-def gather(first_step: str = PATH) -> Dict[str, Dict[str, Any]]:
+def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
     trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
     return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
-def prepare(trees: Dict[str, Dict[str, Any]], book: Optional[Dict[str, Any]] = None) -> Dict[str, Namespace]:
+def prepare(trees: M, book: Optional[M] = None) -> dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
     return {where: plant_a_tree(tree, book) for where, tree in trees.items()}
                 
-def harvest(*, trees: Dict[str, Dict[str, Any]] = {}, system: Dict[str, Any] = {}, local: Dict[str, Any] = {}) -> Configuration:
+def harvest(*, trees: M = {}, system: M = {}, local: M = {}) -> Configuration:
     """Harvest the fruit of local and system, and the fruit of knowlege from the trees on the path."""
     return Configuration(system=system, **trees, local=local)
 
-def find_the_leaves(tree: Dict[str, Any]) -> Dict[str, List[str]]:
+def find_the_leaves(tree: Optional[M]) -> list[Leaf]:
     """Return the leaves (and their stems) of the tree; bearing their fruits and knowlege."""
     leaves = []
     if tree is not None:
         leaves = [Leaf(read_a_leaf(stem, tree), stem) for stem in walk_the_tree(tree)]
     return leaves
 
-def plant_a_tree(tree: Dict[str, Any], book: Optional[Dict[str, Any]] = None) -> Namespace:
+def plant_a_tree(tree: M, book: Optional[M] = None) -> Namespace:
     """Suffle the leaves of the tree using the pages of a book as your guide.""" 
     plant = Namespace(tree)
     pages = find_the_leaves(book)
@@ -66,21 +75,22 @@ def plant_a_tree(tree: Dict[str, Any], book: Optional[Dict[str, Any]] = None) ->
             plant.update(leaf)
     return plant
 
-def read_a_leaf(stem: List[str], tree: Dict[str, Any]) -> Optional[Any]:
+def read_a_leaf(stem: list[str], tree: M) -> Optional[Any]:
     """Read the leaf at the end of the stem on the treee."""
     try:
         return reduce(lambda branch, leaf: branch[leaf], stem, tree) 
     except KeyError:
         return None
 
-def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Tuple[str, Dict[str, Any]]:
+def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterator[tuple[str, Optional[M]]]:
     """Walk the path, learning from the trees of knowlege (like os.walk, but opposite)"""
 
     # read the trees on the path of knowlege ...
+    tree: Optional[M] = None
     try:
         first_step = os.path.realpath(first_step)
         tree = toml.load(os.path.join(first_step, FILE))
-        root = tree.get(ROOT, None)
+        if tree is not None: root = tree.get(ROOT, None)
     except PermissionError as error:
         print(error)
         raise WalkError('Unable to walk the path (... of night in pursuit of knowlege?)!')
@@ -102,7 +112,7 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Tuple[s
     for step in walk_the_path(next_step, root):
         yield step
 
-def walk_the_tree(tree: Dict[str, Any], stem: List[str] = []) -> List[List[str]]:
+def walk_the_tree(tree: M, stem: list[str] = []) -> list[list[str]]:
     """Return the leaves of the branches."""
     leaves = []
     for branch, branches in tree.items():
