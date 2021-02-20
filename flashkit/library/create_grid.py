@@ -34,6 +34,11 @@ NDIM = DEFAULTS['create']['grid']['ndim']
 SIZE = DEFAULTS['create']['grid']['size']
 SMIN = DEFAULTS['create']['grid']['smin']
 SMAX = DEFAULTS['create']['grid']['smax']
+
+# define configuration constants
+AXES = tuple(CONFIG['create']['grid']['axes'])
+DIRECTIONS = tuple(CONFIG['create']['grid']['axes'])
+LABEL = CONFIG['create']['grid']['label']
 MDIM = CONFIG['create']['grid']['mdim']
 METHOD = CONFIG['create']['grid']['method']
 NAME = CONFIG['create']['grid']['name']
@@ -111,13 +116,13 @@ def write_coords(coordinates: tuple[N, N, N], *, path: str = PATH) -> None:
     """Write global coordinate axis arrays to an hdf5 file."""
     filename = path + NAME
     with h5py.File(filename, 'w') as file:
-        for axis, coords in zip(('x', 'y', 'z'), coordinates):
+        for axis, coords in zip(DIRECTIONS, coordinates):
             if coords is not None:
-                file.create_dataset(axis + 'Faces', data=coords)
+                file.create_dataset(axis + LABEL, data=coords)
 
 def create_bounds(*, mins: dict[str, float]={}, maxs: dict[str, float]={}) -> tuple[N, N]:
-    def_mins = {key: SMIN for key in ('i', 'j', 'k')}
-    def_maxs = {key: SMAX for key in ('i', 'j', 'k')}
+    def_mins = {key: SMIN for key in AXES}
+    def_maxs = {key: SMAX for key in AXES}
     simmn = numpy.array([mins.get(key, default) for key, default in def_mins.items()], float)
     simmx = numpy.array([maxs.get(key, default) for key, default in def_maxs.items()], float)
     return simmn, simmx
@@ -140,7 +145,7 @@ def create_processor_grid(*, i: int = SIZE, j: int = SIZE, k: int = SIZE) -> tup
 
 def create_stretching(*, methods: dict[str, str] = {}) -> tuple[list[bool], list[str]]:
     default = METHOD
-    def_methods = {key: default for key in ('i', 'j', 'k')}
+    def_methods = {key: default for key in AXES}
     strTypes = [methods.get(key, default) for key, default in def_methods.items()]
     strBools = [method != default for method in strTypes]
     return strBools, strTypes

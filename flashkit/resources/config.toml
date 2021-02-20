@@ -3,6 +3,9 @@
 [create]
 
   [create.grid]
+  axes   = ['i', 'j', 'k']     # defined names for dimensions
+  directions = ['x', 'y', 'z'] # defined coordinate directions
+  label  = 'Faces'        # directional label (e.g., xfaces)
   mdim   = 3              # maximum dimensions supported
   method = 'uniform'      # default grid algorithm
   name   = 'initGrid.h5'  # filename holding initial grid data

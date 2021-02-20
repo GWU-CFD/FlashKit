@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 # standard libraries
 from dataclasses import dataclass, field, InitVar
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 __all__ = ['Parameters', 'Stretching', ]
 
 # define default constants
-AXES = ('i', 'j', 'k')
+AXES = tuple(CONFIG['create']['grid']['axes'])
 ALPHA = dict(zip(AXES, CONFIG['support']['stretch']['alpha'])) 
 
 def uniform(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:

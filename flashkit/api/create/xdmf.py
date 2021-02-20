@@ -14,7 +14,7 @@ from ...core.error import AutoError
 from ...core.logging import printer
 from ...core.parallel import single 
 from ...core.progress import get_bar
-from ...core.stream import mail, Instructions
+from ...core.stream import Instructions, mail
 from ...library.create_xdmf import create_xdmf
 from ...resources import CONFIG, DEFAULTS
 
