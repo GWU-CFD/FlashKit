@@ -19,6 +19,10 @@ if TYPE_CHECKING:
     S = TypeVar('S', bound='dict[str, Any]')
     C = Callable[[S], S]
 
+# deal w/ runtime cast
+else:
+    F = None
+
 # define public interface
 __all__ = ['Instructions', 'build', 'extract', 'mail', 'pack', 'patch', 
            'prune', 'unpack', 'ship', 'strip', 'translate', ]

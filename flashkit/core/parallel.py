@@ -25,6 +25,10 @@ if TYPE_CHECKING:
     F = TypeVar('F', bound = Callable[..., Any])
     D = Callable[[F], F]
 
+# deal w/ runtime cast
+else:
+    F = None
+
 # module access and module level @property(s)
 SELF = sys.modules[__name__]
 PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', ) 
