@@ -13,18 +13,20 @@ from ..resources import CONFIG, DEFAULTS, MAPPING
 
 # external libraries
 import toml
-from cmdkit.config import Configuration, Namespace # type: ignore
+from cmdkit.config import Configuration, Namespace
 
 # static analysis
 if TYPE_CHECKING:
     from typing import Any, Iterator, Optional
     from collections.abc import MutableMapping
+    C = Configuration
     M = MutableMapping[str, Any]
+    N = Namespace
 
 # define public interface
 __all__ = ['get_arguments', 'get_defaults']
 
-# default constants
+# define configuration constants
 PATH = CONFIG['core']['configure']['path']
 BASE = CONFIG['core']['configure']['base']
 FILE = CONFIG['core']['configure']['file']
@@ -47,11 +49,11 @@ def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
     trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
     return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
-def prepare(trees: M, book: Optional[M] = None) -> dict[str, Namespace]:
+def prepare(trees: M, book: Optional[M] = None) -> dict[str, N]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
     return {where: plant_a_tree(tree, book) for where, tree in trees.items()}
                 
-def harvest(*, trees: M = {}, system: M = {}, local: M = {}) -> Configuration:
+def harvest(*, trees: dict[str, N] = {}, system: N = Namespace(), local: N = Namespace()) -> C:
     """Harvest the fruit of local and system, and the fruit of knowlege from the trees on the path."""
     return Configuration(system=system, **trees, local=local)
 
@@ -62,7 +64,7 @@ def find_the_leaves(tree: Optional[M]) -> list[Leaf]:
         leaves = [Leaf(read_a_leaf(stem, tree), stem) for stem in walk_the_tree(tree)]
     return leaves
 
-def plant_a_tree(tree: M, book: Optional[M] = None) -> Namespace:
+def plant_a_tree(tree: M, book: Optional[M] = None) -> N:
     """Suffle the leaves of the tree using the pages of a book as your guide.""" 
     plant = Namespace(tree)
     pages = find_the_leaves(book)
