@@ -127,7 +127,7 @@ def xdmf(**arguments: S) -> None:
     Keyword arguments:  
     basename: str Basename for flash simulation, will be guessed if not provided
                   (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-    low:  int     Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
+    low: int      Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
     high: int     Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
     skip: int     Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
     files: list   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
