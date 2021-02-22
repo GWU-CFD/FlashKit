@@ -46,9 +46,21 @@ def grid(**arguments: S) -> None:
     """Python application interface for creating a initial grid file from command line or python code.
 
     Keyword arguments:
-    nxb: int      Number of grid points per block in the i direction; defaults to {create_grid.NXB}
-    nyb: int      Number of grid points per block in the j direction; defaults to {create_grid.NYB}
-    nzb: int      Number of grid points per block in the k direction; defaults to {create_grid.NZB}
-    iProcs: int   Number of blocks in the i direction; defaults to {create_grid.IPROCS}
-    jProcs: int   Number of blocks in the j direction; defaults to {create_grid.JPROCS}
-    kProcs: int   Number of blocks in the k direction; defaults to {create_grid.KPROCS}
+    ndim: int     Number of simulation dimensions (i.e., 2 or 3); defaults to {create_grid.NDIM}.
+    nxb: int      Number of grid points per block in the i direction; defaults to {create_grid.NXB}.
+    nyb: int      Number of grid points per block in the j direction; defaults to {create_grid.NYB}.
+    nzb: int      Number of grid points per block in the k direction; defaults to {create_grid.NZB}.
+    iprocs: int   Number of blocks in the i direction; defaults to {create_grid.IPROCS}.
+    jprocs: int   Number of blocks in the j direction; defaults to {create_grid.JPROCS}.
+    kprocs: int   Number of blocks in the k direction; defaults to {create_grid.KPROCS}.
+    xrange: list  Bounding points (e.g., [0.0, 1.0]) for i direction; defaults to {create_grid.XRANGE}.
+    yyange: list  Bounding points (e.g., [0.0, 1.0]) for j direction; defaults to {create_grid.YRANGE}.
+    zrange: list  Bounding points (e.g., [0.0, 1.0]) for k direction; defaults to {create_grid.ZRANGE}.
+    bndbox: list  Bounding box pairs (e.g., [[0.0, 1.0], ...]) for each of i,j,k directions.
+    xmethod: str  Stretching method for grid points in the i directions; defaults to {create_grid.XMETHOD}.
+    ymethod: str  Stretching method for grid points in the j directions; defaults to {create_grid.YMETHOD}.
+    zmethod: str  Stretching method for grid points in the k directions; defaults to {create_grid.ZMETHOD}.
+    xparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
+    yparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
+    zparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
+

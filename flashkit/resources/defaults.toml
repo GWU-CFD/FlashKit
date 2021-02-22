@@ -12,13 +12,26 @@
   output     = ''
   plot       = '_hdf5_plt_cnt_'
 
+  [general.mesh]
+  iprocs = 1
+  jprocs = 1
+  kprocs = 1
+
+  [general.space]
+  ndim = 2
+  nxb  = 64
+  nyb  = 64
+  nzb  = 64
+  xrange = [0.0, 1.0]
+  yrange = [0.0, 1.0]
+  zrange = [0.0, 1.0]
+
 [create]
 
   [create.grid]
-  ndim = 2 
-  size = 1
-  smax = 1.0
-  smin = 0.0
+  xmethod = 'uniform'
+  ymethod = 'uniform'
+  zmethod = 'uniform'
 
   [create.xdmf]
   high = 0

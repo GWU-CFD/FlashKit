@@ -3,14 +3,19 @@
 [create]
 
   [create.grid]
-  axes   = ['i', 'j', 'k']     # defined names for dimensions
-  directions = ['x', 'y', 'z'] # defined coordinate directions
-  label  = 'Faces'        # directional label (e.g., xfaces)
-  mdim   = 3              # maximum dimensions supported
-  method = 'uniform'      # default grid algorithm
-  name   = 'initGrid.h5'  # filename holding initial grid data
+  axes   = ['i', 'j', 'k'] # defined names for dimensions
+  coords = ['x', 'y', 'z'] # defined coordinate directions
+  label  = 'Faces'       # directional label (e.g., xfaces)
+  mdim   = 3             # maximum dimensions supported
+  name   = 'initGrid.h5' # filename holding initial grid data
+  
+  # Delete These When Able
+  method = 'uniform'     # default grid algorithm
+  size   = 1             # default size of axes and proc mesh
+  smin   = 0.0           # default axis lower extent
+  smax   = 1.0           # default axis upper extent
 
-  [create.init]
+  [create.block]
   method = 'uniform'       # default block init algorithm
   name   = 'initBlock.h5'  # filename holding initial block data
 

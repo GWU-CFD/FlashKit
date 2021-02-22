@@ -3,15 +3,25 @@
 [create]
   
   [create.grid]
-  path = ['general', 'paths', 'working']
-  
-  [create.init]
+  iprocs = ['general', 'mesh', 'iprocs']
+  jprocs = ['general', 'mesh', 'jprocs']
+  kprocs = ['general', 'mesh', 'kprocs']
+  ndim   = ['general', 'space', 'ndim']
+  nxb    = ['general', 'space', 'nxb']
+  nyb    = ['general', 'space', 'nyb']
+  nzb    = ['general', 'space', 'nzb']
+  path   = ['general', 'paths', 'working']
+  xrange = ['general', 'space', 'xrange']
+  yrange = ['general', 'space', 'yrange']
+  zrange = ['general', 'space', 'zrange']
+
+  [create.block]
   path = ['general', 'paths', 'working']
   
   [create.xdmf]
+  dest = ['general', 'paths', 'working']
   grid = ['general', 'files', 'grid']
   path = ['general', 'paths', 'working']
-  dest = ['general', 'paths', 'working']
   plot = ['general', 'files', 'plot']
   out  = ['general', 'files', 'output']
 
