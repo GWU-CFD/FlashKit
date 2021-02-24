@@ -63,4 +63,12 @@ def grid(**arguments: S) -> None:
     xparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
     yparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
     zparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
+"""
+
+
+
+
+
+
+
 

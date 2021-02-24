@@ -80,7 +80,6 @@ def build(crates: Sequence[F]) -> D:
 def extract(packages: Iterable[str]) -> D:
     """Extract packages from the stream."""
     def decorator(function: F) -> F:
-        @exception_handler
         def wrapper(**stream):
             return {key: value for key, value in stream.items() if key in packages}
         return cast(F, wrapper)
