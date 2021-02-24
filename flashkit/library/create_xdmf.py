@@ -12,8 +12,6 @@ from xml.dom import minidom
 
 # internal libraries
 from ..core.parallel import squash
-from ..core.progress import NULL_BAR
-from ..resources import DEFAULTS 
 
 # external libraries
 import h5py # type: ignore
@@ -26,22 +24,12 @@ if TYPE_CHECKING:
     TagAttr = Tuple[str, Dict[str, str]]
     TagAttrEx = Tuple[str, Dict[str, str], str]
 
-# define public interface
-__all__ = ['file', ]
+# define library (public) interface
+__all__ = ['create_xdmf', ]
 
-# define default constants
-GRID: str = DEFAULTS['general']['files']['grid']
-HIGH: int = DEFAULTS['create']['xdmf']['high']
-LOW: int = DEFAULTS['create']['xdmf']['low']
-OUT: str = DEFAULTS['general']['files']['output']
-PATH: str = DEFAULTS['general']['paths']['working']
-PLOT: str = DEFAULTS['general']['files']['plot']
-SKIP: int = DEFAULTS['create']['xdmf']['skip']
-
-# internal library (public) function
 @squash
-def create_xdmf(*, files: Sequence[int], basename: str, dest: str = PATH, source: str = PATH, 
-                filename: str = OUT, plotname: str = PLOT, gridname: str = GRID, context: Bar = NULL_BAR) -> None:
+def create_xdmf(*, files: Sequence[int], basename: str, dest: str, source: str, 
+                filename: str, plotname: str, gridname: str, context: Bar) -> None:
     """Create an xdmf file associated with flash simulation HDF5 output."""
     filenames = {'plot-source': source + '/' + basename + plotname,
                  'plot-dest': os.path.relpath(source, dest) + '/' + basename + plotname,

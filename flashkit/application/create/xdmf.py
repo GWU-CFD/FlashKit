@@ -11,8 +11,8 @@ import re
 from functools import partial
 
 # internal libraries
-from ...library.create_xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...api.create import xdmf
+from ...api.create.xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...core.error import AutoError, StreamError
 
 # external libraries

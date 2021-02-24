@@ -25,7 +25,16 @@ if TYPE_CHECKING:
 # define public interface
 __all__ = ['xdmf', ]
 
-# define default constants
+# define default constants (public)
+GRID: str = DEFAULTS['general']['files']['grid']
+HIGH: int = DEFAULTS['create']['xdmf']['high']
+LOW: int = DEFAULTS['create']['xdmf']['low']
+OUT: str = DEFAULTS['general']['files']['output']
+PATH: str = DEFAULTS['general']['paths']['working']
+PLOT: str = DEFAULTS['general']['files']['plot']
+SKIP: int = DEFAULTS['create']['xdmf']['skip']
+
+# define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
 BAR_SWITCH_XDMF = CONFIG['create']['xdmf']['switch']
@@ -85,6 +94,7 @@ def attach_context(**args: S) -> S:
     if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
         args['context'] = get_bar()
     else:
+        args['context'] = get_bar(null=True)
         printer.info('\nWriting xdmf data out to file ...')
     return args
 
@@ -106,7 +116,7 @@ def log_messages(**args: S) -> S:
     printer.info(message)
     return args
 
-# default constants for handling the argument stream
+# define constants for handling the argument stream
 PACKAGES = {'auto', 'basename', 'dest', 'files', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
 ROUTE = ('create', 'xdmf')
 PRIORITY = {'ignore'}
@@ -127,15 +137,15 @@ def xdmf(**arguments: S) -> None:
     Keyword arguments:  
     basename: str Basename for flash simulation, will be guessed if not provided
                   (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-    low: int      Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
-    high: int     Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
-    skip: int     Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
+    low: int      Begining number for timeseries hdf5 files; defaults to {LOW}.
+    high: int     Ending number for timeseries hdf5 files; defaults to {HIGH}.
+    skip: int     Number of files to skip for timeseries hdf5 files; defaults to {SKIP}.
     files: list   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
     path: str     Path to timeseries hdf5 simulation output files; defaults to cwd.
     dest: str     Path to xdmf (contains relative paths to sim data); defaults to cwd.
-    out: str      Output XDMF file name follower; defaults to a footer '{create_xdmf.OUT}'.
-    plot: str     Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
-    grid: str     Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
+    out: str      Output XDMF file name follower; defaults to a footer '{OUT}'.
+    plot: str     Plot/Checkpoint file(s) name follower; defaults to '{PLOT}'.
+    grid: str     Grid file(s) name follower; defaults to '{GRID}'.
     ignore: bool  Ignore configuration file provided arguments, options, and flags.
     auto: bool    Force behavior to attempt guessing BASENAME and [--files LIST].
 

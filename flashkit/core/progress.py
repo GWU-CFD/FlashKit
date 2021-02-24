@@ -104,8 +104,9 @@ class SimpleBar(threading.Thread):
     def write_unknown(self) -> str:
         return f'{self.entrance}|{self.done}{self.left}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)'
 
-def get_bar() -> Bar:
+def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""
+    if null: return NULL_BAR 
     if is_parallel(): return SimpleBar
     try:
         pkg_resources.get_distribution('alive_progress')
