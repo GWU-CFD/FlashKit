@@ -28,12 +28,14 @@ __all__ = ['grid', ]
 # define default constants
 
 # default constants for handling the argument stream
-PACKAGES = {}
+PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
+            'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path'}
 ROUTE = ('create', 'grid')
-PRIORITY = {}
+PRIORITY = {'ignore'}
 CRATES = (adapt_arguments, attach_context, log_messages)
-DROPS = {}
-MAPPING = {}
+DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
+         'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam'}
+MAPPING = {'methods': 'stypes', 'blocks': 'procs', 'ranges_low': 'smins', 'ranges_high': 'smaxs', 'grids': 'sizes'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single
@@ -63,12 +65,10 @@ def grid(**arguments: S) -> None:
     xparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
     yparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
     zparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
-"""
-
-
-
-
-
-
-
-
+    path: str     Path to initial grid file; defaults to cwd.
+    ignore: bool  Ignore configuration file provided arguments, options, and flags.
+    """
+    arguments = process_arguments(**arguments)
+    path = arguments.pop('path')
+    ndim = arguments['ndim']
+    write_coords(coords=calc_coords(**arguments), ndim=ndim, path=path)

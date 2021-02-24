@@ -9,7 +9,7 @@ import os
 
 # internal libraries
 from ..core.parallel import safe, squash
-from ..resources import CONFIG, DEFAULTS 
+from ..resources import CONFIG 
 from ..support.stretch import Stretching, Parameters 
 
 # external libraries
@@ -25,18 +25,11 @@ if TYPE_CHECKING:
     Coords = Tuple[N, N, N]
     Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
 
-# define public interface
+# define library (public) interface
 __all__ = ['calc_coords', 'get_blocks', 'get_shapes', 'write_coords', ]
 
-# define default constants
-PATH = DEFAULTS['general']['paths']['working']
-NDIM = DEFAULTS['create']['grid']['ndim']
-SIZE = DEFAULTS['create']['grid']['size']
-SMIN = DEFAULTS['create']['grid']['smin']
-SMAX = DEFAULTS['create']['grid']['smax']
-
-# define configuration constants
-DIRECTIONS = tuple(CONFIG['create']['grid']['axes'])
+# define configuration constants (internal)
+DIRECTIONS = CONFIG['create']['grid']['axes']
 LABEL = CONFIG['create']['grid']['label']
 NAME = CONFIG['create']['grid']['name']
 
