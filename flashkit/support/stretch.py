@@ -62,7 +62,7 @@ class Stretching:
     default: str = 'uniform'
     
     def __post_init__(self, methods, parameters):
-        self.map_axes = lambda _, check: [axis for axis, method in enumerate(methods) if method == check]
-        self.any_axes = lambda _, check: any(method == check for method in methods)
+        self.map_axes = lambda check: [axis for axis, method in enumerate(methods) if method == check]
+        self.any_axes = lambda check: any(method == check for method in methods)
         self.stretch = {'uniform': uniform,
-                        'tanh_mid': partial(tanh_mid, params=parameters.alpha)}
+                        'tanh_mid': partial(tanh_mid, alpha=parameters.alpha)}

@@ -12,12 +12,11 @@ from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, TypeVar
+    from typing import Any, Callable, Dict, Optional, TypeVar
     from collections.abc import Iterable, Mapping, Sequence
     F = TypeVar('F', bound=Callable[..., Any])
     D = Callable[[F], F]
-    S = TypeVar('S', bound='dict[str, Any]')
-    C = Callable[[S], S]
+    C = Callable[..., Dict[str, Any]]
 
 # deal w/ runtime cast
 else:

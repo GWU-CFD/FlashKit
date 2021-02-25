@@ -2,3 +2,4 @@
 
 # public interfaces
 from .xdmf import xdmf
+from .grid import grid

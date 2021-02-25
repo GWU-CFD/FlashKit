@@ -25,11 +25,15 @@ if TYPE_CHECKING:
     Coords = Tuple[N, N, N]
     Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
 
+# deal w/ runtime cast
+else:
+    M = None
+
 # define library (public) interface
 __all__ = ['calc_coords', 'get_blocks', 'get_shapes', 'write_coords', ]
 
 # define configuration constants (internal)
-DIRECTIONS = CONFIG['create']['grid']['axes']
+AXES = CONFIG['create']['grid']['coords']
 LABEL = CONFIG['create']['grid']['label']
 NAME = CONFIG['create']['grid']['name']
 
@@ -101,9 +105,9 @@ def get_shapes(*, procs: tuple[int , int, int], sizes: tuple[int, int, int]) -> 
 @squash
 def write_coords(*, coords: Coords, ndim: int, path: str) -> None:
     """Write global coordinate axis arrays to an hdf5 file."""
-    filename = path + NAME
+    filename = path + '/' + NAME
     with h5py.File(filename, 'w') as h5file:
-        for axis, coord in zip(DIRECTIONS[:ndim], coords[:ndim]):
+        for axis, coord in zip(AXES[:ndim], coords[:ndim]):
             if coord is not None:
                 h5file.create_dataset(axis + LABEL, data=coord)
 

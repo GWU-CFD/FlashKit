@@ -20,7 +20,7 @@ from ...resources import CONFIG, DEFAULTS
 
 # static analysis
 if TYPE_CHECKING:
-    from ...core.stream import S
+    from typing import Any, Union
 
 # define public interface
 __all__ = ['xdmf', ]
@@ -37,10 +37,9 @@ SKIP: int = DEFAULTS['create']['xdmf']['skip']
 # define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
-BAR_SWITCH_XDMF = CONFIG['create']['xdmf']['switch']
-RANGES = ('low', 'high', 'skip') 
+BAR_SWITCH = CONFIG['create']['xdmf']['switch']
 
-def adapt_arguments(**args: S) -> S:
+def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
 
     # determine arguments passed
@@ -49,7 +48,7 @@ def adapt_arguments(**args: S) -> S:
         files_given = False
         bname_given = False
     else:    
-        range_given = any(args.get(key, False) for key in RANGES)
+        range_given = any(args.get(key, False) for key in ('low', 'high', 'skip'))
         files_given = 'files' in args.keys()
         bname_given = 'basename' in args.keys()
     
@@ -64,7 +63,10 @@ def adapt_arguments(**args: S) -> S:
         condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
 
     # create the filelist (throw if not defaults present)
-    low, high, skip = (args.get(key) for key in RANGES)
+    low: int = args['low']
+    high: int = args['high']
+    skip: int = args['skip']
+    files: Union[range, list[int]] 
     if not files_given: 
         if range_given:
             high = high + 1
@@ -89,20 +91,25 @@ def adapt_arguments(**args: S) -> S:
     
     return args
 
-def attach_context(**args: S) -> S:
+def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
+    if len(args['files']) >= BAR_SWITCH and sys.stdout.isatty():
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
-        printer.info('\nWriting xdmf data out to file ...')
+        printer.info('Writing xdmf data out to file ...')
     return args
 
-def log_messages(**args: S) -> S:
+def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
-    labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
-    basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
-    msg_files = args.pop('message')
+    basename: str = args['basename']
+    dest: str = args['dest']
+    files: list[int] = args['files']
+    grid: str = args['grid']
+    out: str = args['out']
+    plot: str = args['plot']
+    source: str = args['path']
+    msg_files: str = args.pop('message')
     source = os.path.relpath(source)
     dest = os.path.relpath(dest)
     message = '\n'.join([
@@ -120,18 +127,18 @@ def log_messages(**args: S) -> S:
 PACKAGES = {'auto', 'basename', 'dest', 'files', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
 ROUTE = ('create', 'xdmf')
 PRIORITY = {'ignore'}
-CRATES = (adapt_arguments, attach_context, log_messages)
+CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'auto', 'high', 'ignore', 'low', 'skip'}
 MAPPING = {'grid': 'gridname', 'out': 'filename', 'plot': 'plotname', 'path': 'source'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single
 @mail(INSTRUCTIONS)
-def process_arguments(**arguments: S) -> S:
+def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
-def xdmf(**arguments: S) -> None:
+def xdmf(**arguments: Any) -> None:
     """Python application interface for creating xdmf from command line or python code.
 
     Keyword arguments:  

@@ -74,7 +74,7 @@ class XdmfCreateApp(Application):
     """Application class for create xdmf command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-    interface.error = error
+    setattr(interface, 'error', error)
 
     ALLOW_NOARGS: bool = True
 

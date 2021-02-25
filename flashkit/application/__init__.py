@@ -1,5 +1,9 @@
 """Command-line interface for FlashKit."""
 
+# type annotations
+from __future__ import annotations
+from typing import Type
+
 # standard libraries
 import sys
 import argparse
@@ -15,11 +19,7 @@ from cmdkit.cli import Interface
 # command groups
 from . import create, build, job
 
-COMMANDS = {
-    'create': create.CreateApp,
-#    'build': build.BuildApp,
-#    'job': job.JobApp
-}
+COMMANDS: dict[str, Type[Application]] = {'create': create.CreateApp}
 
 PROGRAM = f'flashkit'
 
