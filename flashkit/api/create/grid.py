@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Any
 
 # standard libraries
 import os
@@ -17,10 +17,6 @@ from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
 from ...resources import CONFIG, DEFAULTS
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Any
 
 # define public interface
 __all__ = ['grid', ]

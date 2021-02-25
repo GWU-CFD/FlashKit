@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Any, Union
 
 # standard libraries
 import os
@@ -17,10 +17,6 @@ from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_xdmf import create_xdmf
 from ...resources import CONFIG, DEFAULTS
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Any, Union
 
 # define public interface
 __all__ = ['xdmf', ]
