@@ -58,9 +58,9 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     for axis, param in zip(AXES, (args.get(k, {}) for k in ('xparam', 'yparam', 'zparam'))): 
         for key, value in param.items():
             if key in args['params']:
-                args['params']['key'][axis] = value
+                args['params'][key][axis] = value
             else:
-                args['params']['key'] = {axis: value}
+                args['params'][key] = {axis: value}
 
     # deal with bounding box of simulation domain
     if bndbox_given and len(args['bndbox']) >= 2 * args['ndim']:
@@ -135,7 +135,7 @@ def grid(**arguments: Any) -> None:
     xrange: list  Bounding points (e.g., [0.0, 1.0]) for i direction; defaults to {create_grid.XRANGE}.
     yyange: list  Bounding points (e.g., [0.0, 1.0]) for j direction; defaults to {create_grid.YRANGE}.
     zrange: list  Bounding points (e.g., [0.0, 1.0]) for k direction; defaults to {create_grid.ZRANGE}.
-    bndbox: list  Bounding box pairs (e.g., [[0.0, 1.0], ...]) for each of i,j,k directions.
+    bndbox: list  Bounding box pairs (e.g., [0.0, 1.0, ...]) for each of i,j,k directions.
     xmethod: str  Stretching method for grid points in the i directions; defaults to {create_grid.XMETHOD}.
     ymethod: str  Stretching method for grid points in the j directions; defaults to {create_grid.YMETHOD}.
     zmethod: str  Stretching method for grid points in the k directions; defaults to {create_grid.ZMETHOD}.

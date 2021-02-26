@@ -10,50 +10,56 @@
   switch = 2097152       # number of points before show progress
 
   [create.block]
-  method = 'uniform'       # default block init algorithm
-  name   = 'initBlock.h5'  # filename holding initial block data
+  method = 'uniform'      # default block init algorithm
+  name   = 'initBlock.h5' # filename holding initial block data
+  switch = 1024           # number of points before show progress  
 
   [create.xdmf]
-  switch = 10    # number of files before showing progress
+  switch = 10   # number of files before showing progress
 
 [core]
 
   [core.configure]
   base  = ['jobs', 'FLASH'] # default root of the tree
-  file  = 'flash.toml'  # name of file holding user options
-  label = 'base'        # label for path var written to tree options
-  max   = 99            # maximum levels to walk building tree
-  path  = ''            # relative path to begin directory walk
-  root  = 'root'        # variable in flash.toml for root of tree
-  user  = 'user'        # label for tree options in Configuration
+  file  = 'flash.toml' # name of file holding user options
+  label = 'base'       # label for path var written to tree options
+  max   = 99           # maximum levels to walk building tree
+  path  = ''           # relative path to begin directory walk
+  root  = 'root'       # variable in flash.toml for root of tree
+  user  = 'user'       # label for tree options in Configuration
 
   [core.logger]
   console = '%(msg)s'  # default logging handler format
   logger  = 'FlashKit' # name of the flashkit logger
   printer = 'console'  # name of the flashkit logger
   simple  = true       # use print() vice logger
-  verbose = '%(name)s - %(message)s'  # verbose logging handler format
+  verbose = '%(name)s - %(message)s' # verbose logging handler format
 
   [core.parallel]
-  commands     = ['mpirun', 'mpiexec']  # commands expected for launching mpi
-  distribution = 'mpi4py'  # python distribution supporting mpi
-  root         = 0         # root process number
-  size         = 1         # number of processes in serial execution 			
+  commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi
+  distribution = 'mpi4py' # python distribution supporting mpi
+  root         = 0        # root process number
+  size         = 1        # number of processes in serial execution 			
 
   [core.progress]
-  blanking = ' '     # blank character for bar
-  cyclings = 5.0     # seconds per cycle of unknown bar
-  entrance = '    '  # entrance characters prior to bar
-  progress = 36      # width of progress bar itself
-  sentinal = '█'     # filled character for bar
-  terminal = 120     # width of progress bar message
-  updating = 30      # fps for updating the progress bar
+  blanking = ' '    # blank character for bar
+  cyclings = 5.0    # seconds per cycle of unknown bar
+  entrance = '    ' # entrance characters prior to bar
+  progress = 36     # width of progress bar itself
+  sentinal = '█'    # filled character for bar
+  terminal = 120    # width of progress bar message
+  updating = 30     # fps for updating the progress bar
 
   [core.stream]
-  ignore = 'ignore'  # specific providable flag to ignore configuration tree
+  ignore = 'ignore' # specific providable flag to ignore configuration tree
 
 [support]
 
   [support.stretch]
-  alpha = [0.5, 0.5, 0.5]  # streching constant for tanh based methods
-
+  alpha     = [0.5, 0.5, 0.5] # constant; first scalar parameter
+  column    = [0, 1, 2]       # default columns to read from asci
+  delimiter = [',', ',', ','] # default delimiters when reading from asci
+  header    = [1, 1, 1]       # default skip lines when reading from asci
+  function  = ['x', 'y', 'z'] # default python function names in source
+  methods   = ['ascii', 'python', 'uniform', 'tanh_mid']  # supported methods
+  source    = ['grid', 'grid', 'grid'] # default source file
