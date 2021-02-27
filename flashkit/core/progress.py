@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     Bar = Callable[..., AbstractContextManager]
 
 # define public interface
-__all__ = ['NULL_BAR', 'SimpleBar', 'get_bar', ]
+__all__ = ['SimpleBar', 'get_bar', 'null_bar', ]
 
 # define default constants
 BLANKING = CONFIG['core']['progress']['blanking']
@@ -32,8 +32,9 @@ SENTINAL = CONFIG['core']['progress']['sentinal']
 TERMINAL = CONFIG['core']['progress']['terminal']
 UPDATING = CONFIG['core']['progress']['updating']
 
-# Default context manager for progress bar
-NULL_BAR: Bar = lambda *_: nullcontext(lambda *_: None) 
+def null_bar(*_) -> AbstractContextManager:
+    """Default context manager for progress bar."""
+    return nullcontext(lambda *_: None)
 
 class SimpleBar(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""
@@ -106,7 +107,7 @@ class SimpleBar(threading.Thread):
 
 def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""
-    if null: return NULL_BAR 
+    if null: return null_bar #NULL_BAR 
     if is_parallel(): return SimpleBar
     try:
         pkg_resources.get_distribution('alive_progress')

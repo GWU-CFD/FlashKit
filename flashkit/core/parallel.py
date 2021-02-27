@@ -103,7 +103,7 @@ def assert_unloaded() -> None:
 
 def force_parallel(state: bool = True) -> None:
     """Force the assumption of a parallel or serial state."""
-    _parallel = state
+    SELF._parallel = state # type: ignore
     logger.debug('Force Parallel Enviornment!')
 
 def get_property(name: str) -> str:
@@ -121,7 +121,7 @@ def is_lower(rank: F, limit: int) -> bool:
 
 def is_parallel() -> bool:
     """Attempt to identify if the python runtime was executed in parallel."""
-    if _parallel is not None: return _parallel
+    if SELF._parallel is not None: return SELF._parallel # type: ignore
     return psutil.Process(os.getppid()).name() in MPICMDS
 
 @inject_property('rank')
@@ -131,7 +131,7 @@ def is_root(rank: F) -> bool:
 
 def is_registered() -> bool:
     """Identify if the python MPI interface is accessable from Parallel class instances."""
-    return _MPI is not None 
+    return SELF._MPI is not None # type: ignore
 
 def is_serial() -> bool:
     """Attemt to identify whether the python runtime was executed serially."""
@@ -155,7 +155,7 @@ def load() -> None:
     assert_supported()
     first = is_unloaded()
     from mpi4py import MPI # type: ignore
-    _MPI = MPI
+    SELF._MPI = MPI # type: ignore
     if first and MPI.COMM_WORLD.Get_rank() == 0:
         print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
@@ -167,8 +167,8 @@ def property_COMM_WORLD(mpi: F) -> Intracomm:
 def property_MPI() -> ModuleType:
     """MPI python interface access handle."""
     load()
-    assert _MPI is not None
-    return _MPI
+    assert SELF._MPI is not None # type: ignore
+    return SELF._MPI # type: ignore
 
 @inject_property('COMM_WORLD')
 def property_rank(comm: F) -> int:
