@@ -5,7 +5,8 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import grid
-from ...api.create.grid import NDIM, NXB, NYB, NZB, XRANGE, YRANGE, ZRANGE, XMETHOD, YMETHOD, ZMETHOD
+from ...api.create.grid import (NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, 
+        XRANGE, YRANGE, ZRANGE, XMETHOD, YMETHOD, ZMETHOD)
 from ...core.custom import patched_error, patched_exceptions, ListFloat, DictStr
 from ...core.error import AutoError, StreamError
 
@@ -28,6 +29,9 @@ options:
 -X, --nxb      INT   Number of grid points per block in the i direction; defaults to {NXB}.
 -Y, --nyb      INT   Number of grid points per block in the j direction; defaults to {NYB}.
 -Z, --nzb      INT   Number of grid points per block in the k direction; defaults to {NZB}.
+-i, --iprocs   INT   Number of blocks in the i direction; defaults to {IPROCS}.
+-j, --jprocs   INT   Number of blocks in the j direction; defaults to {JPROCS}.
+-k, --kprocs   INT   Number of blocks in the k direction; defaults to {KPROCS}.
 -x, --xrange   LIST  Bounding points (e.g., <0.0,1.0>) for i direction; defaults to {XRANGE}.
 -y, --yrange   LIST  Bounding points (e.g., <0.0,1.0>) for j direction; defaults to {YRANGE}.
 -z, --zrange   LIST  Bounding points (e.g., <0.0,1.0>) for k direction; defaults to {ZRANGE}.
@@ -62,6 +66,9 @@ class GridCreateApp(Application):
     interface.add_argument('-X', '--nxb', type=int) 
     interface.add_argument('-Y', '--nyb', type=int) 
     interface.add_argument('-Z', '--nzb', type=int) 
+    interface.add_argument('-i', '--iprocs', type=int) 
+    interface.add_argument('-j', '--jprocs', type=int) 
+    interface.add_argument('-k', '--kprocs', type=int) 
     interface.add_argument('-x', '--xrange', type=ListFloat)
     interface.add_argument('-y', '--yrange', type=ListFloat)
     interface.add_argument('-z', '--zrange', type=ListFloat)
@@ -78,8 +85,7 @@ class GridCreateApp(Application):
 
     def run(self) -> None:
         """Buisness logic for creating grid from command line."""
-        options ={'ndim', 'nxb', 'nyb', 'nzb', 'xrange', 'yrange', 'zrange', 'bndbox',
-                  'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam',
-                  'path', 'dest', 'ignore'}
+        options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox', 
+                  'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path', 'dest', 'ignore'}
         local = {key: getattr(self, key) for key in options}
         grid(**local)

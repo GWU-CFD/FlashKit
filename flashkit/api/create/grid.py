@@ -76,7 +76,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s >= SWITCH for s in args['grids']) and sys.stdout.isatty():
+    if any(g * b >= SWITCH for g, b in zip(args['grids'], args['blocks'])) and sys.stdout.isatty():
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
@@ -89,7 +89,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     dest = os.path.relpath(args['dest'])
     ndim = args['ndim'] 
     methods = args['methods'][:ndim]
-    grids = tuple(g if m not in user else '?' for g, m in zip(args['grids'], methods)) 
+    grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods)) 
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
     message = '\n'.join([
