@@ -4,14 +4,17 @@
 from __future__ import annotations
 from typing import Type
 
+# internal libraries
+from ...core.custom import DictApp
+
 # external libraries
-from cmdkit.app import Application, ApplicationGroup
+from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # commands
 from . import xdmf, par, run, grid, block, intrp
 
-COMMANDS: dict[str, Type[Application]] = {
+COMMANDS: DictApp = {
         'grid': grid.GridCreateApp,
         'xdmf': xdmf.XdmfCreateApp,
         }
@@ -43,6 +46,8 @@ learn more about their usage.\
 
 class CreateApp(ApplicationGroup):
     """Application class for create command group."""
+    
     interface = Interface(PROGRAM, USAGE, HELP)
-    interface.add_argument('command')
     commands = COMMANDS
+    
+    interface.add_argument('command')

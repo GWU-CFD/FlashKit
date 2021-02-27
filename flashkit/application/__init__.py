@@ -6,21 +6,19 @@ from typing import Type
 
 # standard libraries
 import sys
-import argparse
 
 # internal libraries
 from ..__meta__ import __version__, __website__
-from ..core.logging import logger, DEBUG
-from ..core.parallel import force_parallel
+from ..core.custom import DebugLogging, ForceParallel, DictApp
 
 # external libraries
-from cmdkit.app import Application, ApplicationGroup
+from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # command groups
 from . import create, build, job
 
-COMMANDS: dict[str, Type[Application]] = {
+COMMANDS: DictApp = {
         'create': create.CreateApp,
         }
 
@@ -62,32 +60,18 @@ learn more about their usage.
 {EPILOG}\
 """
 
-# inject logger back into cmdkit library
-Application.log_critical = logger.critical
-Application.log_exception =logger.exception
-
-class DebugLogging(argparse.Action):
-    """Create custom action for setting debug logging."""
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, True)
-        logger.setLevel(DEBUG)
-        logger.debug('Set Logging Level To DEBUG!')
-
-class ForceParallel(argparse.Action):
-    """Create custom action for setting parallel enviornment."""
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, True)
-        force_parallel()
-
 class FlashKit(ApplicationGroup):
     """Application class for flashkit entry-point."""
-    ALLOW_PARSE = True
+   
     interface = Interface(PROGRAM, USAGE, HELP)
+    commands = COMMANDS
+    
+    ALLOW_PARSE = True
+
     interface.add_argument('command')
     interface.add_argument('-v', '--version', version=__version__, action='version')
     interface.add_argument('-V', '--verbose', nargs=0, action=DebugLogging)
     interface.add_argument('-P', '--parallel', nargs=0, action=ForceParallel)
-    commands = COMMANDS
 
 def main() -> int:
     """Entry-point for flaskkit command-line interface."""

@@ -2,22 +2,16 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Optional
-
-# standard libraries
-import os
-import sys
-import re
-from functools import partial
 
 # internal libraries
 from ...api.create import xdmf
 from ...api.create.xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
+from ...core.custom import patched_error, patched_exceptions, ListInt
 from ...core.error import AutoError, StreamError
 
 # external libraries
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError 
+from cmdkit.app import Application
+from cmdkit.cli import Interface 
 
 PROGRAM = f'flashkit create xdmf'
 
@@ -57,24 +51,12 @@ notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
 # default constants
 STR_FAILED = 'Unable to create xdmf file!'
 
-# Create argpase List custom types
-IntListType = lambda l: [int(i) for i in re.split(r',\s|,|\s', l)] 
-
-def log_exception(exception: Exception, status: int = exit_status.runtime_error) -> int:
-    """Custom exception handler for this module."""
-    message, *_ = exception.args
-    Application.log_critical('\n'.join([STR_FAILED, message]))
-    return status
-
-def error(message: str) -> None:
-    """Override simple raise w/ formatted message."""
-    raise ArgumentError('\n'.join((STR_FAILED, message)))
-
 class XdmfCreateApp(Application):
     """Application class for create xdmf command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-    setattr(interface, 'error', error)
+    setattr(interface, 'error', patched_error(STR_FAILED))
+    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
 
     ALLOW_NOARGS: bool = True
 
@@ -82,7 +64,7 @@ class XdmfCreateApp(Application):
     interface.add_argument('-b', '--low', type=int) 
     interface.add_argument('-e', '--high', type=int) 
     interface.add_argument('-s', '--skip', type=int) 
-    interface.add_argument('-f', '--files', type=IntListType)
+    interface.add_argument('-f', '--files', type=ListInt)
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-o', '--out')
@@ -90,9 +72,6 @@ class XdmfCreateApp(Application):
     interface.add_argument('-g', '--grid')
     interface.add_argument('-A', '--auto', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
-
-    exceptions = {error: partial(log_exception, status=exit_status.runtime_error) 
-        for error in {AutoError, StreamError, OSError}}
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
