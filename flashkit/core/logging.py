@@ -21,10 +21,10 @@ __all__ = ['CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN',
 
 # default constants
 CONSOLE = CONFIG['core']['logger']['console']
+DEBUGGER = CONFIG['core']['logger']['debugger']
 LOGGER = CONFIG['core']['logger']['logger']
 PRINTER = CONFIG['core']['logger']['printer']
 SIMPLE = CONFIG['core']['logger']['simple']
-VERBOSE = CONFIG['core']['logger']['verbose']
 
 # provide logging constants
 DEBUG = logging.DEBUG
@@ -58,8 +58,8 @@ console.setFormatter(logging.Formatter(CONSOLE))
 
 # Configure a stderr handler
 debugger = logging.StreamHandler(sys.stderr)
-debugger.setLevel(WARN)
-debugger.setFormatter(logging.Formatter(VERBOSE))
+debugger.setLevel(DEBUG)
+debugger.setFormatter(logging.Formatter(DEBUGGER))
 
 # Initialize flashkit printer (console logging)
 printer: Union[Simple, logging.Logger]

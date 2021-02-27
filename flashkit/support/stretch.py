@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # standard libraries
+import os
 from dataclasses import dataclass, field, InitVar
 from functools import partial
-from importlib import import_module
+import importlib
 
 # internal libraries
 from ..resources import CONFIG
@@ -41,20 +42,29 @@ HEADER = dict(zip(AXES, CONFIG['support']['stretch']['header']))
 FUNCTION = dict(zip(AXES, CONFIG['support']['stretch']['function']))
 SOURCE = dict(zip(AXES, CONFIG['support']['stretch']['source']))
 
+def int_safe(value):
+    """Provide pythonic int conversion that fails to str."""
+    try: return int(value)
+    except ValueError: return str(value)
+
 def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Iterable[Union[str, int]], header: Iterable[int]) -> Callable[..., None]:
-    """Factory method for implementing a asci file interface for stretching algorithms."""
+    """Factory method for implementing a ascii file interface for stretching algorithms."""
     def wrapper(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
         for axis, (s, c, d, h) in enumerate(zip(source, column, delimiter, header)):
             if axis < ndim and axis in axes:
                 coords[axis] = numpy.genfromtxt(fname=s, usecols=(c, ), delimiter=d, skip_header=h, dtype=numpy.float_)   
     return wrapper
 
-def from_python(*, source: Iterable[str], function: Iterable[str]) -> Callable[..., None]:
+def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str]) -> Callable[..., None]:
     """Factory method for implementing a python interface for stretching algorithms."""
     def wrapper(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
-        for axis, (s, f) in enumerate(zip(source, function)):
+        for axis, (p, s, f) in enumerate(zip(path, source, function)):
             if axis < ndim and axis in axes:
-                getattr(import_module(s), f)(axes, coords, sizes, ndim, smin, smax)
+                loader = importlib.machinery.SourceFileLoader(s, os.path.join(p, s + '.py'))
+                spec = importlib.util.spec_from_loader(loader.name, loader)
+                module = importlib.util.module_from_spec(spec)
+                loader.exec_module(module)
+                getattr(module, f)(axes, coords, sizes, ndim, smin, smax)
     return wrapper
 
 def uniform(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
@@ -71,20 +81,24 @@ def tanh_mid(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F, alpha
 
 @dataclass
 class Parameters:
+    root: InitVar[str]
+
     alpha: Union[dict, N] = field(default_factory=dict)
     column: Union[dict, Iterable[int]] = field(default_factory=dict)
     delimiter: Union[dict, Iterable[Union[str, int]]] = field(default_factory=dict)
     header: Union[dict, Iterable[int]] = field(default_factory=dict)
     function: Union[dict, Iterable[str]] = field(default_factory=dict)
+    path: Union[dict, Iterable[str]] = field(default_factory=dict)
     source: Union[dict, Iterable[str]] = field(default_factory=dict)
 
-    def __post_init__(self):
-        self.alpha = numpy.array([self.alpha.get(key, default) for key, default in ALPHA.items()])
-        self.column = [self.column.get(key, default) for key, default in COLUMN.items()]
-        self.delimiter = [self.delimiter.get(key, default) for key, default in DELIMITER.items()]
-        self.header = [self.header.get(key, default) for key, default in HEADER.items()]
-        self.source = [self.source.get(key, default) for key, default in SOURCE.items()]
-        self.function = [self.function.get(key, default) for key, default in FUNCTION.items()]
+    def __post_init__(self, root):
+        self.alpha = numpy.array([float(self.alpha.get(key, default)) for key, default in ALPHA.items()])
+        self.column = [int(self.column.get(key, default)) for key, default in COLUMN.items()]
+        self.delimiter = [int_safe(self.delimiter.get(key, default)) for key, default in DELIMITER.items()]
+        self.function = [str(self.function.get(key, default)) for key, default in FUNCTION.items()]
+        self.header = [int(self.header.get(key, default)) for key, default in HEADER.items()]
+        self.path = [str(self.path.get(key, root)) for key in AXES]
+        self.source = [str(self.source.get(key, default)) for key, default in SOURCE.items()]
 
 @dataclass
 class Stretching:
@@ -100,8 +114,9 @@ class Stretching:
         self.map_axes = lambda check: [axis for axis, method in enumerate(methods) if method == check]
         self.any_axes = lambda check: any(method == check for method in methods)
         self.stretch = {
-                'ascii': from_ascii(source=parameters.source, column=parameters.column, delimiter=parameters.delimiter, header=parameters.header), 
-                'python': from_python(source=parameters.source, function=parameters.function), 
+                'ascii': from_ascii(source=[os.path.join(p, s) for p, s in zip(parameters.path, parameters.source)], 
+                                    column=parameters.column, delimiter=parameters.delimiter, header=parameters.header), 
+                'python': from_python(path=parameters.path, source=parameters.source, function=parameters.function), 
                 'uniform': uniform,
                 'tanh_mid': partial(tanh_mid, alpha=parameters.alpha),
                         }

@@ -45,8 +45,8 @@ options:
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{GRID}'.
 
 flags:
--I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -h, --help           Show this message and exit.
 
 notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
@@ -78,41 +78,18 @@ class XdmfCreateApp(Application):
 
     ALLOW_NOARGS: bool = True
 
-    basename: Optional[str] = None
     interface.add_argument('basename', nargs='?')
-
-    low: Optional[int] = None 
     interface.add_argument('-b', '--low', type=int) 
-
-    high: Optional[int] = None 
     interface.add_argument('-e', '--high', type=int) 
-
-    skip: Optional[int] = None
     interface.add_argument('-s', '--skip', type=int) 
-
-    files: Optional[List[int]] = None
     interface.add_argument('-f', '--files', type=IntListType)
-
-    path: Optional[str] = None
     interface.add_argument('-p', '--path')
-
-    dest: Optional[str] = None
     interface.add_argument('-d', '--dest')
-
-    out: Optional[str] = None
     interface.add_argument('-o', '--out')
-
-    plot: Optional[str] = None
     interface.add_argument('-i', '--plot')
-
-    grid: Optional[str] = None
     interface.add_argument('-g', '--grid')
-
-    ignore: Optional[bool] = None
-    interface.add_argument('-I', '--ignore', action='store_true')
-
-    auto: Optional[bool] = None
     interface.add_argument('-A', '--auto', action='store_true')
+    interface.add_argument('-I', '--ignore', action='store_true')
 
     exceptions = {error: partial(log_exception, status=exit_status.runtime_error) 
         for error in {AutoError, StreamError, OSError}}

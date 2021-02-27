@@ -35,7 +35,6 @@ ZRANGE = DEFAULTS['general']['space']['zrange']
 XMETHOD = DEFAULTS['create']['grid']['xmethod']
 YMETHOD = DEFAULTS['create']['grid']['ymethod']
 ZMETHOD = DEFAULTS['create']['grid']['zmethod']
-PATH: str = DEFAULTS['general']['paths']['working']
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
@@ -73,6 +72,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     # resolve proper absolute directory paths
     args['path'] = os.path.realpath(os.path.expanduser(args['path']))
+    args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
 
     return args
 
@@ -87,18 +87,19 @@ def attach_context(**args: Any) -> dict[str, Any]:
 
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
-    grids: tuple[int, int, int] = args['grids']
-    lows: tuple[float, float, float] = args['ranges_low']
-    highs: tuple[float, float, float] = args['ranges_high']
-    methods: tuple[str, str, str] = args['methods']
-    source: str = args['path']
-    source = os.path.relpath(source)
-    message: str = '\n'.join([
+    user = {'ascii', 'python'}
+    dest = os.path.relpath(args['dest'])
+    ndim = args['ndim'] 
+    methods = args['methods'][:ndim]
+    grids = tuple(g if m not in user else '?' for g, m in zip(args['grids'], methods)) 
+    lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
+    highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
+    message = '\n'.join([
         f'Creating initial grid file from specification:',
         f'  grid_pnts = {grids}',
         f'  sim_range = {lows} -> {highs}',
         f'  algorythm = {methods}',
-        f'  grid_file = {source}/{NAME}',
+        f'  grid_file = {dest}/{NAME}',
         f'',
         ])
     printer.info(message)
@@ -106,7 +107,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
-            'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path'}
+            'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'dest', 'path'}
 ROUTE = ('create', 'grid')
 PRIORITY = {'ignore'}
 CRATES = (adapt_arguments, log_messages, attach_context)
@@ -125,27 +126,28 @@ def grid(**arguments: Any) -> None:
     """Python application interface for creating a initial grid file from command line or python code.
 
     Keyword arguments:
-    dim: int      Number of simulation dimensions (i.e., 2 or 3); defaults to {create_grid.NDIM}.
-    nxb: int      Number of grid points per block in the i direction; defaults to {create_grid.NXB}.
-    nyb: int      Number of grid points per block in the j direction; defaults to {create_grid.NYB}.
-    nzb: int      Number of grid points per block in the k direction; defaults to {create_grid.NZB}.
-    iprocs: int   Number of blocks in the i direction; defaults to {create_grid.IPROCS}.
-    jprocs: int   Number of blocks in the j direction; defaults to {create_grid.JPROCS}.
-    kprocs: int   Number of blocks in the k direction; defaults to {create_grid.KPROCS}.
-    xrange: list  Bounding points (e.g., [0.0, 1.0]) for i direction; defaults to {create_grid.XRANGE}.
-    yyange: list  Bounding points (e.g., [0.0, 1.0]) for j direction; defaults to {create_grid.YRANGE}.
-    zrange: list  Bounding points (e.g., [0.0, 1.0]) for k direction; defaults to {create_grid.ZRANGE}.
+    ndim: int     Number of simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
+    nxb: int      Number of grid points per block in the i direction; defaults to {NXB}.
+    nyb: int      Number of grid points per block in the j direction; defaults to {NYB}.
+    nzb: int      Number of grid points per block in the k direction; defaults to {NZB}.
+    iprocs: int   Number of blocks in the i direction; defaults to {IPROCS}.
+    jprocs: int   Number of blocks in the j direction; defaults to {JPROCS}.
+    kprocs: int   Number of blocks in the k direction; defaults to {KPROCS}.
+    xrange: list  Bounding points (e.g., [0.0, 1.0]) for i direction; defaults to {XRANGE}.
+    yrange: list  Bounding points (e.g., [0.0, 1.0]) for j direction; defaults to {YRANGE}.
+    zrange: list  Bounding points (e.g., [0.0, 1.0]) for k direction; defaults to {ZRANGE}.
     bndbox: list  Bounding box pairs (e.g., [0.0, 1.0, ...]) for each of i,j,k directions.
-    xmethod: str  Stretching method for grid points in the i directions; defaults to {create_grid.XMETHOD}.
-    ymethod: str  Stretching method for grid points in the j directions; defaults to {create_grid.YMETHOD}.
-    zmethod: str  Stretching method for grid points in the k directions; defaults to {create_grid.ZMETHOD}.
+    xmethod: str  Stretching method for grid points in the i directions; defaults to {XMETHOD}.
+    ymethod: str  Stretching method for grid points in the j directions; defaults to {YMETHOD}.
+    zmethod: str  Stretching method for grid points in the k directions; defaults to {ZMETHOD}.
     xparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
     yparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
     zparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
-    path: str     Path to initial grid file; defaults to cwd.
+    path: str     Path to source files used in some stretching methods (e.g., ascii); defaults to cwd.
+    dest: str     Path to initial grid hdf5 file; defaults to cwd.
     ignore: bool  Ignore configuration file provided arguments, options, and flags.
     """
     args = process_arguments(**arguments)
-    path = args.pop('path')
+    path = args.pop('dest')
     with args.pop('context')() as progress:
         write_coords(coords=calc_coords(**args), ndim=args['ndim'], path=path)

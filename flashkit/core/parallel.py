@@ -12,6 +12,7 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
+from .logging import logger
 from ..resources import CONFIG
 
 # external libraries
@@ -46,6 +47,9 @@ SIZE = CONFIG['core']['parallel']['size']
 
 # python MPI interface access member
 _MPI: Optional[ModuleType] = None
+
+# internal member for forced parallel
+_parallel: Optional[bool] = None
 
 def __getattr__(name: str) -> Any:
     """Provide module level @property behavior."""
@@ -97,6 +101,11 @@ def assert_supported() -> None:
 def assert_unloaded() -> None:
     pass
 
+def force_parallel(state: bool = True) -> None:
+    """Force the assumption of a parallel or serial state."""
+    _parallel = state
+    logger.debug('Force Parallel Enviornment!')
+
 def get_property(name: str) -> str:
     """Provide lookup support for module properties."""
     return f'property_{name}'
@@ -112,6 +121,7 @@ def is_lower(rank: F, limit: int) -> bool:
 
 def is_parallel() -> bool:
     """Attempt to identify if the python runtime was executed in parallel."""
+    if _parallel is not None: return _parallel
     return psutil.Process(os.getppid()).name() in MPICMDS
 
 @inject_property('rank')

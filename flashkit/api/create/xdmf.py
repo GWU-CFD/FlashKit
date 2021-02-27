@@ -26,7 +26,6 @@ GRID: str = DEFAULTS['general']['files']['grid']
 HIGH: int = DEFAULTS['create']['xdmf']['high']
 LOW: int = DEFAULTS['create']['xdmf']['low']
 OUT: str = DEFAULTS['general']['files']['output']
-PATH: str = DEFAULTS['general']['paths']['working']
 PLOT: str = DEFAULTS['general']['files']['plot']
 SKIP: int = DEFAULTS['create']['xdmf']['skip']
 

@@ -11,7 +11,10 @@ from cmdkit.cli import Interface
 # commands
 from . import xdmf, par, run, grid, block, intrp
 
-COMMANDS: dict[str, Type[Application]] = {'xdmf': xdmf.XdmfCreateApp}
+COMMANDS: dict[str, Type[Application]] = {
+        'grid': grid.GridCreateApp,
+        'xdmf': xdmf.XdmfCreateApp,
+        }
 
 PROGRAM = f'flashkit create'
 

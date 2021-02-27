@@ -38,7 +38,7 @@ LABEL = CONFIG['create']['grid']['label']
 NAME = CONFIG['create']['grid']['name']
 
 @safe
-def calc_coords(*, ndim: int, params: dict[str, dict[str, Any]], procs: tuple[int, int, int], 
+def calc_coords(*, ndim: int, params: dict[str, dict[str, Any]], path: str, procs: tuple[int, int, int], 
                 smins: tuple[float, float, float], smaxs: tuple[float, float, float], 
                 sizes: tuple[int, int, int], stypes: tuple[str, str, str]) -> Coords:
     """Calculate global coordinate axis arrays; face data vice cell data."""
@@ -49,7 +49,7 @@ def calc_coords(*, ndim: int, params: dict[str, dict[str, Any]], procs: tuple[in
     gr_lIndexSize, gr_gIndexSize = create_indexSize_fromLocal(*sizes, gr_axisNumProcs)
 
     # create grid stretching parameters
-    gr_str = Stretching(stypes, Parameters(**params))
+    gr_str = Stretching(stypes, Parameters(path, **params))
 
     # Create grids
     return get_filledCoords(sizes=gr_gIndexSize, methods=gr_str, ndim=ndim, smin=gr_min, smax=gr_max)
