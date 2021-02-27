@@ -7,10 +7,8 @@ from typing import Any
 # standard libraries
 import os
 import sys
-import re
 
 # internal libraries
-from ...core.error import AutoError
 from ...core.logging import printer
 from ...core.parallel import single
 from ...core.progress import get_bar
@@ -38,7 +36,7 @@ ZMETHOD = DEFAULTS['create']['grid']['zmethod']
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
-BAR_SWITCH = CONFIG['create']['grid']['switch']
+SWITCH = CONFIG['create']['grid']['switch']
 NAME = CONFIG['create']['grid']['name']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
@@ -78,7 +76,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s >= BAR_SWITCH for s in args['grids']) and sys.stdout.isatty():
+    if any(s >= SWITCH for s in args['grids']) and sys.stdout.isatty():
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)

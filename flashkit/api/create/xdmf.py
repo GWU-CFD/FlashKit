@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any, Union
 
 # standard libraries
+import re
 import os
 import sys
-import re
 
 # internal libraries
 from ...core.error import AutoError
@@ -97,16 +97,14 @@ def attach_context(**args: Any) -> dict[str, Any]:
 
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
-    basename: str = args['basename']
-    dest: str = args['dest']
-    files: list[int] = args['files']
-    grid: str = args['grid']
-    out: str = args['out']
-    plot: str = args['plot']
-    source: str = args['path']
-    msg_files: str = args.pop('message')
-    source = os.path.relpath(source)
-    dest = os.path.relpath(dest)
+    basename = args['basename']
+    dest = os.path.relpath(args['dest'])
+    source = os.path.relpath(args['path'])
+    files = args['files']
+    grid = args['grid']
+    out = args['out']
+    plot = args['plot']
+    msg_files = args.pop('message')
     message = '\n'.join([
         f'Creating xdmf file from {len(files)} simulation files',
         f'  plotfiles = {source}/{basename}{plot}xxxx',
