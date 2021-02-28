@@ -59,14 +59,14 @@ def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Itera
 def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str], options: Mapping[str, Any]) -> Callable[..., None]:
     """Factory method for implementing a python interface for stretching algorithms."""
     def wrapper(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
-        for axis, (p, s, f) in enumerate(zip(path, source, function)):
+        for axis, (p, s, f, size, start, end) in enumerate(zip(path, source, function, sizes, smin, smax)):
             if axis < ndim and axis in axes:
                 loader = importlib.machinery.SourceFileLoader(s, os.path.join(p, s + '.py'))
                 spec = importlib.util.spec_from_loader(loader.name, loader)
                 module = importlib.util.module_from_spec(spec)
                 loader.exec_module(module)
                 kwargs = {kwarg: value[axis] for kwarg, value in options.items() if value[axis]}
-                getattr(module, f)([axis, ], coords, sizes, ndim, smin, smax, **kwargs)
+                coords[axis] = getattr(module, f)(size, start, end, **kwargs)
     return wrapper
 
 def uniform(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
