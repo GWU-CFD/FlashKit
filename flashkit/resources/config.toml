@@ -8,6 +8,8 @@
   label  = 'Faces'       # directional label (e.g., xfaces)
   name   = 'initGrid.h5' # filename holding initial grid data
   switch = 1000000       # number of points before show progress
+  precision = 6          # precision if output to screen
+  linewidth = 120        # line width if ouput to screen
 
   [create.block]
   method = 'uniform'      # default block init algorithm

@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any
+from typing import Any, Optional, Tuple
 
 # standard libraries
 import os
@@ -10,11 +10,14 @@ import sys
 
 # internal libraries
 from ...core.logging import printer
-from ...core.parallel import single
+from ...core.parallel import single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
 from ...resources import CONFIG, DEFAULTS
+
+# external libraries
+import numpy
 
 # define public interface
 __all__ = ['grid', ]
@@ -33,11 +36,19 @@ ZRANGE = DEFAULTS['general']['space']['zrange']
 XMETHOD = DEFAULTS['create']['grid']['xmethod']
 YMETHOD = DEFAULTS['create']['grid']['ymethod']
 ZMETHOD = DEFAULTS['create']['grid']['zmethod']
+RESULT = DEFAULTS['create']['grid']['result']
+NOFILE = DEFAULTS['create']['grid']['nofile']
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
+COORDS = CONFIG['create']['grid']['coords']
 SWITCH = CONFIG['create']['grid']['switch']
 NAME = CONFIG['create']['grid']['name']
+PRECISION = CONFIG['create']['grid']['precision']
+LINEWIDTH = CONFIG['create']['grid']['linewidth']
+
+# define type annotation alias
+Coords = Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
@@ -80,7 +91,10 @@ def attach_context(**args: Any) -> dict[str, Any]:
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
-        printer.info('Writing grid data out to file ...')
+        if args['nofile']:
+            printer.info('Calculating grid data (no file out) ...')
+        else:
+            printer.info('Writing grid data out to file ...')
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -109,9 +123,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
-            'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'dest', 'path'}
+            'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'dest', 'path', 'result', 'nofile'}
 ROUTE = ('create', 'grid')
-PRIORITY = {'ignore'}
+PRIORITY = {'ignore', 'cmdline'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
          'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam'}
@@ -124,7 +138,14 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
-def grid(**arguments: Any) -> None:
+@squash
+def screen_out(*, coords: Coords, ndim: int) -> None:
+    """Output calculated coordinates to the screen."""
+    with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
+        message = "\n\n".join(f'{a}:\n{c}' for a, c in zip(COORDS, coords[:ndim]))
+        printer.info(f'\nCoordinates are a follows:\n{message}')
+
+def grid(**arguments: Any) -> Optional[Coords]:
     """Python application interface for creating a initial grid file from command line or python code.
 
     Keyword arguments:
@@ -148,8 +169,20 @@ def grid(**arguments: Any) -> None:
     path: str     Path to source files used in some stretching methods (e.g., ascii); defaults to cwd.
     dest: str     Path to initial grid hdf5 file; defaults to cwd.
     ignore: bool  Ignore configuration file provided arguments, options, and flags.
+    result: bool  Return the calculated coordinates; defaults to {RESULT}.
+    nofile: bool  Do not write the calculated coordinates to file; defaults to {NOFILE}.
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')
+    ndim = args['ndim']
+    result = args.pop('result')
+    nofile = args.pop('nofile')
+    cmdline = args.pop('cmdline', False)
+    
     with args.pop('context')() as progress:
-        write_coords(coords=calc_coords(**args), ndim=args['ndim'], path=path)
+        coords = calc_coords(**args)
+        if not nofile: write_coords(coords=coords, ndim=ndim, path=path)
+    
+    if not result: return None
+    if cmdline: screen_out(coords=coords, ndim=ndim)
+    return coords

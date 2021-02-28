@@ -47,6 +47,8 @@ options:
 
 flags:
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-R, --result         Return the calculated coordinates. 
+-F, --nofile         Do not write the calculated coordinates to file. 
 -h, --help           Show this message and exit.\
 """
 
@@ -82,10 +84,13 @@ class GridCreateApp(Application):
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-R', '--result', action='store_true')
+    interface.add_argument('-F', '--nofile', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating grid from command line."""
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox', 
-                  'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path', 'dest', 'ignore'}
+                  'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path', 'dest', 
+                  'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        grid(**local)
+        grid(**local, cmdline=True)

@@ -32,6 +32,8 @@
   xmethod = 'uniform'
   ymethod = 'uniform'
   zmethod = 'uniform'
+  result  = false
+  nofile  = false 
 
   [create.xdmf]
   high = 0
