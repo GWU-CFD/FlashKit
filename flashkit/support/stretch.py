@@ -19,13 +19,14 @@ import numpy
 # static analysis
 if TYPE_CHECKING:
     from typing import Any, Callable, Iterable, Union, TypeVar
-    from collections.abc import Container, MutableSequence, Sequence
+    from collections.abc import Container, Mapping, MutableSequence, Sequence
     N = numpy.ndarray
     M = MutableSequence[N]
     C = Container[int]
     I = Iterable[int]
     F = Iterable[float]
     S = Sequence[str]
+    D = Mapping[str, Any]
 
 # define library (public) interface
 __all__ = ['Parameters', 'Stretching', ]
@@ -55,7 +56,7 @@ def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Itera
                 coords[axis] = numpy.genfromtxt(fname=s, usecols=(c, ), delimiter=d, skip_header=h, dtype=numpy.float_)   
     return wrapper
 
-def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str]) -> Callable[..., None]:
+def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str], options: Mapping[str, Any]) -> Callable[..., None]:
     """Factory method for implementing a python interface for stretching algorithms."""
     def wrapper(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
         for axis, (p, s, f) in enumerate(zip(path, source, function)):
@@ -64,7 +65,8 @@ def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterabl
                 spec = importlib.util.spec_from_loader(loader.name, loader)
                 module = importlib.util.module_from_spec(spec)
                 loader.exec_module(module)
-                getattr(module, f)(axes, coords, sizes, ndim, smin, smax)
+                kwargs = {kwarg: value[axis] for kwarg, value in options.items() if value[axis]}
+                getattr(module, f)([axis, ], coords, sizes, ndim, smin, smax, **kwargs)
     return wrapper
 
 def uniform(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
@@ -79,26 +81,27 @@ def tanh_mid(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F, alpha
         if axis < ndim and axis in axes:
             coords[axis] = (end - start) * (numpy.tanh((-1.0 + 2.0 * numpy.linspace(0.0, 1.0, size + 1)) * numpy.arctanh(a)) / a + 1.0) / 2.0 + start
 
-@dataclass
 class Parameters:
-    root: InitVar[str]
+    alpha: N
+    column: list[int]
+    delimiter: list[Union[str, int]]
+    function: list[str]
+    header: list[int]
+    path: list[str]
+    source: list[str]
+    meta: dict[str, list[Any]]
 
-    alpha: Union[dict, N] = field(default_factory=dict)
-    column: Union[dict, Iterable[int]] = field(default_factory=dict)
-    delimiter: Union[dict, Iterable[Union[str, int]]] = field(default_factory=dict)
-    header: Union[dict, Iterable[int]] = field(default_factory=dict)
-    function: Union[dict, Iterable[str]] = field(default_factory=dict)
-    path: Union[dict, Iterable[str]] = field(default_factory=dict)
-    source: Union[dict, Iterable[str]] = field(default_factory=dict)
-
-    def __post_init__(self, root):
-        self.alpha = numpy.array([float(self.alpha.get(key, default)) for key, default in ALPHA.items()])
-        self.column = [int(self.column.get(key, default)) for key, default in COLUMN.items()]
-        self.delimiter = [int_safe(self.delimiter.get(key, default)) for key, default in DELIMITER.items()]
-        self.function = [str(self.function.get(key, default)) for key, default in FUNCTION.items()]
-        self.header = [int(self.header.get(key, default)) for key, default in HEADER.items()]
-        self.path = [str(self.path.get(key, root)) for key in AXES]
-        self.source = [str(self.source.get(key, default)) for key, default in SOURCE.items()]
+    def __init__(self, root: str, *, alpha: D = {}, 
+                 column: D = {}, delimiter: D = {}, header: D = {}, function: D = {}, path: D = {}, source: D = {}, 
+                 **kwargs) -> None:
+        self.alpha = numpy.array([float(alpha.get(key, default)) for key, default in ALPHA.items()])
+        self.column = [int(column.get(key, default)) for key, default in COLUMN.items()]
+        self.delimiter = [int_safe(delimiter.get(key, default)) for key, default in DELIMITER.items()]
+        self.function = [str(function.get(key, default)) for key, default in FUNCTION.items()]
+        self.header = [int(header.get(key, default)) for key, default in HEADER.items()]
+        self.path = [str(path.get(key, root)) for key in AXES]
+        self.source = [str(source.get(key, default)) for key, default in SOURCE.items()]
+        self.meta = {kwarg: [value.get(key, None) for key in AXES] for kwarg, value in kwargs.items()}
 
 @dataclass
 class Stretching:
@@ -116,7 +119,7 @@ class Stretching:
         self.stretch = {
                 'ascii': from_ascii(source=[os.path.join(p, s) for p, s in zip(parameters.path, parameters.source)], 
                                     column=parameters.column, delimiter=parameters.delimiter, header=parameters.header), 
-                'python': from_python(path=parameters.path, source=parameters.source, function=parameters.function), 
+                'python': from_python(path=parameters.path, source=parameters.source, function=parameters.function, options=parameters.meta), 
                 'uniform': uniform,
                 'tanh_mid': partial(tanh_mid, alpha=parameters.alpha),
                         }

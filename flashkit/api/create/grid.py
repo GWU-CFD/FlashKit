@@ -89,6 +89,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
     dest = os.path.relpath(args['dest'])
     ndim = args['ndim'] 
     methods = args['methods'][:ndim]
+    params = {kwarg: tuple(value.get(axis, '?') for axis in AXES[:ndim]) for kwarg, value in args['params'].items()}
+    pad = max((len(key) for key in params.keys()), default=1)
+    options = '\n              '.join(f'{k:{pad}}: {v},' for k, v in params.items())
     grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods)) 
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
@@ -98,6 +101,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  sim_range = {lows} -> {highs}',
         f'  algorythm = {methods}',
         f'  grid_file = {dest}/{NAME}',
+        f'  with_opts = {options}',
         f'',
         ])
     printer.info(message)
