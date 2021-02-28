@@ -5,6 +5,10 @@
   [general.paths]
   working = ''
 
+  [general.pipes]
+  result  = false
+  nofile  = false 
+
   [general.files]
   checkpoint = '_hdf5_chk_'
   forced     = 'forced'
@@ -32,8 +36,6 @@
   xmethod = 'uniform'
   ymethod = 'uniform'
   zmethod = 'uniform'
-  result  = false
-  nofile  = false 
 
   [create.xdmf]
   high = 0

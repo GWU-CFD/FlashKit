@@ -36,8 +36,8 @@ ZRANGE = DEFAULTS['general']['space']['zrange']
 XMETHOD = DEFAULTS['create']['grid']['xmethod']
 YMETHOD = DEFAULTS['create']['grid']['ymethod']
 ZMETHOD = DEFAULTS['create']['grid']['zmethod']
-RESULT = DEFAULTS['create']['grid']['result']
-NOFILE = DEFAULTS['create']['grid']['nofile']
+RESULT = DEFAULTS['general']['pipes']['result']
+NOFILE = DEFAULTS['general']['pipes']['nofile']
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']

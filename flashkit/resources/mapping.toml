@@ -15,6 +15,8 @@
   xrange = ['general', 'space', 'xrange']
   yrange = ['general', 'space', 'yrange']
   zrange = ['general', 'space', 'zrange']
+  result = ['general', 'pipes', 'result']
+  nofile = ['general', 'pipes', 'nofile']
 
   [create.block]
   path = ['general', 'paths', 'working']
