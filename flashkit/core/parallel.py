@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, TYPE_CHECKING
+from typing import cast, NamedTuple, TYPE_CHECKING
 
 # system libraries
 import sys
@@ -16,11 +16,12 @@ from .logging import logger
 from ..resources import CONFIG
 
 # external libraries
+import numpy
 import psutil # type: ignore
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, TypeVar
+    from typing import Any, Callable, Optional, Sequence, TypeVar
     from types import ModuleType
     Intracomm = TypeVar('Intracomm', bound=Any)
     F = TypeVar('F', bound = Callable[..., Any])
@@ -31,12 +32,12 @@ else:
     F = None
 
 # module access and module level @property(s)
-SELF = sys.modules[__name__]
+this = sys.modules[__name__]
 PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', ) 
 
 # define public interface
-__all__ = list(PROPERTIES) + [
-        'ParallelError', 'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
+__all__ = list(PROPERTIES) + ['Index', 
+        'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
         'is_loaded', 'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
 
 # default constants
@@ -56,13 +57,44 @@ def __getattr__(name: str) -> Any:
     if name in PROPERTIES: return globals()[get_property(name)]()
     raise AttributeError(f'module {__name__} has no attribute {name}')
 
+class Index:
+    """Support class for parallel process distribution."""
+    width: int
+    low: int
+    high: int
+
+    def __init__(self, *, width: int, low: int, high: int):
+        self.width = int(width)
+        self.low = int(low)
+        self.high = int(high)
+
+    @classmethod
+    def from_simple(cls, tasks: int = 1):
+        """Simple even distribution or processes across communicator."""
+        rank: int = this.rank # type: ignore
+        size: int = this.size # type: ignore
+        avg, res  = divmod(tasks, size)
+        width = avg + 1 if rank < res else avg 
+        low   =  rank      * (avg + 1)     if rank < res else res * (avg + 1) + (rank - res    ) * avg
+        high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
+        return cls(width=width, low=low, high=high)
+
+    def mesh_low(self, mesh: Sequence[int]) -> tuple[int, ...]:
+        return tuple(int(self.low / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh))
+
+    def mesh_high(self, mesh: Sequence[int]) -> tuple[int, ...]:
+        return tuple(int(self.high / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh))
+
+    def mesh_width(self, mesh: Sequence[int]) -> list[tuple[int, ...]]:
+        return [tuple(int(n / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh)) for n in range(self.low, self.high+1)]
+
 def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper():
             try:
-                assert(getattr(SELF, method)())
+                assert(getattr(this, method)())
             except AssertionError as error:
                 raise ParallelError(message) from error
         return cast(F, wrapper)
@@ -73,7 +105,7 @@ def inject_property(name: str) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(*args, **kwargs):
-            return function(getattr(SELF, get_property(name)), *args, **kwargs)
+            return function(getattr(this, get_property(name)), *args, **kwargs)
         return cast(F, wrapper)
     return decorator
 
@@ -103,8 +135,8 @@ def assert_unloaded() -> None:
 
 def force_parallel(state: bool = True) -> None:
     """Force the assumption of a parallel or serial state."""
-    SELF._parallel = state # type: ignore
-    logger.debug('Force Parallel Enviornment!')
+    this._parallel = state # type: ignore
+    if is_root(): logger.debug('Force Parallel Enviornment!')
 
 def get_property(name: str) -> str:
     """Provide lookup support for module properties."""
@@ -121,7 +153,7 @@ def is_lower(rank: F, limit: int) -> bool:
 
 def is_parallel() -> bool:
     """Attempt to identify if the python runtime was executed in parallel."""
-    if SELF._parallel is not None: return SELF._parallel # type: ignore
+    if this._parallel is not None: return this._parallel # type: ignore
     return psutil.Process(os.getppid()).name() in MPICMDS
 
 @inject_property('rank')
@@ -131,7 +163,7 @@ def is_root(rank: F) -> bool:
 
 def is_registered() -> bool:
     """Identify if the python MPI interface is accessable from Parallel class instances."""
-    return SELF._MPI is not None # type: ignore
+    return this._MPI is not None # type: ignore
 
 def is_serial() -> bool:
     """Attemt to identify whether the python runtime was executed serially."""
@@ -155,7 +187,7 @@ def load() -> None:
     assert_supported()
     first = is_unloaded()
     from mpi4py import MPI # type: ignore
-    SELF._MPI = MPI # type: ignore
+    this._MPI = MPI # type: ignore
     if first and MPI.COMM_WORLD.Get_rank() == 0:
         print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
@@ -167,8 +199,8 @@ def property_COMM_WORLD(mpi: F) -> Intracomm:
 def property_MPI() -> ModuleType:
     """MPI python interface access handle."""
     load()
-    assert SELF._MPI is not None # type: ignore
-    return SELF._MPI # type: ignore
+    assert this._MPI is not None # type: ignore
+    return this._MPI # type: ignore
 
 @inject_property('COMM_WORLD')
 def property_rank(comm: F) -> int:
@@ -232,8 +264,8 @@ def many(number: Optional[int] = None, *, root: bool = True) -> D:
                 result = function(*args, **kwargs)
             else:
                 result = None
-            if root: return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
-            return SELF._MPI.COMM_WORLD.allgather(result)
+            if root: return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
+            return this._MPI.COMM_WORLD.allgather(result)
         return cast(F, wrapper)
     return decorator
 
@@ -266,5 +298,5 @@ def single(function: F) -> F:
             result = function(*args, **kwargs)
         else:
             result = None
-        return SELF._MPI.COMM_WORLD.bcast(result, root=ROOT)
+        return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
     return cast(F, wrapper)

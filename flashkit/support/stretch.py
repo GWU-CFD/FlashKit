@@ -43,10 +43,34 @@ HEADER = dict(zip(AXES, CONFIG['support']['stretch']['header']))
 FUNCTION = dict(zip(AXES, CONFIG['support']['stretch']['function']))
 SOURCE = dict(zip(AXES, CONFIG['support']['stretch']['source']))
 
-def int_safe(value):
+def none(arg: Any) -> None:
+    """Coerce if should convert to NoneType."""
+    if str(arg).lower() not in (str(None).lower(), 'null'):
+        raise ValueError()
+    return None
+
+def logical(arg: Any) -> bool:
+    """Coerce if should convert to bool."""
+    if str(arg).lower() not in (str(b).lower() for b in {True, False}):
+        raise ValueError()
+    return bool(arg)
+
+def int_safe(value: Any) -> Union[int, str]:
     """Provide pythonic int conversion that fails to str."""
-    try: return int(value)
-    except ValueError: return str(value)
+    try:
+        return int(value)
+    except ValueError:
+        return str(value)
+
+def any_safe(arg: Any) -> Union[bool, int, float, None, str]:
+    """Provide pythonic conversion to sensical type that fails to str."""
+    arg = str(arg)
+    for func in (logical, int, float, none):
+        try:
+            return func(arg) # type: ignore
+        except ValueError:
+            next
+    return arg
 
 def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Iterable[Union[str, int]], header: Iterable[int]) -> Callable[..., None]:
     """Factory method for implementing a ascii file interface for stretching algorithms."""
@@ -59,27 +83,27 @@ def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Itera
 def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str], options: Mapping[str, Any]) -> Callable[..., None]:
     """Factory method for implementing a python interface for stretching algorithms."""
     def wrapper(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
-        for axis, (p, s, f, size, start, end) in enumerate(zip(path, source, function, sizes, smin, smax)):
+        for axis, (p, s, f, size, low, high) in enumerate(zip(path, source, function, sizes, smin, smax)):
             if axis < ndim and axis in axes:
                 loader = importlib.machinery.SourceFileLoader(s, os.path.join(p, s + '.py'))
                 spec = importlib.util.spec_from_loader(loader.name, loader)
                 module = importlib.util.module_from_spec(spec)
                 loader.exec_module(module)
                 kwargs = {kwarg: value[axis] for kwarg, value in options.items() if value[axis]}
-                coords[axis] = getattr(module, f)(size, start, end, **kwargs)
+                coords[axis] = getattr(module, f)(size, low, high, **kwargs)
     return wrapper
 
 def uniform(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F) -> None:
     """Method implementing a uniform grid algorithm."""
-    for axis, (size, start, end) in enumerate(zip(sizes, smin, smax)):
+    for axis, (size, low, high) in enumerate(zip(sizes, smin, smax)):
         if axis < ndim and axis in axes:
-            coords[axis] = numpy.linspace(start, end, size + 1)
+            coords[axis] = numpy.linspace(low, high, size + 1)
 
 def tanh_mid(*, axes: C, coords: M, sizes: I, ndim: int, smin: F, smax: F, alpha: F) -> None:
     """Method implementing a symmetric hyperbolic tangent stretching algorithm."""
-    for axis, (size, start, end, a) in enumerate(zip(sizes, smin, smax, alpha)):
+    for axis, (size, low, high, a) in enumerate(zip(sizes, smin, smax, alpha)):
         if axis < ndim and axis in axes:
-            coords[axis] = (end - start) * (numpy.tanh((-1.0 + 2.0 * numpy.linspace(0.0, 1.0, size + 1)) * numpy.arctanh(a)) / a + 1.0) / 2.0 + start
+            coords[axis] = (high - low) * (numpy.tanh((-1.0 + 2.0 * numpy.linspace(0.0, 1.0, size + 1)) * numpy.arctanh(a)) / a + 1.0) / 2.0 + low
 
 class Parameters:
     alpha: N
@@ -101,7 +125,7 @@ class Parameters:
         self.header = [int(header.get(key, default)) for key, default in HEADER.items()]
         self.path = [str(path.get(key, root)) for key in AXES]
         self.source = [str(source.get(key, default)) for key, default in SOURCE.items()]
-        self.meta = {kwarg: [value.get(key, None) for key in AXES] for kwarg, value in kwargs.items()}
+        self.meta = {kwarg: [any_safe(value.get(key, None)) for key in AXES] for kwarg, value in kwargs.items()}
 
 @dataclass
 class Stretching:

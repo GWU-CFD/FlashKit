@@ -8,7 +8,7 @@ from typing import cast, TYPE_CHECKING
 import os
 
 # internal libraries
-from ..core.parallel import safe, squash
+from ..core.parallel import Index, safe, squash
 from ..resources import CONFIG 
 from ..support.stretch import Stretching, Parameters 
 

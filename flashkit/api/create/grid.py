@@ -99,14 +99,14 @@ def attach_context(**args: Any) -> dict[str, Any]:
 
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
-    user = {'ascii', 'python'}
+    user = {'ascii'}
     dest = os.path.relpath(args['dest'])
     ndim = args['ndim'] 
     methods = args['methods'][:ndim]
     params = {kwarg: tuple(value.get(axis, '?') for axis in AXES[:ndim]) for kwarg, value in args['params'].items()}
     pad = max((len(key) for key in params.keys()), default=1)
     options = '\n              '.join(f'{k:{pad}}: {v},' for k, v in params.items())
-    grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods)) 
+    grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods))
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
     message = '\n'.join([

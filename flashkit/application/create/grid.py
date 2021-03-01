@@ -8,7 +8,6 @@ from ...api.create import grid
 from ...api.create.grid import (NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, 
         XRANGE, YRANGE, ZRANGE, XMETHOD, YMETHOD, ZMETHOD)
 from ...core.custom import patched_error, patched_exceptions, ListFloat, DictStr
-from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
@@ -60,7 +59,7 @@ class GridCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
     
     ALLOW_NOARGS: bool = True
 

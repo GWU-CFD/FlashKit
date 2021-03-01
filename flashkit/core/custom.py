@@ -12,7 +12,7 @@ import sys
 
 # internal libraries
 from ..core.logging import logger, DEBUG
-from ..core.parallel import force_parallel
+from ..core.parallel import force_parallel, is_root, squash
 
 # external libraries
 from cmdkit.app import Application, exit_status
@@ -38,7 +38,7 @@ class DebugLogging(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, True)
         logger.setLevel(DEBUG)
-        logger.debug('Set Logging Level To DEBUG!')
+        if is_root(): logger.debug('Set Logging Level To DEBUG!')
 
 class ForceParallel(argparse.Action):
     """Create custom action for setting parallel enviornment."""
@@ -52,7 +52,7 @@ def patched_error(patch: str) -> Callable[..., None]:
         raise ArgumentError('\n'.join((patch, message)))
     return wrapper
 
-def patched_exceptions(patch: str, errors: Iterable[Type[Exception]]) -> dict[Type[Exception], Callable[[Exception], int]]:
+def patched_exceptions(patch: str, errors: Iterable[Type[Exception]] = [Exception, ]) -> dict[Type[Exception], Callable[[Exception], int]]:
     """Create dictionary based dispatcher for exception handeling."""
     return {error: patched_logging(patch) for error in errors}
 
@@ -60,6 +60,7 @@ def patched_logging(patch: str) -> Callable[[Exception], int]:
     """Factory for patching custom exeption handlers."""
     def wrapper(exception: Exception, status: int = exit_status.runtime_error) -> int:
         message, *_ = exception.args
-        Application.log_critical('\n'.join([patch, message]))
+        message = f'{type(exception).__name__}( {message} )'
+        if is_root(): Application.log_critical('\n'.join((patch, message)))
         return status
     return wrapper
