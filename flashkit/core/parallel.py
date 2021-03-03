@@ -63,10 +63,11 @@ class Index:
     low: int
     high: int
 
-    def __init__(self, *, width: int, low: int, high: int):
-        self.width = int(width)
-        self.low = int(low)
+    def __init__(self, *, high: int, low: int, size: int, width: int):
         self.high = int(high)
+        self.low = int(low)
+        self.size = int(size)
+        self.width = int(width)
 
     @classmethod
     def from_simple(cls, tasks: int = 1):
@@ -77,7 +78,7 @@ class Index:
         width = avg + 1 if rank < res else avg 
         low   =  rank      * (avg + 1)     if rank < res else res * (avg + 1) + (rank - res    ) * avg
         high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
-        return cls(width=width, low=low, high=high)
+        return cls(width=width, low=low, high=high, size=tasks)
 
     def mesh_low(self, mesh: Sequence[int]) -> tuple[int, ...]:
         return tuple(int(self.low / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh))

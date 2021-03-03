@@ -11,6 +11,7 @@ from functools import partial
 import importlib
 
 # internal libraries
+from ..core.custom import SafeAny, SafeInt
 from ..resources import CONFIG
 
 # external libraries
@@ -42,35 +43,6 @@ DELIMITER = dict(zip(AXES, [',', ',', ',']))
 HEADER = dict(zip(AXES, CONFIG['support']['stretch']['header']))
 FUNCTION = dict(zip(AXES, CONFIG['support']['stretch']['function']))
 SOURCE = dict(zip(AXES, CONFIG['support']['stretch']['source']))
-
-def none(arg: Any) -> None:
-    """Coerce if should convert to NoneType."""
-    if str(arg).lower() not in (str(None).lower(), 'null'):
-        raise ValueError()
-    return None
-
-def logical(arg: Any) -> bool:
-    """Coerce if should convert to bool."""
-    if str(arg).lower() not in (str(b).lower() for b in {True, False}):
-        raise ValueError()
-    return bool(arg)
-
-def int_safe(value: Any) -> Union[int, str]:
-    """Provide pythonic int conversion that fails to str."""
-    try:
-        return int(value)
-    except ValueError:
-        return str(value)
-
-def any_safe(arg: Any) -> Union[bool, int, float, None, str]:
-    """Provide pythonic conversion to sensical type that fails to str."""
-    arg = str(arg)
-    for func in (logical, int, float, none):
-        try:
-            return func(arg) # type: ignore
-        except ValueError:
-            next
-    return arg
 
 def from_ascii(*, source: Iterable[str], column: Iterable[int], delimiter: Iterable[Union[str, int]], header: Iterable[int]) -> Callable[..., None]:
     """Factory method for implementing a ascii file interface for stretching algorithms."""
@@ -120,12 +92,12 @@ class Parameters:
                  **kwargs) -> None:
         self.alpha = numpy.array([float(alpha.get(key, default)) for key, default in ALPHA.items()])
         self.column = [int(column.get(key, default)) for key, default in COLUMN.items()]
-        self.delimiter = [int_safe(delimiter.get(key, default)) for key, default in DELIMITER.items()]
+        self.delimiter = [SafeInt(delimiter.get(key, default)) for key, default in DELIMITER.items()]
         self.function = [str(function.get(key, default)) for key, default in FUNCTION.items()]
         self.header = [int(header.get(key, default)) for key, default in HEADER.items()]
         self.path = [str(path.get(key, root)) for key in AXES]
         self.source = [str(source.get(key, default)) for key, default in SOURCE.items()]
-        self.meta = {kwarg: [any_safe(value.get(key, None)) for key in AXES] for kwarg, value in kwargs.items()}
+        self.meta = {kwarg: [SafeAny(value.get(key, None)) for key in AXES] for kwarg, value in kwargs.items()}
 
 @dataclass
 class Stretching:

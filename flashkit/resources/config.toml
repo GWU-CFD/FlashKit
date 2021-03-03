@@ -12,7 +12,6 @@
   linewidth = 120        # line width if ouput to screen
 
   [create.block]
-  method = 'uniform'      # default block init algorithm
   name   = 'initBlock.h5' # filename holding initial block data
   switch = 1024           # number of points before show progress  
 
@@ -65,3 +64,13 @@
   function  = ['x', 'y', 'z'] # default python function names in source
   methods   = ['ascii', 'python', 'uniform', 'tanh_mid']  # supported methods
   source    = ['grid', 'grid', 'grid'] # default source file
+
+  [support.flow]
+  fields   = {velx='facex', vely='facey', velz='facez', temp='center'} # fields and their grid location
+  level    = {velx=0.0    , vely=0.0    , velz=0.0    , temp=0.0     } # constant; level for simulation fields
+  freq     = {velx=1.0    , vely=1.0    , velz=1.0    , temp=1.0     } # constant; (x*f) scalar for trig functions
+  shift    = {velx=0.0    , vely=0.0    , velz=0.0    , temp=0.0     } # constant; (x+s) scalar for trig functions
+  scale    = {velx=1.0    , vely=1.0    , velz=1.0    , temp=1.0     } # constant; (x)/s scalar for trig functions
+  methods  = ['python', 'uniform'] # supported methods
+  function = 'fields' # default python function name in source
+  source   = 'blocks' # default source file
