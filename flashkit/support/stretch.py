@@ -11,7 +11,6 @@ from functools import partial
 import importlib
 
 # internal libraries
-from ..core.custom import SafeAny, SafeInt
 from ..resources import CONFIG
 
 # external libraries
@@ -90,14 +89,14 @@ class Parameters:
     def __init__(self, root: str, *, alpha: D = {}, 
                  column: D = {}, delimiter: D = {}, header: D = {}, function: D = {}, path: D = {}, source: D = {}, 
                  **kwargs) -> None:
-        self.alpha = numpy.array([float(alpha.get(key, default)) for key, default in ALPHA.items()])
-        self.column = [int(column.get(key, default)) for key, default in COLUMN.items()]
-        self.delimiter = [SafeInt(delimiter.get(key, default)) for key, default in DELIMITER.items()]
-        self.function = [str(function.get(key, default)) for key, default in FUNCTION.items()]
-        self.header = [int(header.get(key, default)) for key, default in HEADER.items()]
-        self.path = [str(path.get(key, root)) for key in AXES]
-        self.source = [str(source.get(key, default)) for key, default in SOURCE.items()]
-        self.meta = {kwarg: [SafeAny(value.get(key, None)) for key in AXES] for kwarg, value in kwargs.items()}
+        self.alpha = numpy.array([alpha.get(key, default) for key, default in ALPHA.items()])
+        self.column = [column.get(key, default) for key, default in COLUMN.items()]
+        self.delimiter = [delimiter.get(key, default) for key, default in DELIMITER.items()]
+        self.function = [function.get(key, default) for key, default in FUNCTION.items()]
+        self.header = [header.get(key, default) for key, default in HEADER.items()]
+        self.path = [path.get(key, root) for key in AXES]
+        self.source = [source.get(key, default) for key, default in SOURCE.items()]
+        self.meta = {kwarg: [value.get(key, None) for key in AXES] for kwarg, value in kwargs.items()}
 
 @dataclass
 class Stretching:

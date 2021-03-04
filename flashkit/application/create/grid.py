@@ -7,7 +7,8 @@ from __future__ import annotations
 from ...api.create import grid
 from ...api.create.grid import (NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, 
         XRANGE, YRANGE, ZRANGE, XMETHOD, YMETHOD, ZMETHOD)
-from ...core.custom import patched_error, patched_exceptions, ListFloat, DictStr
+from ...core.custom import patched_error, patched_exceptions
+from ...core.parse import ListFloat, DictAny
 
 # external libraries
 from cmdkit.app import Application
@@ -77,9 +78,9 @@ class GridCreateApp(Application):
     interface.add_argument('-a', '--xmethod')
     interface.add_argument('-b', '--ymethod')
     interface.add_argument('-c', '--zmethod')
-    interface.add_argument('-q', '--xparam', type=DictStr)
-    interface.add_argument('-r', '--yparam', type=DictStr)
-    interface.add_argument('-s', '--zparam', type=DictStr)
+    interface.add_argument('-q', '--xparam', type=DictAny)
+    interface.add_argument('-r', '--yparam', type=DictAny)
+    interface.add_argument('-s', '--zparam', type=DictAny)
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-I', '--ignore', action='store_true')

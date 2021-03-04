@@ -11,7 +11,7 @@ import os
 from .create_grid import create_processor_grid
 from ..core import parallel
 from ..resources import CONFIG 
-from ..support.flow import Flow, Options
+from ..support.flow import flow, Parameters
 
 # external libraries
 import numpy
@@ -34,8 +34,8 @@ FIELDS = CONFIG['create']['block']['fields']
 NAME = CONFIG['create']['block']['name']
 
 @parallel.safe
-def calc_flows(*, blocks: Blocks, method: str, options: dict[str, Any], path: str, 
-               procs: tuple[int, int, int]) -> tuple[dict[str, N], Index]:
+def calc_flows(*, blocks: Blocks, method: str, params: dict[str, Any], path: str, 
+               procs: tuple[int, int, int]) -> tuple[dict[str, N], parallel.Index]:
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 
@@ -44,14 +44,14 @@ def calc_flows(*, blocks: Blocks, method: str, options: dict[str, Any], path: st
     gr_lIndex = parallel.Index.from_simple(gr_numProcs)
     gr_lMesh = gr_lIndex.mesh_width(gr_axisMesh)
 
-    # create flow field parameters
-    gr_flow = flow(method, Options(path, **options))
+    # create flow field method from parameters
+    gr_flow = flow(method, Parameters(path, **params))
 
     # create flow fields
-    return gr_flow.flow(blocks=blocks, mesh=gr_lMesh), gr_lIndex
+    return gr_flow(blocks=blocks, mesh=gr_lMesh), gr_lIndex
 
 @parallel.safe
-def write_flows(*, fields: dict[str, N], shapes: dict[str, tuple[int, ...]], path: str, index: Index) -> None:
+def write_flows(*, fields: dict[str, N], shapes: dict[str, tuple[int, ...]], path: str, index: parallel.Index) -> None:
     
     # auto fill missing supported fields
     keys = fields.keys()
@@ -92,7 +92,7 @@ def write_flows(*, fields: dict[str, N], shapes: dict[str, tuple[int, ...]], pat
                 if parallel.is_root():
                     dset = h5file.create_dataset(field, shape, dtype=data.dtype)
                 for process in range(index.size):
-                    low, high = None, None
+                    low, high = 0, 0
                     if process == parallel.rank and parallel.is_root():
                         dset[index.low:index.high+1] = data
                     if process == parallel.rank and not parallel.is_root():

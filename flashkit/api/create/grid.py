@@ -44,8 +44,9 @@ AXES = CONFIG['create']['grid']['axes']
 COORDS = CONFIG['create']['grid']['coords']
 SWITCH = CONFIG['create']['grid']['switch']
 NAME = CONFIG['create']['grid']['name']
-PRECISION = CONFIG['create']['grid']['precision']
 LINEWIDTH = CONFIG['create']['grid']['linewidth']
+OPTIONPAD = CONFIG['create']['grid']['optionpad']
+PRECISION = CONFIG['create']['grid']['precision']
 
 # define type annotation alias
 Coords = Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
@@ -103,7 +104,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     dest = os.path.relpath(args['dest'])
     ndim = args['ndim'] 
     methods = args['methods'][:ndim]
-    params = {kwarg: tuple(value.get(axis, '?') for axis in AXES[:ndim]) for kwarg, value in args['params'].items()}
+    params = {kwarg: tuple(f'{value.get(axis, "?"):>{OPTIONPAD}}' for axis in AXES[:ndim]) for kwarg, value in args['params'].items()}
     pad = max((len(key) for key in params.keys()), default=1)
     options = '\n              '.join(f'{k:{pad}}: {v},' for k, v in params.items())
     grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods))
