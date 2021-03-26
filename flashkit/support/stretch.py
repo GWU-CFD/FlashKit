@@ -98,16 +98,12 @@ class Parameters:
         self.source = [source.get(key, default) for key, default in SOURCE.items()]
         self.meta = {kwarg: [value.get(key, None) for key in AXES] for kwarg, value in kwargs.items()}
 
-@dataclass
 class Stretching:
-    methods: InitVar[S]
-    parameters: InitVar[Parameters]
-            
-    map_axes: Callable[[Any, str], list[int]] = field(repr=False, init=False)
-    any_axes: Callable[[Any, str], bool] = field(repr=False, init=False)
-    stretch: dict[str, Callable[..., None]] = field(repr=False, init=False)
+    map_axes: Callable[[Any, str], list[int]]
+    any_axes: Callable[[Any, str], bool]
+    stretch: dict[str, Callable[..., None]]
     
-    def __post_init__(self, methods, parameters):
+    def __init__(self, methods: S, parameters: Parameters):
         assert all(method in METHODS for method in methods), 'Unkown Stretching Method Specified!'
         self.map_axes = lambda check: [axis for axis, method in enumerate(methods) if method == check]
         self.any_axes = lambda check: any(method == check for method in methods)

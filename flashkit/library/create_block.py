@@ -25,16 +25,15 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Tuple
     from collections.abc import MutableSequence, Sequence, Sized
     N = numpy.ndarray
-    M = MutableSequence[N]
-    Coords = Tuple[N, N, N]
-    Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
+    Grids = Dict[str, Tuple[N, N, N]]
+    Shapes = Dict[str, Tuple[int, ...]]
 
 # define configuration constants (internal)
 FIELDS = CONFIG['create']['block']['fields']
 NAME = CONFIG['create']['block']['name']
 
 @parallel.safe
-def calc_flows(*, blocks: Blocks, method: str, params: dict[str, Any], path: str, 
+def calc_flows(*, grids: Grids, method: str, params: dict[str, Any], path: str, 
                procs: tuple[int, int, int]) -> tuple[dict[str, N], parallel.Index]:
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
@@ -48,14 +47,13 @@ def calc_flows(*, blocks: Blocks, method: str, params: dict[str, Any], path: str
     gr_flow = flow(method, Parameters(path, **params))
 
     # create flow fields
-    return gr_flow(blocks=blocks, mesh=gr_lMesh), gr_lIndex
+    return gr_flow(grids=grids, mesh=gr_lMesh), gr_lIndex
 
 @parallel.safe
-def write_flows(*, fields: dict[str, N], shapes: dict[str, tuple[int, ...]], path: str, index: parallel.Index) -> None:
+def write_flows(*, fields: dict[str, N], shapes: Shapes, path: str, index: parallel.Index) -> None:
     
     # auto fill missing supported fields
     keys = fields.keys()
-    first = next(iter(fields))
     for default, shape in FIELDS.items():
         if default not in keys:
             fields[default] = numpy.zeros(shapes[shape], dtype=float)
@@ -65,42 +63,48 @@ def write_flows(*, fields: dict[str, N], shapes: dict[str, tuple[int, ...]], pat
     if parallel.is_root() and os.path.exists(filename): 
         os.remove(filename)
 
+    # write hdf5 file serially
     if parallel.is_serial():
-
-        # write hdf5 file serially
         with h5py.File(filename, 'w-') as h5file:
             for field, data in fields.items():
                 h5file.create_dataset(field, data=data)
+        return
     
-    else:
-        comm = parallel.COMM_WORLD
-        shape = (shapes['center'][0], ) + data.shape[1:] 
-        
-        # write hdf5 file with parallel support
-        if 'mpio' in h5py.registered_drivers():
-            with h5py.File(filename, 'w-', driver='mpio', comm=comm) as h5file:
-                for field, data in fields.items():
-                    dset = h5file.create_dataset(field, shape, dtype=data.dtype)
-                    dset[index.low:index.high+1] = data
-        
-        else:
-
-            # write hdf5 file without parallel support
-            if parallel.is_root(): 
-                h5file = h5py.File('parallel.h5', 'w-')
+    comm = parallel.COMM_WORLD
+       
+    # write hdf5 file with parallel support
+    if 'mpio' in h5py.registered_drivers():
+        with h5py.File(filename, 'w-', driver='mpio', comm=comm) as h5file:
             for field, data in fields.items():
-                if parallel.is_root():
-                    dset = h5file.create_dataset(field, shape, dtype=data.dtype)
-                for process in range(index.size):
-                    low, high = 0, 0
-                    if process == parallel.rank and parallel.is_root():
-                        dset[index.low:index.high+1] = data
-                    if process == parallel.rank and not parallel.is_root():
-                        comm.Send(data, dest=parallel.ROOT, tag=process)
-                        comm.Send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
-                    if process != parallel.rank and parallel.is_root():
-                        comm.Recv(data, source=process, tag=process)
-                        comm.Recv((low, high), source=process, tag=process+index.size)
-                        dset[low:high+1] = data
+                shape = (shapes['center'][0], ) + data.shape[1:] 
+                dset = h5file.create_dataset(field, shape, dtype=data.dtype)
+                dset[index.low:index.high+1] = data
+        
+    # write hdf5 file without parallel support
+    else:
+        if parallel.is_root():
+            h5file = h5py.File('parallel.h5', 'w-')
+        
+        for field, data in fields.items():
+            shape = (shapes['center'][0], ) + data.shape[1:] 
+            
             if parallel.is_root():
-                h5file.close()
+                dset = h5file.create_dataset(field, shape, dtype=data.dtype)
+            
+            for process in range(index.size):
+                low, high = 0, 0
+
+                if process == parallel.rank and parallel.is_root():
+                    dset[index.low:index.high+1] = data
+                
+                if process == parallel.rank and not parallel.is_root():
+                    comm.Send(data, dest=parallel.ROOT, tag=process)
+                    comm.Send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
+                
+                if process != parallel.rank and parallel.is_root():
+                    comm.Recv(data, source=process, tag=process)
+                    comm.Recv((low, high), source=process, tag=process+index.size)
+                    dset[low:high+1] = data
+        
+        if parallel.is_root():
+            h5file.close()

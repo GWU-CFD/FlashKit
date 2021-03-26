@@ -77,5 +77,5 @@ def DictDictStr(s: str) -> dict[str, dict[str, str]]:
     return dict((k.strip(), DictStr(v.strip())) for k, v in [re.split(r'={|=\s{', i) for i in re.split(r'},|}\s,', s[:-1])])
 
 def DictDictAny(s: str) -> dict[str, dict[str, T]]:
-    """Parse a string of format <OPT={KEY=VALUE, ...}, ...> into a nested dictionary of strings."""
+    """Parse a string of format <OPT={KEY=VALUE, ...}, ...> into a nested dictionary of actual types."""
     return dict((k.strip(), DictAny(v.strip())) for k, v in [re.split(r'={|=\s{', i) for i in re.split(r'},|}\s,', s[:-1])])

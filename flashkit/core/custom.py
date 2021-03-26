@@ -15,6 +15,7 @@ from ..core.logging import logger, DEBUG
 from ..core.parallel import force_parallel, is_root, squash
 
 # external libraries
+from cmdkit import app
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError 
 
@@ -31,6 +32,10 @@ Application.log_exception = logger.exception
 # inject root limited version and help options
 setattr(Application, 'handle_help', squash(Application.handle_help))
 setattr(Application, 'handle_version', squash(Application.handle_version))
+setattr(Application, 'handle_usage', squash(Application.handle_usage))
+
+# inject redefinition of usage message as a success
+setattr(app, 'exit_status', exit_status._replace(usage = 0))
 
 # Create custom argparse actions
 class DebugLogging(argparse.Action):

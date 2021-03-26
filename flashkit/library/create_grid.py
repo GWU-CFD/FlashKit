@@ -22,15 +22,17 @@ if TYPE_CHECKING:
     from collections.abc import MutableSequence, Sequence, Sized
     N = numpy.ndarray
     M = MutableSequence[N]
-    Coords = Tuple[N, N, N]
     Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
+    Coords = Tuple[N, N, N]
+    Grids = Dict[str, Tuple[N, N, N]]
+    Shapes = Dict[str, Tuple[int, ...]]
 
 # deal w/ runtime cast
 else:
     M = None
 
 # define library (public) interface
-__all__ = ['calc_coords', 'get_blocks', 'get_shapes', 'write_coords', ]
+__all__ = ['calc_coords', 'get_blocks', 'get_grids', 'get_shapes', 'write_coords', ]
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['coords']
@@ -56,7 +58,7 @@ def calc_coords(*, ndim: int, params: dict[str, dict[str, Any]], path: str, proc
 
 @safe
 def get_blocks(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> Blocks:
-    """Calculate block coordinate axis arrays from global axis arrays."""
+    """Calculate block coordinate axis arrays from global axis arrays for each face."""
 
     # get the processor communicator layout and global arrays
     gr_axisNumProcs, gr_axisMesh = create_processor_grid(*procs)
@@ -87,7 +89,40 @@ def get_blocks(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int,
     return (xxxl, xxxc, xxxr), (yyyl, yyyc, yyyr), (zzzl, zzzc, zzzr)
 
 @safe
-def get_shapes(*, procs: tuple[int , int, int], sizes: tuple[int, int, int]) -> dict[str, tuple[int, ...]]:
+def get_grids(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> Grids:
+    """Calculate block coordinate arrays for each staggered grid from block coordinate face arrays."""
+
+    # get the processor communicator layout, grid shapes, and block arrays
+    gr_axisNumProcs, gr_axisMesh = create_processor_grid(*procs)
+    gr_gridShapes = get_shapes(procs, sizes)
+    (xxxl, xxxc, xxxr), (yyyl, yyyc, yyyr), (zzzl, zzzc, zzzr) = get_blocks(coords, procs, sizes)
+
+    # create the staggered grid coordinate arrays
+    grids = {grid: tuple(numpy.zeros((procs, size), dtype=float) for procs, size in zip(gr_axisNumProcs, shape[::-1])) for grid, shape in gr_gridShapes.items()}
+
+    grids['center'][0][:,:] = xxxc[:,:]
+    grids['center'][1][:,:] = yyyc[:,:]
+    grids['center'][2][:,:] = zzzc[:,:]
+
+    grids['facex'][0][:,0] = xxxl[:,0]
+    grids['facex'][0][:,1:] = xxxr[:,:]
+    grids['facex'][1][:,:] = yyyc[:,:]
+    grids['facex'][2][:,:] = zzzc[:,:]
+
+    grids['facey'][0][:,:] = xxxc[:,:]
+    grids['facey'][1][:,0] = yyyl[:,0]
+    grids['facey'][1][:,1:] = yyyr[:,:]
+    grids['facey'][2][:,:] = zzzc[:,:]
+
+    grids['facez'][0][:,:] = xxxc[:,:]
+    grids['facez'][1][:,:] = yyyc[:,:]
+    grids['facez'][2][:,0] = zzzl[:,0]
+    grids['facez'][2][:,1:] = zzzr[:,:]
+
+    return grids
+
+@safe
+def get_shapes(*, procs: tuple[int , int, int], sizes: tuple[int, int, int]) -> Shapes:
     """Determine shape of simulation data on the relavent grids (e.g., center or facex)."""
 
     # get the processor communicator layout and global arrays

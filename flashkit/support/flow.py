@@ -20,10 +20,12 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Iterable, Union, Tuple
     from collections.abc import Container, Mapping, MutableSequence, Sequence
     N = numpy.ndarray
-    S = Sequence[str]
+    M = MutableMapping[str, N]
     D = Mapping[str, Any]
-    M = Sequence[Tuple[int, int, int]]
-    Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
+    F = Mapping[str, str]
+    G = Mapping[str, Tuple[N, N, N]]
+    S = Mapping[str, Tuple[int, ...]]
+    I = Sequence[Tuple[int, int, int]]
 
 # define library (public) interface
 __all__ = ['Parameters', 'flow', ]
@@ -32,38 +34,51 @@ __all__ = ['Parameters', 'flow', ]
 METHODS = CONFIG['support']['flow']['methods']
 
 # define default paramater configuration constants (internal)
-FIELDS = CONFIG['support']['flow']['fields']
-LEVEL = CONFIG['support']['flow']['level']
 FUNCTION = CONFIG['support']['flow']['function']
+LEVEL = CONFIG['support']['flow']['level']
 SOURCE = CONFIG['support']['flow']['source']
 
-def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterable[str], options: Mapping[str, Any]) -> Callable[..., dict[str, N]]:
-    """Factory method for implementing a python interface for flow intialization algorithms."""
-    pass
+def constant(*, blocks: M, fields: F, grids: G, mesh: I, shapes: S, level: dict[str, float]) -> None:
+    """Method implementing a constant value field initialization."""
+    for field, location in fields.items():
+        shape = (len(index), ) + shapes[location][1:]
+        const = level[field]
+        blocks[field] = numpy.ones(shape, dtype=float) * const
 
-def uniform(*, blocks: Blocks, mesh: M, level: dict[str, float]) -> dict[str, N]:
-    pass
-
+def uniform(*, blocks: M, fields: F, grids: G, mesh: I, shapes: S) -> None:
+    """Method implementing a uniform (zero) field initialization."""
+    for field, location in fields.items():
+        shape = (len(index), ) + shapes[location][1:]
+        blocks[field] = numpy.zeroes(shape, dtype=float)
+        
 class Parameters:
     fields: dict[str, str]
-    function: str
+    function: dict[str, str]
     level: dict[str, float]
-    path: str
-    source: str
-    meta: dict[str, Any]
+    path: dict[str, str]
+    source: dict[str, str]
+    meta: dict[str, dict[str, Any]]
 
-    def __init__(self, path: str, *, function: str = FUNCTION, source: str = SOURCE, 
-                 fields: D = {}, level: D = {}, **kwargs) -> None:
-        self.function = function
-        self.path = path
-        self.source = source
-        self.fields = {**FIELDS, **fields}
-        self.level = {**LEVEL, **level}
-        self.meta = {kwarg: value for kwarg, value in kwargs.items()}
+    def __init__(self, root: str, fields: S, *, 
+                 function: D = {}, level: D = {}, path: D = {}, source: S = {}, 
+                 **kwargs) -> None:
+        assert all(grid in GRIDS for grid in fields.values()), 'Unknown Grid Specified for a Given Field!'
+        keys = fields.keys()
+        self.fields = dict(fields)
+        self.function = {key: function.get(key, FUNCTION) for key in keys}
+        self.path = {key: path.get(key, root) for key in keys}
+        self.source = {key: source.get(key, SOURCE) for key in keys}
+        self.level = {key: level.get(key, LEVEL) for key in keys}
+        self.meta = {kwarg: {key: value.get(key, None) for key in keys} for kwarg, value in kwargs.items()}
 
-def flow(method: str, parameters: Parameters) -> Callable[..., dict[str, N]]:
-    assert method in METHODS, 'Unknown Flow Initiation Method Specified!'
-    flows: dict[str, Callable[..., dict[str, N]]] = {
-        'python': from_python(path=parameters.path, source=parameters.source, function=parameters.function, options=parameters.meta),
-        'uniform': partial(uniform, level=parameters.level), }
-    return flows[method]
+class Flowing:
+    map_fields: Callable[[Any, str], set[str]] 
+    any_fields: Callable[[Any, str], bool]
+    flow: dict[str, Callable[..., None]]
+
+    def __init__(self, methods: S, parameters: Parameters):
+        assert all(method in METHODS for method in methods), 'Unknown Flow Initiation Method Specified!'
+        self.flow = {
+            'constant': partial(constant, level=parameters.level), 
+            'uniform': uniform, 
+                    }
