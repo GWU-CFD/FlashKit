@@ -10,7 +10,7 @@ import os
 # internal libraries
 from ..core.parallel import Index, safe, squash
 from ..resources import CONFIG 
-from ..support.stretch import Stretching, Parameters 
+from ..support.stretch import Stretching
 
 # external libraries
 import numpy 
@@ -22,9 +22,9 @@ if TYPE_CHECKING:
     from collections.abc import MutableSequence, Sequence, Sized
     N = numpy.ndarray
     M = MutableSequence[N]
-    Blocks = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
     Coords = Tuple[N, N, N]
-    Grids = Dict[str, Tuple[N, N, N]]
+    Faces = Tuple[Tuple[N, N, N], Tuple[N, N, N], Tuple[N, N, N]]
+    Grids = Dict[str, Tuple[N, ...]]
     Shapes = Dict[str, Tuple[int, ...]]
 
 # deal w/ runtime cast
@@ -32,7 +32,7 @@ else:
     M = None
 
 # define library (public) interface
-__all__ = ['calc_coords', 'get_blocks', 'get_grids', 'get_shapes', 'write_coords', ]
+__all__ = ['calc_coords', 'get_faces', 'get_grids', 'get_shapes', 'write_coords', ]
 
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['coords']
@@ -51,13 +51,13 @@ def calc_coords(*, ndim: int, params: dict[str, dict[str, Any]], path: str, proc
     gr_lIndexSize, gr_gIndexSize = create_indexSize_fromLocal(*sizes, gr_axisNumProcs)
 
     # create grid stretching parameters
-    gr_str = Stretching(stypes, Parameters(path, **params))
+    gr_str = Stretching(stypes, path, **params)
 
     # Create grids
     return get_filledCoords(sizes=gr_gIndexSize, methods=gr_str, ndim=ndim, smin=gr_min, smax=gr_max)
 
 @safe
-def get_blocks(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> Blocks:
+def get_faces(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> Faces:
     """Calculate block coordinate axis arrays from global axis arrays for each face."""
 
     # get the processor communicator layout and global arrays
@@ -94,8 +94,8 @@ def get_grids(*, coords: Coords, procs: tuple[int, int, int], sizes: tuple[int, 
 
     # get the processor communicator layout, grid shapes, and block arrays
     gr_axisNumProcs, gr_axisMesh = create_processor_grid(*procs)
-    gr_gridShapes = get_shapes(procs, sizes)
-    (xxxl, xxxc, xxxr), (yyyl, yyyc, yyyr), (zzzl, zzzc, zzzr) = get_blocks(coords, procs, sizes)
+    gr_gridShapes = get_shapes(procs=procs, sizes=sizes)
+    (xxxl, xxxc, xxxr), (yyyl, yyyc, yyyr), (zzzl, zzzc, zzzr) = get_faces(coords=coords, procs=procs, sizes=sizes)
 
     # create the staggered grid coordinate arrays
     grids = {grid: tuple(numpy.zeros((procs, size), dtype=float) for procs, size in zip(gr_axisNumProcs, shape[::-1])) for grid, shape in gr_gridShapes.items()}

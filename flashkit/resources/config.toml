@@ -59,13 +59,13 @@
 [support]
 
   [support.stretch]
-  alpha     = [0.5, 0.5, 0.5] # constant; first scalar parameter
+  alpha     = 0.5             # constant; first scalar parameter
   column    = [0, 1, 2]       # default columns to read from asci
-  delimiter = [',', ',', ','] # default delimiters when reading from asci
-  header    = [1, 1, 1]       # default skip lines when reading from asci
+  delimiter = ','             # default delimiters when reading from asci
+  header    = 1               # default skip lines when reading from asci
   function  = ['x', 'y', 'z'] # default python function names in source
   methods   = ['ascii', 'python', 'uniform', 'tanh_mid']  # supported methods
-  source    = ['grid', 'grid', 'grid'] # default source file
+  source    = 'grid'          # default source file
 
   [support.flow]
   level    = 0.0 # constant; level for simulation fields
