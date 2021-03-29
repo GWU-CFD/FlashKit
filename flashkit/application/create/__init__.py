@@ -15,6 +15,7 @@ from cmdkit.cli import Interface
 from . import xdmf, par, run, grid, block, intrp
 
 COMMANDS: DictApp = {
+        'block': block.BlockCreateApp,
         'grid': grid.GridCreateApp,
         'xdmf': xdmf.XdmfCreateApp,
         }

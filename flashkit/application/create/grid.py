@@ -56,7 +56,7 @@ flags:
 STR_FAILED = 'Unable to create grid file!'
 
 class GridCreateApp(Application):
-    """Application class for create xdmf command."""
+    """Application class for create grid command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))

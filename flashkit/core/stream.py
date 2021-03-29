@@ -38,7 +38,7 @@ class Instructions(NamedTuple):
     priority: Optional[Iterable[str]] = None
     crates: Optional[Sequence[C]] = None
     drops: Optional[Iterable[str]] = None
-    mapping: Optional[Mapping[str, str]] = None
+    mapping: Mapping[str, str] = {}
 
 def abstract(members: Sequence[str]) -> D:
     """Support abstracting decorator factories, with Instructions; 

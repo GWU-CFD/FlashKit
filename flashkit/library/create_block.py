@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 # standard libraries
 import os
@@ -11,53 +11,55 @@ import os
 from .create_grid import create_processor_grid
 from ..core import parallel
 from ..resources import CONFIG 
-from ..support.flow import flow, Parameters
+from ..support.flow import Flowing
 
 # external libraries
 import numpy
 import h5py # type: ignore
 
 # define public interface
-__all__ = ['calc_flows', 'write_flows', ]
+__all__ = ['calc_blocks', 'write_blocks', ]
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
+    from typing import Any, Dict, Optional, Tuple
     from collections.abc import MutableSequence, Sequence, Sized
     N = numpy.ndarray
-    Grids = Dict[str, Tuple[N, N, N]]
+    Blocks = Dict[str, N]
+    Grids = Dict[str, Tuple[Optional[N], ...]]
+    Mesh = Sequence[Tuple[int, ...]]
     Shapes = Dict[str, Tuple[int, ...]]
 
+# deal w/ runtime cast
+else:
+    Blocks = None
+
 # define configuration constants (internal)
-FIELDS = CONFIG['create']['block']['fields']
 NAME = CONFIG['create']['block']['name']
 
 @parallel.safe
-def calc_flows(*, grids: Grids, method: str, params: dict[str, Any], path: str, 
-               procs: tuple[int, int, int]) -> tuple[dict[str, N], parallel.Index]:
+def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict[str, Any], 
+               path: str, procs: tuple[int, int, int], shapes: Shapes) -> tuple[Blocks, parallel.Index]:
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 
     gr_axisNumProcs, gr_axisMesh = create_processor_grid(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
     gr_lIndex = parallel.Index.from_simple(gr_numProcs)
-    gr_lMesh = gr_lIndex.mesh_width(gr_axisMesh)
+    gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)
 
     # create flow field method from parameters
-    gr_flow = flow(method, Parameters(path, **params))
+    gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (procs, *shape) in shapes.items()}
+    gr_loc = {field: location for field, (location, _) in flows.items()}
+    gr_mth = {field: method for field, (_, method) in flows.items()}
+    gr_flw = Flowing(gr_mth, path, **params)
 
     # create flow fields
-    return gr_flow(grids=grids, mesh=gr_lMesh), gr_lIndex
+    return get_filledBlocks(grids=grids, locations=gr_loc, mesh=gr_lMesh, methods=gr_flw, shapes=gr_shp), gr_lIndex
 
 @parallel.safe
-def write_flows(*, fields: dict[str, N], shapes: Shapes, path: str, index: parallel.Index) -> None:
+def write_blocks(*, blocks: Blocks, index: parallel.Index, path: str, shapes: Shapes) -> None:
     
-    # auto fill missing supported fields
-    keys = fields.keys()
-    for default, shape in FIELDS.items():
-        if default not in keys:
-            fields[default] = numpy.zeros(shapes[shape], dtype=float)
-
     # specify filename and remove if exists
     filename = os.path.join(path, NAME)
     if parallel.is_root() and os.path.exists(filename): 
@@ -66,7 +68,7 @@ def write_flows(*, fields: dict[str, N], shapes: Shapes, path: str, index: paral
     # write hdf5 file serially
     if parallel.is_serial():
         with h5py.File(filename, 'w-') as h5file:
-            for field, data in fields.items():
+            for field, data in blocks.items():
                 h5file.create_dataset(field, data=data)
         return
     
@@ -75,36 +77,45 @@ def write_flows(*, fields: dict[str, N], shapes: Shapes, path: str, index: paral
     # write hdf5 file with parallel support
     if 'mpio' in h5py.registered_drivers():
         with h5py.File(filename, 'w-', driver='mpio', comm=comm) as h5file:
-            for field, data in fields.items():
+            for field, data in blocks.items():
                 shape = (shapes['center'][0], ) + data.shape[1:] 
                 dset = h5file.create_dataset(field, shape, dtype=data.dtype)
                 dset[index.low:index.high+1] = data
+        return
         
     # write hdf5 file without parallel support
-    else:
-        if parallel.is_root():
-            h5file = h5py.File('parallel.h5', 'w-')
+    if parallel.is_root():
+        h5file = h5py.File('parallel.h5', 'w-')
         
-        for field, data in fields.items():
-            shape = (shapes['center'][0], ) + data.shape[1:] 
+    for field, data in blocks.items():
+        shape = (shapes['center'][0], ) + data.shape[1:] 
             
-            if parallel.is_root():
-                dset = h5file.create_dataset(field, shape, dtype=data.dtype)
+        if parallel.is_root():
+            dset = h5file.create_dataset(field, shape, dtype=data.dtype)
             
-            for process in range(index.size):
-                low, high = 0, 0
+        for process in range(index.size):
+            low, high = 0, 0
 
-                if process == parallel.rank and parallel.is_root():
-                    dset[index.low:index.high+1] = data
+            if process == parallel.rank and parallel.is_root():
+                dset[index.low:index.high+1] = data
                 
-                if process == parallel.rank and not parallel.is_root():
-                    comm.Send(data, dest=parallel.ROOT, tag=process)
-                    comm.Send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
+            if process == parallel.rank and not parallel.is_root():
+                comm.Send(data, dest=parallel.ROOT, tag=process)
+                comm.Send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
                 
-                if process != parallel.rank and parallel.is_root():
-                    comm.Recv(data, source=process, tag=process)
-                    comm.Recv((low, high), source=process, tag=process+index.size)
-                    dset[low:high+1] = data
+            if process != parallel.rank and parallel.is_root():
+                comm.Recv(data, source=process, tag=process)
+                comm.Recv((low, high), source=process, tag=process+index.size)
+                dset[low:high+1] = data
         
-        if parallel.is_root():
-            h5file.close()
+    if parallel.is_root():
+        h5file.close()
+
+def get_filledBlocks(*, grids: Grids, locations: dict[str, str], mesh: Mesh, methods: Flowing, shapes: Shapes) -> Blocks:
+    blocks: Blocks = cast(Blocks, {field: None for field in locations.keys()})
+    for method, func in methods.flow.items():
+        if methods.any_fields(method):
+            fields = {field: locations[field] for field in methods.map_fields(method)}
+            func(blocks=blocks, fields=fields, grids=grids, mesh=mesh, shapes=shapes)
+    return blocks
+

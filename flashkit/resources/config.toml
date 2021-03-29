@@ -13,9 +13,14 @@
   precision = 6          # precision if output to screen
 
   [create.block]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center'} # required fields and locations
+  grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
+  method = 'uniform'      # default intialization method
   name   = 'initBlock.h5' # filename holding initial block data
-  switch = 1024           # number of points before show progress  
+  switch = 2046           # number of points before show progress  
+  linewidth = 120         # line width if ouput to screen
+  optionpad = 5           # padding for option printing
+  tablespad = 8           # padding for table printing
+  precision = 6           # precision if output to screen
 
   [create.xdmf]
   switch = 10   # number of files before showing progress
@@ -68,10 +73,10 @@
   source    = 'grid'          # default source file
 
   [support.flow]
-  level    = 0.0 # constant; level for simulation fields
-  freq     = 1.0 # constant; (x*f) scalar for trig functions
-  shift    = 0.0 # constant; (x+s) scalar for trig functions
-  scale    = 1.0 # constant; (x)/s scalar for trig functions
-  methods  = ['python', 'uniform'] # supported methods
+  const    = 0.0      # constant; (x)+b  scalar for constant term
+  freq     = 1.0      # constant; (x*f)  scalar for domain scale
+  shift    = 0.0      # constant; (x+s)  scalar for domain shift
+  scale    = 1.0      # constant; m(x)   scalar for linear scale
+  methods  = ['python', 'uniform', 'constant']  # supported methods
   function = 'fields' # default python function name in source
   source   = 'blocks' # default source file

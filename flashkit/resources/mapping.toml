@@ -19,7 +19,17 @@
   nofile = ['general', 'pipes', 'nofile']
 
   [create.block]
-  path = ['general', 'paths', 'working']
+  iprocs = ['general', 'mesh', 'iprocs']
+  jprocs = ['general', 'mesh', 'jprocs']
+  kprocs = ['general', 'mesh', 'kprocs']
+  ndim   = ['general', 'space', 'ndim']
+  nxb    = ['general', 'space', 'nxb']
+  nyb    = ['general', 'space', 'nyb']
+  nzb    = ['general', 'space', 'nzb']
+  dest   = ['general', 'paths', 'working']
+  path   = ['general', 'paths', 'working']
+  result = ['general', 'pipes', 'result']
+  nofile = ['general', 'pipes', 'nofile']
   
   [create.xdmf]
   dest = ['general', 'paths', 'working']

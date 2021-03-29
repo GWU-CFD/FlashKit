@@ -32,6 +32,9 @@
 
 [create]
 
+  [create.block]
+  fields = {velx='facex', vely='facey', velz='facez', temp='center' } # required fields and locations
+
   [create.grid]
   xmethod = 'uniform'
   ymethod = 'uniform'

@@ -81,7 +81,7 @@ class Stretching:
     methods: S
     stretch: dict[str, Callable[..., None]]
     
-    def __init__(self, methods: S, root: str,  *, alpha: D = {}, column: D = {}, delimiter: D = {},
+    def __init__(self, methods: S, root: str, *, alpha: D = {}, column: D = {}, delimiter: D = {},
                  function: D = {}, header: D = {}, path: D = {}, source: D = {}, **kwargs):
 
         assert all(method in METHODS for method in methods), 'Unkown Stretching Method Specified!'

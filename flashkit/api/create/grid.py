@@ -10,7 +10,7 @@ import sys
 
 # internal libraries
 from ...core.logging import printer
-from ...core.parallel import single, squash
+from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
@@ -58,8 +58,9 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     bndbox_given = 'bndbox' in args
 
     # gather arguments into appropriate tuples
-    args['blocks'] = tuple(args[k] for k in ('iprocs', 'jprocs', 'kprocs'))
-    args['grids'] = tuple(args[k] for k in ('nxb', 'nyb', 'nzb'))
+    ndim = args['ndim']
+    args['procs'] = tuple(args[k] if n < ndim else 1 for n, k in enumerate(('iprocs', 'jprocs', 'kprocs')))
+    args['sizes'] = tuple(args[k] if n < ndim else 1 for n, k in enumerate(('nxb', 'nyb', 'nzb')))
     args['methods'] = tuple(args[k] for k in ('xmethod', 'ymethod', 'zmethod'))
 
     # build paramaters dictionary
@@ -88,7 +89,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(g * b >= SWITCH for g, b in zip(args['grids'], args['blocks'])) and sys.stdout.isatty():
+    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
@@ -107,7 +108,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     params = {kwarg: tuple(f'{value.get(axis, "?"):>{OPTIONPAD}}' for axis in AXES[:ndim]) for kwarg, value in args['params'].items()}
     pad = max((len(key) for key in params.keys()), default=1)
     options = '\n              '.join(f'{k:{pad}}: {v},' for k, v in params.items())
-    grids = tuple(g * b if m not in user else '?' for g, b, m in zip(args['grids'], args['blocks'], methods))
+    grids = tuple(s * p if m not in user else '?' for s, p, m in zip(args['sizes'], args['procs'], methods))
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
     message = '\n'.join([
@@ -130,7 +131,7 @@ PRIORITY = {'ignore', 'cmdline'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox',
          'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam'}
-MAPPING = {'methods': 'stypes', 'blocks': 'procs', 'ranges_low': 'smins', 'ranges_high': 'smaxs', 'grids': 'sizes'}
+MAPPING = {'methods': 'stypes', 'ranges_low': 'smins', 'ranges_high': 'smaxs'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single
@@ -144,8 +145,9 @@ def screen_out(*, coords: Coords, ndim: int) -> None:
     """Output calculated coordinates to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{a}:\n{c}' for a, c in zip(COORDS, coords[:ndim]))
-        printer.info(f'\nCoordinates are a follows:\n{message}')
+        printer.info(f'\nCoordinates are as follows:\n{message}')
 
+@safe
 def grid(**arguments: Any) -> Optional[Coords]:
     """Python application interface for creating a initial grid file from command line or python code.
 
