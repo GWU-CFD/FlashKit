@@ -2,13 +2,6 @@
 
 [general]
 
-  [general.paths]
-  working = ''
-
-  [general.pipes]
-  result  = false
-  nofile  = false 
-
   [general.files]
   checkpoint = '_hdf5_chk_'
   forced     = 'forced'
@@ -20,6 +13,13 @@
   iprocs = 1
   jprocs = 1
   kprocs = 1
+
+  [general.paths]
+  working = ''
+
+  [general.pipes]
+  nofile  = false 
+  result  = false
 
   [general.space]
   ndim = 2
@@ -33,7 +33,7 @@
 [create]
 
   [create.block]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center' } # required fields and locations
+  fields = {velx='facex', vely='facey', velz='facez', temp='center'}
 
   [create.grid]
   xmethod = 'uniform'
