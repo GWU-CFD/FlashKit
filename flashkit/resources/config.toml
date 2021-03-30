@@ -2,6 +2,16 @@
 
 [create]
 
+  [create.block]
+  grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
+  method = 'uniform'      # default intialization method
+  name   = 'initBlock.h5' # filename holding initial block data
+  switch = 1024           # number of points before show progress  
+  linewidth = 120         # line width if ouput to screen
+  optionpad = 5           # padding for option printing
+  tablespad = 10          # padding for table printing
+  precision = 6           # precision if output to screen
+
   [create.grid]
   axes   = ['i', 'j', 'k'] # defined names for dimensions
   coords = ['x', 'y', 'z'] # defined coordinate directions
@@ -11,16 +21,6 @@
   linewidth = 120        # line width if ouput to screen
   optionpad = 5          # padding for option printing
   precision = 6          # precision if output to screen
-
-  [create.block]
-  grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
-  method = 'uniform'      # default intialization method
-  name   = 'initBlock.h5' # filename holding initial block data
-  switch = 2046           # number of points before show progress  
-  linewidth = 120         # line width if ouput to screen
-  optionpad = 5           # padding for option printing
-  tablespad = 8           # padding for table printing
-  precision = 6           # precision if output to screen
 
   [create.xdmf]
   switch = 10   # number of files before showing progress
@@ -77,6 +77,6 @@
   freq     = 1.0      # constant; (x*f)  scalar for domain scale
   shift    = 0.0      # constant; (x+s)  scalar for domain shift
   scale    = 1.0      # constant; m(x)   scalar for linear scale
-  methods  = ['constant', 'rb_strat', 'uniform']  # supported methods
+  methods  = ['constant', 'stratified', 'uniform']  # supported methods
   function = 'fields' # default python function name in source
   source   = 'blocks' # default source file

@@ -46,15 +46,14 @@ def constant(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: dict[
     for field, location in fields.items():
         blocks[field] = numpy.ones(shapes[location], dtype=float) * const[field]
 
-def rb_strat(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, shift: F) -> None:
+def stratified(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, scale: F, shift: F) -> None:
     """Method implementing a cold over hot intial condition."""
     ndim = 2 if all(g[2] is None for g in grids.values()) else 3
     for field, location in fields.items():
-        center, value = shift[field], const[field]
         source = grids[location][ndim - 1]
         meshed = [m[ndim - 1] for m in mesh]
         sliced = (slice(None), None, slice(None), None) if ndim == 2 else (slice(None), slice(None), None, None)
-        domain = numpy.heaviside(numpy.array([source[m,:] for m in meshed]) - center, 0.5) * value
+        domain = numpy.heaviside(numpy.array([source[m,:] for m in meshed]) - shift[field], 0.5) * scale[field] + const[field]
         blocks[field] = numpy.ones(shapes[location], dtype=float) * domain[sliced]
 
 def uniform(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
@@ -86,7 +85,7 @@ class Flowing:
         
         self.flow = {
             'constant': partial(constant, const=s_const), 
-            'rb_strat': partial(rb_strat, const=s_const, shift=s_shift), 
+            'stratified': partial(stratified, const=s_const, scale=s_scale, shift=s_shift), 
             'uniform': uniform, 
                     }
 
