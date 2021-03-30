@@ -12,7 +12,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # commands
-from . import xdmf, par, run, grid, block, intrp
+from . import block, grid, intrp, par, run, xdmf 
 
 COMMANDS: DictApp = {
         'block': block.BlockCreateApp,
@@ -31,12 +31,12 @@ HELP = f"""\
 {USAGE}
 
 commands:   
-xdmf        {xdmf.__doc__}
+block       {block.__doc__}
+grid        {grid.__doc__}
+intrp       {intrp.__doc__}
 par         {par.__doc__}
 run         {run.__doc__}
-grid        {grid.__doc__}
-block       {block.__doc__}
-intrp       {intrp.__doc__}
+xdmf        {xdmf.__doc__}
 
 options:
 -h, --help  Show this message and exit.

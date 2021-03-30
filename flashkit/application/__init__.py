@@ -38,8 +38,8 @@ HELP = f"""\
 {USAGE}
     
 commands:
-create       {create.__doc__}
 build        {build.__doc__}
+create       {create.__doc__}
 job          {job.__doc__}
 
 options:
