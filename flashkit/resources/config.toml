@@ -77,6 +77,6 @@
   freq     = 1.0      # constant; (x*f)  scalar for domain scale
   shift    = 0.0      # constant; (x+s)  scalar for domain shift
   scale    = 1.0      # constant; m(x)   scalar for linear scale
-  methods  = ['python', 'uniform', 'constant']  # supported methods
+  methods  = ['constant', 'rb_strat', 'uniform']  # supported methods
   function = 'fields' # default python function name in source
   source   = 'blocks' # default source file

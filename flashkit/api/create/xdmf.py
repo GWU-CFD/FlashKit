@@ -12,7 +12,7 @@ import sys
 # internal libraries
 from ...core.error import AutoError
 from ...core.logging import printer
-from ...core.parallel import single 
+from ...core.parallel import safe, single 
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_xdmf import create_xdmf
@@ -131,6 +131,7 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
+@safe
 def xdmf(**arguments: Any) -> None:
     """Python application interface for creating xdmf from command line or python code.
 

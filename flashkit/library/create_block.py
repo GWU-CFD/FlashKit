@@ -39,7 +39,7 @@ NAME = CONFIG['create']['block']['name']
 
 @parallel.safe
 def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict[str, Any], 
-               path: str, procs: tuple[int, int, int], shapes: Shapes) -> tuple[Blocks, parallel.Index]:
+                path: str, procs: tuple[int, int, int], shapes: Shapes) -> tuple[Blocks, parallel.Index]:
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 

@@ -31,7 +31,8 @@ options:
 -i, --iprocs   INT   Number of blocks in the i direction; defaults to {IPROCS}.
 -j, --jprocs   INT   Number of blocks in the j direction; defaults to {JPROCS}.
 -k, --kprocs   INT   Number of blocks in the k direction; defaults to {KPROCS}.
--l, --fields   DICT  Key/value pairs for fields (e.g., <temp=center,...>); defaults to {FIELDS}.
+-l, --fields   DICT  Key/value pairs for fields (e.g., <temp=center,...>); defaults to 
+                         {FIELDS}.
 -m, --fmethod  DICT  Key/value pairs for flow initialization (e.g., <temp=constant,...>); defaults to {METHOD}.
 -o, --fparam   DICT  Key/value pairs for paramaters (e.g., <temp={{const=0.5,...}},...>) used for each field method.
 -p, --path     PATH  Path to source files used in some initialization methods (e.g., python); defaults to cwd.
@@ -41,12 +42,12 @@ flags:
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -R, --result         Return the calculated fields by block on root. 
 -F, --nofile         Do not write the calculated coordinates to file. 
--h, --help           Show this message and exit.\
+-h, --help           Show this message and exit.
 
 note:
-This function reads grid data from hdf5 file (i.e., must run create.grid() first); if you receive a cryptic
-  error message (e.g., ValueError about inhomogenious shape) make sure you have run the create grid command with
-  the correct and compatible options to what you are intending for the create block command.
+This function reads grid data from an hdf5 file (i.e., must run <flashkit create grid> first); if you receive a cryptic
+  error message (e.g., ValueError about inhomogenious shape) make sure you have rerun the create grid command with the 
+  correct and compatible options to what you are intending for the create block command.\
 """
 
 # default constants

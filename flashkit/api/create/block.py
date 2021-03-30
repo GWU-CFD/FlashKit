@@ -97,7 +97,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     methods = tuple(args['flows'].get(field)[1] for field in fields)
     params = {kwarg: tuple(f'{value.get(field, "?"):>{OPTIONPAD}}' for field in fields) for kwarg, value in args['params'].items()}
     pad = max((len(key) for key in params.keys()), default=1)
-    options = '\n              '.join(f'{k:{pad}}: {v},' for k, v in params.items())
+    options = '\n               '.join(f'{k:{pad}}: {v},' for k, v in params.items())
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
     message = '\n'.join([
         f'Creating initial block file from specification:',
@@ -144,7 +144,8 @@ def block(**arguments: Any) -> Optional[Blocks]:
     iprocs: int    Number of blocks in the i direction; defaults to {IPROCS}.
     jprocs: int    Number of blocks in the j direction; defaults to {JPROCS}.
     kprocs: int    Number of blocks in the k direction; defaults to {KPROCS}.
-    fields: dict   Key/value pairs for fields (e.g., {'temp': 'center', ...}); defaults are {FIELDS}.
+    fields: dict   Key/value pairs for fields (e.g., {'temp': 'center', ...}); defaults are 
+                       {FIELDS}.
     fmethod: dict  Key/value pairs for flow initialization (e.g., {'temp': 'constant', ...}); defaults to {METHOD}.
     fparam: dict   Key/value pairs for paramaters (e.g., {'temp': {'const': 0.5, ...}, ...}) used for each field method.
     path: str      Path to source files used in some initialization methods (e.g., python); defaults to cwd.

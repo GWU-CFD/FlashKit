@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     N = numpy.ndarray
     M = MutableMapping[str, N]
     D = Mapping[str, str]
+    F = Mapping[str, float]
     G = Mapping[str, Tuple[N, N, N]]
     S = Mapping[str, Tuple[int, ...]]
     I = Sequence[Tuple[int, ...]]
@@ -45,11 +46,22 @@ def constant(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: dict[
     for field, location in fields.items():
         blocks[field] = numpy.ones(shapes[location], dtype=float) * const[field]
 
+def rb_strat(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, shift: F) -> None:
+    """Method implementing a cold over hot intial condition."""
+    ndim = 2 if all(g[2] is None for g in grids.values()) else 3
+    for field, location in fields.items():
+        center, value = shift[field], const[field]
+        source = grids[location][ndim - 1]
+        meshed = [m[ndim - 1] for m in mesh]
+        sliced = (slice(None), None, slice(None), None) if ndim == 2 else (slice(None), slice(None), None, None)
+        domain = numpy.heaviside(numpy.array([source[m,:] for m in meshed]) - center, 0.5) * value
+        blocks[field] = numpy.ones(shapes[location], dtype=float) * domain[sliced]
+
 def uniform(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
     """Method implementing a uniform (zero) field initialization."""
     for field, location in fields.items():
         blocks[field] = numpy.zeros(shapes[location], dtype=float)
-        
+
 class Flowing:
     """Class supporting the dispatching of fields to methods to build initial flow condition."""
     methods: dict[str, str]
@@ -74,6 +86,7 @@ class Flowing:
         
         self.flow = {
             'constant': partial(constant, const=s_const), 
+            'rb_strat': partial(rb_strat, const=s_const, shift=s_shift), 
             'uniform': uniform, 
                     }
 
