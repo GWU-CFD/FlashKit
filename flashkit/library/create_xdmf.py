@@ -12,6 +12,7 @@ from xml.dom import minidom
 
 # internal libraries
 from ..core.parallel import squash
+from ..core.tools import first_true
 
 # external libraries
 import h5py # type: ignore
@@ -47,9 +48,6 @@ class SimulationInfo(NamedTuple):
     sizes: dict[str, int]
     fields: set[str]
     velflds: list[str]
-
-def first_true(iterable, predictor):
-    return next(filter(predictor, iterable))
 
 def author_xdmf(filenames: dict[str, str], filesteps: Sequence[int], context: Bar) -> ElementTree.Element:
     root = ElementTree.Element(*get_root_element())
