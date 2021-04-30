@@ -2,15 +2,17 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Union 
+from typing import TYPE_CHECKING
 
 # standard libraries
 import re
 
-# useful type alias
-F = Union[float, str]
-I = Union[int, str]
-T = Union[bool, int, float, None, str]
+# static analysis
+if TYPE_CHECKING:
+    from typing import Any, Union 
+    F = Union[float, str]
+    I = Union[int, str]
+    T = Union[bool, int, float, None, str]
 
 # define library (public) interface
 __all__ = ['DictStr', 'DictAny', 'DictDictStr', 'DictDictAny'

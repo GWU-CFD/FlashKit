@@ -17,8 +17,8 @@ from cmdkit.config import Configuration, Namespace
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Iterator, Optional
     from collections.abc import MutableMapping
+    from typing import Any, Iterator, Optional
     C = Configuration
     M = MutableMapping[str, Any]
     N = Namespace

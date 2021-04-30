@@ -16,8 +16,8 @@ with open('flashkit/__meta__.py', mode='r') as source:
                             '__license__', '__website__', '__description__']}
 
 # core dependancies
-DEPENDANCIES = ['cmdkit', 'toml', 'alive_progress', 'psutil', 'h5py', 'numpy', ]
-OPTIONAL_PKG = {'mpi' : ['mpi4py', ], }
+DEPENDANCIES = ['cmdkit', 'toml', 'psutil', 'h5py', 'numpy', 'scipy']
+OPTIONAL_PKG = {'mpi' : ['mpi4py', ], 'bar' : ['alive_progress', ], }
 
 setup(
     name                 = metadata['__pkgname__'],

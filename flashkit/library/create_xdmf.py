@@ -2,7 +2,8 @@
 
 # type annotations
 from __future__ import annotations
-from typing import NamedTuple, TYPE_CHECKING
+from typing import NamedTuple
+from collections.abc import Sequence
 
 # standard libraries
 import sys
@@ -12,18 +13,12 @@ from xml.dom import minidom
 
 # internal libraries
 from ..core.parallel import squash
+from ..core.progress import Bar
 from ..core.tools import first_true
+from ..support.types import TagAttr, TagAttrEx
 
 # external libraries
 import h5py # type: ignore
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Callable, Dict, Tuple
-    from collections.abc import Sequence
-    from ..core.progress import Bar
-    TagAttr = Tuple[str, Dict[str, str]]
-    TagAttrEx = Tuple[str, Dict[str, str], str]
 
 # define library (public) interface
 __all__ = ['create_xdmf', ]

@@ -11,15 +11,15 @@ import importlib
 
 # internal libraries
 from ..resources import CONFIG
+from .types import N
 
 # external libraries
 import numpy
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, Union, Tuple
-    from collections.abc import Container, Mapping, MutableMapping, Sequence
-    N = numpy.ndarray
+    from typing import Any, Callable, Tuple 
+    from collections.abc import Mapping, MutableMapping, Sequence
     M = MutableMapping[str, N]
     D = Mapping[str, str]
     F = Mapping[str, float]

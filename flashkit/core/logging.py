@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Union
 
 # standard libraries
 import sys
@@ -10,10 +10,6 @@ import logging
 
 # internal libraries
 from ..resources import CONFIG
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Union
 
 # define public interface
 __all__ = ['CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN',

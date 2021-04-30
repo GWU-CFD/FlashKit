@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional 
 
 # standard libraries
 import os
@@ -13,9 +13,11 @@ from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
-from ...library.create_grid import get_grids, get_shapes, read_coords 
 from ...library.create_block import calc_blocks, write_blocks
+from ...library.create_grid import read_coords
 from ...resources import CONFIG, DEFAULTS
+from ...support.grid import get_grids, get_shapes
+from ...support.types import Blocks
 
 # external libraries
 import numpy
@@ -44,9 +46,6 @@ LINEWIDTH = CONFIG['create']['block']['linewidth']
 OPTIONPAD = CONFIG['create']['block']['optionpad']
 TABLESPAD = CONFIG['create']['block']['tablespad']
 PRECISION = CONFIG['create']['block']['precision']
-
-# define type annotation alias
-Blocks = Dict[str, numpy.ndarray]
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""

@@ -2,16 +2,17 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, TYPE_CHECKING
+from typing import Any, cast
 
 # standard libraries
 import os
 
 # internal libraries
-from .create_grid import create_processor_grid
 from ..core import parallel
 from ..resources import CONFIG 
+from ..support.grid import axisMesh
 from ..support.flow import Flowing
+from ..support.types import N, Blocks, Grids, Mesh, Shapes 
 
 # external libraries
 import numpy
@@ -19,20 +20,6 @@ import h5py # type: ignore
 
 # define public interface
 __all__ = ['calc_blocks', 'write_blocks', ]
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Tuple
-    from collections.abc import MutableSequence, Sequence, Sized
-    N = numpy.ndarray
-    Blocks = Dict[str, N]
-    Grids = Dict[str, Tuple[Optional[N], ...]]
-    Mesh = Sequence[Tuple[int, ...]]
-    Shapes = Dict[str, Tuple[int, ...]]
-
-# deal w/ runtime cast
-else:
-    Blocks = None
 
 # define configuration constants (internal)
 NAME = CONFIG['create']['block']['name']
@@ -43,7 +30,7 @@ def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 
-    gr_axisNumProcs, gr_axisMesh = create_processor_grid(*procs)
+    gr_axisNumProcs, gr_axisMesh = axisMesh(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
     gr_lIndex = parallel.Index.from_simple(gr_numProcs)
     gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)

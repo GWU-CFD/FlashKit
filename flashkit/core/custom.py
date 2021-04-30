@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Callable, Dict, Iterable, Type
+from typing import TYPE_CHECKING
 
 # standard libraries
 import argparse
@@ -19,8 +19,14 @@ from cmdkit import app
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError 
 
-# Create commands custom type
-DictApp = Dict[str, Type[Application]]
+# static analysis
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, Iterable, Type
+    DictApp = Dict[str, Type[Application]]
+
+# deal w/ runtime import
+else:
+    DictApp = None
 
 # define library (public) interface
 __all__ = ['patched_error', 'patched_exceptions', ]

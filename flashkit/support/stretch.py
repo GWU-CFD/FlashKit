@@ -12,16 +12,15 @@ import importlib
 
 # internal libraries
 from ..resources import CONFIG
+from .types import M, N
 
 # external libraries
 import numpy
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, Union, TypeVar
+    from typing import Any, Callable, Iterable, Union
     from collections.abc import Container, Mapping, MutableSequence, Sequence
-    N = numpy.ndarray
-    M = MutableSequence[N]
     C = Container[int]
     I = Iterable[int]
     F = Iterable[float]

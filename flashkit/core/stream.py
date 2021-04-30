@@ -12,8 +12,8 @@ from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Optional, TypeVar
     from collections.abc import Iterable, Mapping, Sequence
+    from typing import Any, Callable, Dict, Optional, TypeVar
     F = TypeVar('F', bound=Callable[..., Any])
     D = Callable[[F], F]
     C = Callable[..., Dict[str, Any]]

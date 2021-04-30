@@ -14,7 +14,7 @@ from ..resources import CONFIG
 
 # external libraries
 import numpy
-from scipy.interpolate import interpn
+from scipy.interpolate import interpn # type: ignore
 import h5py # type: ignore
 
 # define public interface
@@ -34,7 +34,7 @@ GNAME = CONFIG['create']['grid']['name']
 
 @parallel.safe
 def interp_blocks(*, basename: str, checkname: str, dest: str, flows: dict[str, tuple[str, str]], gridname: str, grids: Grids,
-                  method: str, procs: tuple[int, int, int], shapes: Shapes, source: str, step: int, context: Bar) -> None:
+                  method: str, plotname: str, procs: tuple[int, int, int], shapes: Shapes, source: str, step: int, context: Bar) -> None:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # define necessary filenames on the correct path
@@ -47,7 +47,7 @@ def interp_blocks(*, basename: str, checkname: str, dest: str, flows: dict[str, 
 
 def blocks_from_bbox(boxes, box):
     overlaps = lambda ll, lh, hl, hh: not ((hh < ll) or (hl > lh))
-    return [blk from blk, bb in enumerate(boxes) 
-            if all(overlaps(*low, *high) for low, high in zip(bb, box))]
+    #return [blk from blk, bb in enumerate(boxes) 
+    #        if all(overlaps(*low, *high) for low, high in zip(bb, box))]
 
 

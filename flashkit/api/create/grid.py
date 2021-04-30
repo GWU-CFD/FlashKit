@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Optional, Tuple
+from typing import Any, Optional 
 
 # standard libraries
 import os
@@ -15,6 +15,7 @@ from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
 from ...resources import CONFIG, DEFAULTS
+from ...support.types import Coords
 
 # external libraries
 import numpy
@@ -47,9 +48,6 @@ NAME = CONFIG['create']['grid']['name']
 LINEWIDTH = CONFIG['create']['grid']['linewidth']
 OPTIONPAD = CONFIG['create']['grid']['optionpad']
 PRECISION = CONFIG['create']['grid']['precision']
-
-# define type annotation alias
-Coords = Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""

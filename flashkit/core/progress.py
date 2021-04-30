@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import time
 import threading
 import pkg_resources
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 
 # internal libraries
 from .parallel import is_parallel
@@ -17,8 +17,11 @@ from ..resources import CONFIG
 # static analysis
 if TYPE_CHECKING:
     from typing import Callable, Optional, Union
-    from contextlib import AbstractContextManager
     Bar = Callable[..., AbstractContextManager]
+
+# deal w/ runtime import
+else:
+    Bar = None
 
 # define public interface
 __all__ = ['SimpleBar', 'get_bar', 'null_bar', ]
