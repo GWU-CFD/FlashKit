@@ -14,6 +14,13 @@ def axisMesh(iProcs: int, jProcs: int, kProcs: int) -> tuple[N, N]:
     grid = numpy.array([[i, j, k] for k in range(kProcs) for j in range(jProcs) for i in range(iProcs)], int)
     return proc, grid
 
+def axisUniqueIndex(iProcs: int, jProcs: int, kProcs: int) -> tuple[N, N, N]:
+    _, gr_axisMesh = axisMesh(iProcs, jProcs, kProcs)
+    iInd = numpy.array([n for n in range(iProcs)])
+    jInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0])
+    kInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0 and j == 0])
+    return iInd, jInd, kInd
+
 def get_blocks(*, coords: Coords, ndim: int, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> tuple[N, N]:
     """Calculate block (center) coordinates and bounding boxes from face arrays."""
 

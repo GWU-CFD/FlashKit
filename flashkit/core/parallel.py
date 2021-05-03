@@ -68,6 +68,11 @@ class Index:
         self.low = int(low)
         self.size = int(size)
         self.width = int(width)
+        self.range = range(self.low, self.high + 1)
+        try:
+            assert(self.high - self.low + 1 == self.width)
+        except AssertionError:
+            raise ParallelError('Width of local tasks does not match local width!')
 
     @classmethod
     def from_simple(cls, tasks: int = 1):
@@ -80,14 +85,23 @@ class Index:
         high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
         return cls(width=width, low=low, high=high, size=tasks)
 
-    def mesh_low(self, mesh: Sequence[int]) -> tuple[int, ...]:
-        return tuple(int(self.low / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh))
+    def _tasksMatchSize(self, axisTasks: Sequence[int]) -> None:
+        try:
+            assert(int(numpy.prod(axisTasks)) == self.size)
+        except AssertionError as error:
+            raise ParallelError('Total number of tasks (by axis) do not match parallel size!')
 
-    def mesh_high(self, mesh: Sequence[int]) -> tuple[int, ...]:
-        return tuple(int(self.high / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh))
+    def mesh_low(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
+        if not force: self._tasksMatchSize(axisTasks)
+        return tuple(int(self.low / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
 
-    def mesh_width(self, mesh: Sequence[int]) -> list[tuple[int, ...]]:
-        return [tuple(int(n / numpy.prod(mesh[:a], initial=1)) % m for a, m in enumerate(mesh)) for n in range(self.low, self.high+1)]
+    def mesh_high(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
+        if not force: self._tasksMatchSize(axisTasks)
+        return tuple(int(self.high / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
+
+    def mesh_width(self, axisTasks: Sequence[int], *, force: bool = False) -> list[tuple[int, ...]]:
+        if not force: self._tasksMatchSize(axisTasks)
+        return [tuple(int(n / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks)) for n in range(self.low, self.high+1)]
 
 def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""

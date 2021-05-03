@@ -22,6 +22,9 @@
   optionpad = 5          # padding for option printing
   precision = 6          # precision if output to screen
 
+  [create.interp]
+  method = 'linear' # interpolation kernal
+
   [create.xdmf]
   switch = 10   # number of files before showing progress
 
