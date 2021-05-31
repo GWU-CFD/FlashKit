@@ -13,8 +13,10 @@ if TYPE_CHECKING:
 
     # external libraries
     import numpy
+    import h5py # type: ignore
 
     # grid arrays (and collections)
+    D = h5py._hl.dataset.Dataset
     N = numpy.ndarray
     M = MutableSequence[N]
     Blocks = Dict[str, N]
@@ -32,6 +34,7 @@ if TYPE_CHECKING:
 else:
 
     # grid arrays (and collections)
+    D = None
     N = None
     M = None
     Blocks = None

@@ -11,6 +11,7 @@ import os
 from ..core import parallel
 from ..resources import CONFIG 
 from ..support.grid import axisMesh
+from ..support.files import H5Manager
 from ..support.flow import Flowing
 from ..support.types import N, Blocks, Grids, Mesh, Shapes 
 
@@ -46,57 +47,11 @@ def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict
 
 @parallel.safe
 def write_blocks(*, blocks: Blocks, index: parallel.Index, path: str, shapes: Shapes) -> None:
-    
-    # specify filename and remove if exists
     filename = os.path.join(path, NAME)
-    if parallel.is_root() and os.path.exists(filename): 
-        os.remove(filename)
-
-    # write hdf5 file serially
-    if parallel.is_serial():
-        with h5py.File(filename, 'w-') as h5file:
-            for field, data in blocks.items():
-                h5file.create_dataset(field, data=data)
-        return
-    
-    comm = parallel.COMM_WORLD
-       
-    # write hdf5 file with parallel support
-    if 'mpio' in h5py.registered_drivers():
-        with h5py.File(filename, 'w-', driver='mpio', comm=comm) as h5file:
-            for field, data in blocks.items():
-                shape = (shapes['center'][0], ) + data.shape[1:] 
-                dset = h5file.create_dataset(field, shape, dtype=data.dtype)
-                dset[index.low:index.high+1] = data
-        return
-        
-    # write hdf5 file without parallel support
-    if parallel.is_root():
-        h5file = h5py.File('parallel.h5', 'w-')
-        
-    for field, data in blocks.items():
-        shape = (shapes['center'][0], ) + data.shape[1:] 
-            
-        if parallel.is_root():
-            dset = h5file.create_dataset(field, shape, dtype=data.dtype)
-            
-        for process in range(index.size):
-            low, high = 0, 0
-
-            if process == parallel.rank and parallel.is_root():
-                dset[index.low:index.high+1] = data
-                
-            if process == parallel.rank and not parallel.is_root():
-                comm.Send(data, dest=parallel.ROOT, tag=process)
-                comm.Send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
-                
-            if process != parallel.rank and parallel.is_root():
-                comm.Recv(data, source=process, tag=process)
-                comm.Recv((low, high), source=process, tag=process+index.size)
-                dset[low:high+1] = data
-        
-    if parallel.is_root():
-        h5file.close()
+    with H5Manager(filename, 'w-', clean=True) as h5file:
+        for field, data in blocks.items():
+            shape = (shapes['center'][0], ) + data.shape[1:] 
+            h5file.write(field, data, index=index, shape=shape)
 
 def get_filledBlocks(*, grids: Grids, locations: dict[str, str], mesh: Mesh, methods: Flowing, shapes: Shapes) -> Blocks:
     blocks: Blocks = cast(Blocks, {field: None for field in locations.keys()})
@@ -105,4 +60,3 @@ def get_filledBlocks(*, grids: Grids, locations: dict[str, str], mesh: Mesh, met
             fields = {field: locations[field] for field in methods.map_fields(method)}
             func(blocks=blocks, fields=fields, grids=grids, mesh=mesh, shapes=shapes)
     return blocks
-
