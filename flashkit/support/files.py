@@ -17,16 +17,25 @@ import h5py # type: ignore
 # define public interface
 __all__ = ['H5Manager', ]
 
-
-class H5Manager(h5py.File):
+class H5Manager:
     """Context Manager for simple reading and writing of hdf5 files"""
     
-    def __init__(self, filename: str, mode: str = 'r', *, clean: bool = False):
+    def __init__(self, filename: str, mode: str = 'r', *, clean: bool = False, force: bool = False):
+        
         self.filename = filename
         self.mode = mode
+        
         self.clean = clean
+        self.force = mode == 'r' and force 
+        
         self.serial = parallel.is_serial()
         self.supported = 'mpio' in h5py.registered_drivers()
+        self.safe = any((self.supported, self.serial, parallel.is_root(), self.force))
+
+        try:
+            assert(mode in {'r', 'r+', 'w', 'w-', 'x', 'a'})
+        except AssertionError:
+            raise LibraryError('Invalid file mode requested!')
 
     def __enter__(self):
         self.open()
@@ -37,26 +46,23 @@ class H5Manager(h5py.File):
 
     def close(self) -> None:
         """Ensures proper closing of hdf5 file based on runtime enviornment."""
-        if any((self.serial, self.supported, parallel.is_root())):
+        if self.safe:
             self.h5file.close()
 
     def open(self) -> None:
         """Ensures proper opening of hdf5 file based on runtime enviornment."""
         if self.clean and os.path.exists(self.filename) and parallel.is_root():
             os.remove(self.filename)
-
         if not self.serial and self.supported:
-            self.h5file = h5py.File(self.filename, driver='mpio', comm=parallel.COMM_WORLD)
-
-        elif parallel.is_root():
+            self.h5file = h5py.File(self.filename, self.mode, driver='mpio', comm=parallel.COMM_WORLD)
+        elif parallel.is_root() or self.force:
             self.h5file = h5py.File(self.filename, self.mode)
-
         else:
             pass
 
     def read(self, dataset: str) -> D:
         """Retrieve a hdf5 dataset object."""
-        if any((self.serial, self.supported, parallel.is_root())):
+        if self.safe: 
             return self.read_unsafe(dataset)
 
     def read_unsafe(self, dataset: str) -> D:
@@ -82,7 +88,8 @@ class H5Manager(h5py.File):
             dset[index.low:index.high+1] = data
             return
 
-        # write hdf5 file without parallel support 
+        # write hdf5 file without parallel support
+        comm = parallel.COMM_WORLD
         if parallel.is_root():
             dset = self.h5file.create_dataset(dataset, shape, dtype=data.dtype)
             
@@ -91,11 +98,11 @@ class H5Manager(h5py.File):
                 dset[index.low:index.high+1] = data
 
             if process == parallel.rank and not parallel.is_root():
-                parallel.COMM_WORLD.Send(data, dest=parallel.ROOT, tag=process)
+                comm.Send(data, dest=parallel.ROOT, tag=process)
                 parallel.COMM_WORLD.send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
 
             if process != parallel.rank and parallel.is_root():
-                parallel.COMM_WORLD.Recv(data, source=process, tag=process)
+                comm.Recv(data, source=process, tag=process)
                 low, high = parallel.COMM_WORLD.recv(source=process, tag=process+index.size)
                 dset[low:high+1] = data
 
