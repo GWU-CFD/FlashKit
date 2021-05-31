@@ -3,6 +3,9 @@
 #type annotations
 from __future__ import annotations
 
+# standard libraries
+import os
+
 # internal libraries
 from ..core import parallel
 from ..core.error import LibraryError
