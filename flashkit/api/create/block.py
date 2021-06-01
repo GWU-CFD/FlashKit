@@ -126,14 +126,14 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
 
 @squash
 def screen_out(*, blocks: Blocks) -> None:
-    """Output calculated coordinates to the screen."""
+    """Output calculated fields by block to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
         printer.info(f'\nFields for blocks on root are as follows:\n{message}')
 
 @safe
 def block(**arguments: Any) -> Optional[Blocks]:
-    """Python application interface for creating a initial grid file from command line or python code.
+    """Python application interface for creating an initial block file from command line or python code.
 
     Keyword arguments:
     ndim: int      Number of simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
@@ -151,7 +151,7 @@ def block(**arguments: Any) -> Optional[Blocks]:
     dest: str      Path to initial block hdf5 file; defaults to cwd.
     ignore: bool   Ignore configuration file provided arguments, options, and flags.
     result: bool   Return the calculated fields by block on root; defaults to {RESULT}.
-    nofile: bool   Do not write the calculated coordinates to file; defaults to {NOFILE}.
+    nofile: bool   Do not write the calculated fields by block to file; defaults to {NOFILE}.
 
     Note:
     By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally

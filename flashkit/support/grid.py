@@ -9,12 +9,18 @@ from .types import N, Coords, Faces, Grids, Shapes
 # external libraries
 import numpy
 
+# define public interface
+__all__ = ['axisMesh', 'axisUniqueIndex', 'get_blocks', 'get_faces', 'get_grids', 'get_shapes', 
+           'indexSize_fromGlobal', 'indexSize_fromLocal', ]
+
 def axisMesh(iProcs: int, jProcs: int, kProcs: int) -> tuple[N, N]:
+    """Create a simple grid of processes along the axes and return the mesh."""
     proc = numpy.array([iProcs, jProcs, kProcs], int)
     grid = numpy.array([[i, j, k] for k in range(kProcs) for j in range(jProcs) for i in range(iProcs)], int)
     return proc, grid
 
 def axisUniqueIndex(iProcs: int, jProcs: int, kProcs: int) -> tuple[N, N, N]:
+    """Create a grid of the unique (i.e., first) indicies and associated processes along each axis."""
     _, gr_axisMesh = axisMesh(iProcs, jProcs, kProcs)
     iInd = numpy.array([n for n in range(iProcs)])
     jInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0])

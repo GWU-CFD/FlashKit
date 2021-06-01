@@ -34,8 +34,8 @@ class H5Manager:
 
         try:
             assert(mode in {'r', 'r+', 'w', 'w-', 'x', 'a'})
-        except AssertionError:
-            raise LibraryError('Invalid file mode requested!')
+        except AssertionError as error:
+            raise LibraryError('Invalid file mode requested!') from error
 
     def __enter__(self):
         self.open()
@@ -77,13 +77,11 @@ class H5Manager:
             self.h5file.create_dataset(dataset, data=data)
             return
 
-        try:
-            assert(index is not None and shape is not None)
-        except AssertionError:
+        if index is None or shape is None:
             raise LibraryError('Index object and shape are required!')
 
         # write hdf5 file with parallel support
-        if not self.serial and self.supported:
+        if self.supported:
             dset = self.h5file.create_dataset(dataset, shape, dtype=data.dtype)
             dset[index.low:index.high+1] = data
             return
@@ -99,10 +97,42 @@ class H5Manager:
 
             if process == parallel.rank and not parallel.is_root():
                 comm.Send(data, dest=parallel.ROOT, tag=process)
-                parallel.COMM_WORLD.send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
+                comm.send((index.low, index.high), dest=parallel.ROOT, tag=process+index.size)
 
             if process != parallel.rank and parallel.is_root():
                 comm.Recv(data, source=process, tag=process)
-                low, high = parallel.COMM_WORLD.recv(source=process, tag=process+index.size)
+                low, high = comm.recv(source=process, tag=process+index.size)
                 dset[low:high+1] = data
 
+    def write_partial(self, dataset: str, block: int, data: N, *, first: bool = False, shape: tuple = None):
+        """Ensure proper writing of hdf5 dataset based on runtime enviornment."""
+        
+        # write hdf5 file serially
+        if self.serial:
+            raise LibraryError('Partial write not supported for serial IO!')
+
+        if first and shape is None:
+            raise LibraryError('Shape is required!')
+
+        # write hdf5 file with parallel support
+        if self.supported:
+            if first:
+                self.h5file.create_dataset(dataset, shape, dtype=data.dtype)
+            self.h5file[dataset][block] = data
+            return
+
+        # write hdf5 file without parallel support
+        comm = parallel.COMM_WORLD
+        if first and parallel.is_root():
+            self.h5file.create_dataset(dataset, shape, dtype=data.dtype)
+            
+        for process in range(index.size):
+            if process == parallel.rank and parallel.is_root():
+                self.h5file[dataset][block] = data
+
+            if process == parallel.rank and not parallel.is_root():
+                comm.Send(data, dest=parallel.ROOT, tag=process)
+
+            if process != parallel.rank and parallel.is_root():
+                comm.Recv(data, source=process, tag=process)
+                self.h5file[dataset][block] = data

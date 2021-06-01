@@ -33,8 +33,8 @@ METHOD = CONFIG['create']['interp']['method']
 
 @parallel.safe
 def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename: str, flows: dict[str, str],
-                  gridname: str, grids: Grids, ndim: int, procs: tuple[int, int, int], shapes: Shapes, 
-                  source: str, step: int, context: Bar) -> None:
+                  gridname: str, grids: Grids, ndim: int, nofile: bool, path: str, procs: tuple[int, int, int],
+                  shapes: Shapes, step: int, context: Bar) -> Blocks:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # define necessary filenames on the correct path
@@ -67,10 +67,8 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
         del scalars, runtime
 
     # check that source and destination are compatible
-    try:
-        assert(ndim == lw_ndim)
-    except AssertionError as error:
-        raise LibraryError('Incompatible source and destination grids for interpolation!') from error
+    if ndim != lw_ndim:
+        raise LibraryError('Incompatible source and destination grids for interpolation!')
 
     # construct coord and shape dictionaries from low resolution
     with h5py.File(lw_grd_name, 'r') as file:
@@ -82,7 +80,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
         del faxes, uinds, coords
 
     # open input and output files for performing the interpolation (writing the data as we go is most memory efficient)
-    with h5py.File(lw_blk_name, 'r') as inp_file, h5py.File(gr_blk_name, 'w', driver='mpio', comm=parallel.COMM_WORLD) as out_file:
+    with H5Manager(lw_blk_name, 'r', force=True) as inp_file, H5Manager(gr_blk_name, 'w-', clean=True) as out_file:
 
         # create datasets in output file
         dsets = {field: out_file.create_dataset(field, shapes[location], dtype=float) for field, location in flows.items()}
@@ -91,13 +89,13 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
         for step, (block, mesh, bbox) in enumerate(zip(gr_lIndex.range, gr_lMesh, bndboxes[gr_lIndex.range])):
 
             # get blocks in the low grid that overlay the high grid
-            blocks = blocks_from_bbox(lw_bndboxes, bbox)
+            lw_blocks = blocks_from_bbox(lw_bndboxes, bbox)
 
             # gather necessary information to flatten source data from low grid
-            lw_flt_center = [numpy.unique(lw_centers[blocks, axis]) for axis in range(3)]
+            lw_flt_center = [numpy.unique(lw_centers[lw_blocks, axis]) for axis in range(3)]
             lw_flt_extent = [len(axis) for axis in lw_flt_center]
             lw_flt_bindex = [[numpy.where(lw_flt_center[axis] == coord)[0][0]
-                               for axis, coord in enumerate(block)] for block in lw_centers[blocks]]
+                               for axis, coord in enumerate(block)] for block in lw_centers[lw_blocks]]
             lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes['center'])]
 
             if lw_ndim == 3:
@@ -109,7 +107,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                 xxx = lw_grids['center'][lw_flt_bindex[:, 0]].flatten() # type: ignore
                 yyy = lw_grids['center'][lw_flt_bindex[:, 1]].flatten() # type: ignore
                 values = numpy.empty(lw_flt_fshape, dtype=float)
-                for (i, j, _), source in zip(lw_flt_bindex, blocks):
+                for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
                     il, ih = i * lw_sizes[0], (i + 1) * lw_sizes
                     jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes
                     values[jl:jh, il:ih] = inp_file['temp'][source, 0, :, :]
@@ -117,14 +115,19 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                 x = grids['center'][mesh[0], None, :] # type: ignore
                 y = grids['center'][mesh[1], :, None] # type: ignore
 
-                dsets['temp'][block, 0, :, :] = numpy.maximum(numpy.minimum(
+                shape = shapes[location]
+                data = numpy.maximum(numpy.minimum(
                     interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
-                    values.max()), values.min())
+                    values.max()), values.min())[None, :, :]
+                out_file.write_partial('temp', data, block, shape=shape) 
 
             else:
                 pass
 
+
+
 def blocks_from_bbox(boxes, box):
+    """Return all boxes that at least partially overlap box."""
     overlaps = lambda ll, lh, hl, hh : not ((hh < ll) or (hl > lh))
     return [blk for blk, bb in enumerate(boxes)
             if all(overlaps(*low, *high) for low, high in zip(bb, box))]
