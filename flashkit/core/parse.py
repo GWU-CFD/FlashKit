@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     T = Union[bool, int, float, None, str]
 
 # define library (public) interface
-__all__ = ['DictStr', 'DictAny', 'DictDictStr', 'DictDictAny'
-           'ListInt', 'ListFloat', 'ListAny', 'SafeInt', 'SafeFloat', 'SafeAny', ]
+__all__ = ['DictStr', 'DictAny', 'DictDictStr', 'DictDictAny', 'DictListStr', 'DictListAny',
+           'ListInt', 'ListFloat', 'ListStr', 'ListAny', 'SafeInt', 'SafeFloat', 'SafeAny', ]
 
 def none(arg: Any) -> None:
     """Coerce if should convert to NoneType."""
@@ -62,6 +62,10 @@ def ListFloat(s: str) -> list[float]:
     """Parse a string of format <VALUE, ...> into a list of floats.""" 
     return [float(i) for i in re.split(r',\s|,|\s', s)]
 
+def ListStr(s: str) -> list[str]:
+    """Parse a string of format <VALUE, ...> into a list of strings."""
+    return list(re.split(',', s))
+
 def ListAny(s: str) -> list[T]:
     """Parse a string of format <VALUE, ...> into a list of actual types.""" 
     return [SafeAny(i) for i in re.split(r',\s|,|\s', s)]
@@ -81,3 +85,11 @@ def DictDictStr(s: str) -> dict[str, dict[str, str]]:
 def DictDictAny(s: str) -> dict[str, dict[str, T]]:
     """Parse a string of format <OPT={KEY=VALUE, ...}, ...> into a nested dictionary of actual types."""
     return dict((k.strip(), DictAny(v.strip())) for k, v in [re.split(r'={|=\s{', i) for i in re.split(r'},|}\s,', s[:-1])])
+
+def DictListStr(s: str) -> dict[str, list[str]]:
+    """Parse a string of format <OPT=(VALUE, ...), ...> into a dictionary of lists of strings."""
+    return dict((k.strip(), ListStr(v.strip())) for k, v in [re.split(r'=\(|=\s\(', i) for i in re.split(r'\),|\)\s,', s[:-1])])
+
+def DictListAny(s: str) -> dict[str, list[T]]:
+    """Parse a string of format <OPT=(VALUE, ...), ...> into a dictionary of lists of strings."""
+    return dict((k.strip(), ListAny(v.strip())) for k, v in [re.split(r'=\(|=\s\(', i) for i in re.split(r'\),|\)\s,', s[:-1])])

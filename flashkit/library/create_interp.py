@@ -8,12 +8,13 @@ from typing import cast, Tuple
 import os
 
 # internal libraries
-from ..core import parallel
 from ..core.error import LibraryError
 from ..core.logging import printer
+from ..core.parallel import Index, safe
 from ..core.progress import Bar
 from ..core.tools import first_true
 from ..resources import CONFIG
+from ..support.files import H5Manager
 from ..support.grid import axisMesh, axisUniqueIndex, get_grids, get_shapes
 from ..support.types import N, Grids, Shapes
 
@@ -27,25 +28,23 @@ __all__ = ['interp_blocks', ]
 
 # define configuration constants (internal)
 BNAME = CONFIG['create']['block']['name']
-AXES = CONFIG['create']['grid']['coords']
-LABEL = CONFIG['create']['grid']['label']
 METHOD = CONFIG['create']['interp']['method']
 
-@parallel.safe
-def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename: str, flows: dict[str, str],
-                  gridname: str, grids: Grids, ndim: int, nofile: bool, path: str, procs: tuple[int, int, int],
-                  shapes: Shapes, step: int, context: Bar) -> Blocks:
+@safe
+def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename: str, flows: dict[str, tuple[str, str, str]],
+                  gridname: str, grids: Grids, ndim: int, path: str, procs: tuple[int, int, int],
+                  shapes: Shapes, step: int, context: Bar) -> None:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # define necessary filenames on the correct path
-    lw_blk_name = os.path.join(source, basename + filename + f'{step:04}')
-    lw_grd_name = os.path.join(source, basename + gridname + '0000')
-    gr_blk_name = os.path.join(os.path.relpath(source, dest), BNAME)
+    lw_blk_name = os.path.join(path, basename + filename + f'{step:04}')
+    lw_grd_name = os.path.join(path, basename + gridname + '0000')
+    gr_blk_name = os.path.join(dest, BNAME)
 
     # create grid init parameters for parallelizing blocks 
     gr_axisNumProcs, gr_axisMesh = axisMesh(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
-    gr_lIndex = parallel.Index.from_simple(gr_numProcs)
+    gr_lIndex = Index.from_simple(gr_numProcs)
     gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)
 
     # read simulation information from low resolution
@@ -83,8 +82,9 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
     with H5Manager(lw_blk_name, 'r', force=True) as inp_file, H5Manager(gr_blk_name, 'w-', clean=True) as out_file:
 
         # create datasets in output file
-        dsets = {field: out_file.create_dataset(field, shapes[location], dtype=float) for field, location in flows.items()}
-
+        for field, (location, _, _) in flows.items():
+            out_file.create_dataset(field, shapes[location], float)
+        
         # interpolate over assigned blocks
         for step, (block, mesh, bbox) in enumerate(zip(gr_lIndex.range, gr_lMesh, bndboxes[gr_lIndex.range])):
 
@@ -110,21 +110,18 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                 for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
                     il, ih = i * lw_sizes[0], (i + 1) * lw_sizes
                     jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes
-                    values[jl:jh, il:ih] = inp_file['temp'][source, 0, :, :]
+                    values[jl:jh, il:ih] = inp_file.read('temp')[source, 0, :, :]
 
                 x = grids['center'][mesh[0], None, :] # type: ignore
                 y = grids['center'][mesh[1], :, None] # type: ignore
 
-                shape = shapes[location]
                 data = numpy.maximum(numpy.minimum(
                     interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
                     values.max()), values.min())[None, :, :]
-                out_file.write_partial('temp', data, block, shape=shape) 
+                out_file.write_partial('temp', block, data, gr_lIndex) 
 
             else:
                 pass
-
-
 
 def blocks_from_bbox(boxes, box):
     """Return all boxes that at least partially overlap box."""

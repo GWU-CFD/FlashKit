@@ -34,8 +34,6 @@ PLOT = DEFAULTS['general']['files']['plot']
 IPROCS = DEFAULTS['general']['mesh']['iprocs']
 JPROCS = DEFAULTS['general']['mesh']['jprocs']
 KPROCS = DEFAULTS['general']['mesh']['kprocs']
-RESULT = DEFAULTS['general']['pipes']['result']
-NOFILE = DEFAULTS['general']['pipes']['nofile']
 NDIM = DEFAULTS['general']['space']['ndim']
 NXB = DEFAULTS['general']['space']['nxb']
 NYB = DEFAULTS['general']['space']['nyb']
@@ -45,9 +43,7 @@ NZB = DEFAULTS['general']['space']['nzb']
 GRIDS = CONFIG['create']['block']['grids']
 NAME = CONFIG['create']['block']['name']
 SWITCH = CONFIG['create']['interp']['switch']
-LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
-PRECISION = CONFIG['create']['interp']['precision']
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 
@@ -94,7 +90,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # build flows dictionary
     zloc = GRIDS[-1]
     used = lambda grid: ndim == 3 or grid != zloc
-    args['flows'] = {field: (location, args.get('fsource', {}).get(field, (field, location))) 
+    args['flows'] = {field: (location, *args.get('fsource', {}).get(field, (field, location)))
             for field, location in args['fields'].items() if used(location)}
 
     return args
@@ -140,9 +136,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'basename', 
-            'step', 'plot', 'grid', 'path', 'dest', 'auto', 'result', 'nofile'}
+            'step', 'plot', 'grid', 'path', 'dest', 'auto'}
 ROUTE = ('create', 'interp')
-PRIORITY = {'ignore', 'cmdline', 'coords'}
+PRIORITY = {'ignore', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
@@ -154,15 +150,8 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
-@squash
-def screen_out(*, blocks: Blocks) -> None:
-    """Output calculated fields by block to the screen."""
-    with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
-        message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
-        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
-
 @safe
-def interp(**arguments: Any) -> Optional[Blocks]:
+def interp(**arguments: Any) -> None:
     """Python application interface for using interpolation to create an initial block file.
 
     Keyword arguments:
@@ -175,7 +164,7 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     kprocs: int    Number of final blocks in the k direction; defaults to {KPROCS}.
     fields: dict   Key/value pairs for final fields (e.g., {'velx': 'facex', ...}); defaults are 
                        {FIELDS}.
-    fsource: dict  Key/value pairs for source fields (e.g., {'cc_u': 'center', ...}); defaults to FIELDS.
+    fsource: dict  Key/value pairs for source fields (e.g., {'velx': ('cc_u', 'center'), ...}); defaults to FIELDS.
     basename: str  Basename for flash simulation, will be guessed if not provided
                    (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
     step: int      File number (e.g., <1,3,5,7,9>) of source timeseries output.
@@ -185,8 +174,6 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     dest: str      Path to final grid and block hdf5 files; defaults to cwd.
     ignore: bool   Ignore configuration file provided arguments, options, and flags.
     auto: bool     Force behavior to attempt guessing BASENAME and [--step INT].
-    result: bool   Return the calculated fields by block on root; defaults to {RESULT}.
-    nofile: bool   Do not write the calculated fields by block to file; defaults to {NOFILE}.
 
     Note:
     By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
@@ -197,16 +184,10 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     ndim = args.pop('ndim')
     procs = args.pop('procs')
     sizes = args.pop('sizes')
-    result = args.pop('result')
-    cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
     
     if coords is None: coords = read_coords(path=path, ndim=ndim)
     shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
     grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
     boxes, centers = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    blocks = interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, procs=procs, shapes=shapes, **args)
-    
-    if not result: return None
-    if cmdline: screen_out(blocks=blocks)
-    return blocks
+    interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, procs=procs, shapes=shapes, **args)
