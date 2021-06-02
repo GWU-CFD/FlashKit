@@ -90,7 +90,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # build flows dictionary
     zloc = GRIDS[-1]
     used = lambda grid: ndim == 3 or grid != zloc
-    args['flows'] = {field: (location, *args.get('fsource', {}).get(field, (field, location)))
+    args['flows'] = {field: (location, *args.get('fsource', {}).get(field, [field, location]))
             for field, location in args['fields'].items() if used(location)}
 
     return args
@@ -101,7 +101,7 @@ def attach_context(**args: Any) -> dict[str, Any]:
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
-        if args['nofile']:
+        if False: #args['nofile']:
             printer.info('Interpolating block data (no file out) ...')
         else:
             printer.info('Interpolation block data (out to file) ...')
@@ -117,26 +117,26 @@ def log_messages(**args: Any) -> dict[str, Any]:
     plot = args['plot']
     fields = tuple(args['flows'].keys())
     locations = tuple(args['flows'].get(field)[0] for field in fields)
-    f_sources = tuple(args['flows'].get(field)[1][0] for field in fields)
-    l_sources = tuple(args['flows'].get(field)[1][1] for field in fields)
+    f_sources = tuple(args['flows'].get(field)[1] for field in fields)
+    l_sources = tuple(args['flows'].get(field)[2] for field in fields)
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
     message = '\n'.join([
         f'Creating block file by interpolationg simulation files:',
-        f'               {row(fields)}',
-        f'  locations  = {row(locations)}',
-        f'  source     = {row(f_sources)}',
-        f'               {row(l_sources)}',
-        f'  plotfile   = {path}/{basename}{plot}{step:04}',
-        f'  gridfile   = {path}/{basename}{grid}{0000}',
-        f'  block_file = {dest}/{NAME}',
+        f'                  {row(fields)}',
+        f'  locations     = {row(locations)}',
+        f'  sources       = {row(f_sources)}',
+        f'                  {row(l_sources)}',
+        f'  plot (source) = {path}/{basename}{plot}{step:04}',
+        f'  grid (source) = {path}/{basename}{grid}{0000}',
+        f'  block (dest)  = {dest}/{NAME}',
         f'',
         ])
     printer.info(message)
     return args
 
 # default constants for handling the argument stream
-PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'basename', 
-            'step', 'plot', 'grid', 'path', 'dest', 'auto'}
+PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource',
+            'basename', 'step', 'plot', 'grid', 'path', 'dest', 'auto'}
 ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
@@ -189,5 +189,5 @@ def interp(**arguments: Any) -> None:
     if coords is None: coords = read_coords(path=path, ndim=ndim)
     shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
     grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    boxes, centers = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, procs=procs, shapes=shapes, **args)
+    centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
+    interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, ndim=ndim, procs=procs, shapes=shapes, **args)

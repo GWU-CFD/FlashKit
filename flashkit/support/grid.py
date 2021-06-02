@@ -42,7 +42,6 @@ def get_blocks(*, coords: Coords, ndim: int, procs: tuple[int, int, int], sizes:
     
     # create block centers from bboxes
     centers = numpy.array([[sum(axis) / 2 for axis in box] for box in bboxes], float)
-
     return centers, bboxes
 
 def get_faces(*, coords: Coords, ndim: int, procs: tuple[int, int, int], sizes: tuple[int, int, int]) -> Faces:

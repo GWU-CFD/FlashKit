@@ -50,7 +50,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
     # read simulation information from low resolution
     with h5py.File(lw_blk_name, 'r') as file:
         scalars = list(file['integer scalars'])
-        runtime = list(file['integer runtime scalars'])
+        runtime = list(file['integer runtime parameters'])
         lw_numProcs = first_true(scalars, lambda l: 'globalnumblocks' in str(l[0]))[1]
         lw_axisNumProcs = (
                 first_true(runtime, lambda l: 'iprocs' in str(l[0]))[1],
@@ -83,7 +83,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
 
         # create datasets in output file
         for field, (location, _, _) in flows.items():
-            out_file.create_dataset(field, shapes[location], float)
+            out_file.create_dataset(field, shape=shapes[location], dtype=float)
         
         # interpolate over assigned blocks
         for step, (block, mesh, bbox) in enumerate(zip(gr_lIndex.range, gr_lMesh, bndboxes[gr_lIndex.range])):
@@ -94,31 +94,32 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
             # gather necessary information to flatten source data from low grid
             lw_flt_center = [numpy.unique(lw_centers[lw_blocks, axis]) for axis in range(3)]
             lw_flt_extent = [len(axis) for axis in lw_flt_center]
-            lw_flt_bindex = [[numpy.where(lw_flt_center[axis] == coord)[0][0]
-                               for axis, coord in enumerate(block)] for block in lw_centers[lw_blocks]]
-            lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes['center'])]
-
+            lw_flt_bindex = [[numpy.where(lw_flt_center[axis] == coord)[0][0] 
+                for axis, coord in enumerate(block)] for block in lw_centers[lw_blocks]]
+            lw_flt_uindex = [sorted(set(ind[axis] for ind in lw_flt_bindex)) for axis in range(3)]
+            lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes['center'][:0:-1])]
+                
             if lw_ndim == 3:
                 pass
 
             elif lw_ndim == 2:
 
                 # interpolate cell center fields
-                xxx = lw_grids['center'][lw_flt_bindex[:, 0]].flatten() # type: ignore
-                yyy = lw_grids['center'][lw_flt_bindex[:, 1]].flatten() # type: ignore
-                values = numpy.empty(lw_flt_fshape, dtype=float)
+                xxx = lw_grids['center'][0][lw_flt_uindex[0]].flatten() # type: ignore
+                yyy = lw_grids['center'][1][lw_flt_uindex[1]].flatten() # type: ignore
+                values = numpy.empty(lw_flt_fshape[1::-1], dtype=float)
                 for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
-                    il, ih = i * lw_sizes[0], (i + 1) * lw_sizes
-                    jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes
-                    values[jl:jh, il:ih] = inp_file.read('temp')[source, 0, :, :]
+                    il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
+                    jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
+                    values[jl:jh, il:ih] = inp_file.read('temp')[source, 0]
 
-                x = grids['center'][mesh[0], None, :] # type: ignore
-                y = grids['center'][mesh[1], :, None] # type: ignore
-
+                x = grids['center'][0][mesh[0], None, :] # type: ignore
+                y = grids['center'][1][mesh[1], :, None] # type: ignore
+                
                 data = numpy.maximum(numpy.minimum(
                     interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
                     values.max()), values.min())[None, :, :]
-                out_file.write_partial('temp', block, data, gr_lIndex) 
+                out_file.write_partial('temp', data, block=block, index=gr_lIndex) 
 
             else:
                 pass

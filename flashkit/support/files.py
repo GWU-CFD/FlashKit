@@ -49,7 +49,7 @@ class H5Manager:
         if self.safe:
             self.h5file.close()
 
-    def create_dataset(self, dataset: str, shape: tuple, dtype: type) -> None:
+    def create_dataset(self, dataset: str, *, shape: tuple, dtype: type) -> None:
         """Ensure proper creation of hdf5 dataset based on runtime enviornment."""
         if self.safe:
             self.h5file.create_dataset(dataset, shape, dtype=dtype)
@@ -109,14 +109,14 @@ class H5Manager:
                 low, high = comm.recv(source=process, tag=process+index.size)
                 dset[low:high+1] = data
 
-    def write_partial(self, dataset: str, block: int, data: N, *, index: parallel.Index = None) -> None:
+    def write_partial(self, dataset: str, data: N, *, block: int, index: parallel.Index = None) -> None:
         """Ensure proper writing of hdf5 dataset based on runtime enviornment; Must create dataset first."""
         
         # write hdf5 file serially or with parallel support
         if self.serial or self.supported:
             self.h5file[dataset][block] = data
             return
-
+        
         if index is None:
             raise LibraryError('Index object is required!')
 
