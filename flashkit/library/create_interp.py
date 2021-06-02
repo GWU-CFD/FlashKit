@@ -97,32 +97,56 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
             lw_flt_bindex = [[numpy.where(lw_flt_center[axis] == coord)[0][0] 
                 for axis, coord in enumerate(block)] for block in lw_centers[lw_blocks]]
             lw_flt_uindex = [sorted(set(ind[axis] for ind in lw_flt_bindex)) for axis in range(3)]
-            lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes['center'][:0:-1])]
+            
+            # interpolate each field for the working block
+            for field, (gr_loc, lw_fld, lw_loc) in flows.items():
+
+                # calculate flattened source data shape on low grid
+                lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes[lw_loc][:0:-1])]
+
+                if lw_ndim == 3:
                 
-            if lw_ndim == 3:
-                pass
+                    # interpolate cell center fields
+                    xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten() # type: ignore
+                    yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten() # type: ignore
+                    zzz = lw_grids[lw_loc][2][lw_flt_uindex[2]].flatten() # type: ignore
+                    values = numpy.empty(lw_flt_fshape[0::-1], dtype=float)
+                    for (i, j, k), source in zip(lw_flt_bindex, lw_blocks):
+                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
+                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
+                        kl, kh = k * lw_sizes[2], (k + 1) * lw_sizes[2]
+                        values[kl:kh, jl:jh, il:ih] = inp_file.read(lw_fld)[source]
 
-            elif lw_ndim == 2:
-
-                # interpolate cell center fields
-                xxx = lw_grids['center'][0][lw_flt_uindex[0]].flatten() # type: ignore
-                yyy = lw_grids['center'][1][lw_flt_uindex[1]].flatten() # type: ignore
-                values = numpy.empty(lw_flt_fshape[1::-1], dtype=float)
-                for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
-                    il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
-                    jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
-                    values[jl:jh, il:ih] = inp_file.read('temp')[source, 0]
-
-                x = grids['center'][0][mesh[0], None, :] # type: ignore
-                y = grids['center'][1][mesh[1], :, None] # type: ignore
+                    x = grids[gr_loc][0][mesh[0], None, None, :] # type: ignore
+                    y = grids[gr_loc][1][mesh[1], None, :, None] # type: ignore
+                    z = grids[gr_loc][2][mesh[2], :, None, None] # type: ignore
                 
-                data = numpy.maximum(numpy.minimum(
-                    interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
-                    values.max()), values.min())[None, :, :]
-                out_file.write_partial('temp', data, block=block, index=gr_lIndex) 
+                    data = numpy.maximum(numpy.minimum(
+                        interpn((zzz, yyy, xxx), values, (z, y, x), method=METHOD, bounds_error=False, fill_value=None),
+                        values.max()), values.min())
+                    out_file.write_partial(field, data, block=block, index=gr_lIndex) 
 
-            else:
-                pass
+                elif lw_ndim == 2:
+
+                    # interpolate cell center fields
+                    xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten() # type: ignore
+                    yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten() # type: ignore
+                    values = numpy.empty(lw_flt_fshape[1::-1], dtype=float)
+                    for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
+                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
+                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
+                        values[jl:jh, il:ih] = inp_file.read(lw_fld)[source, 0]
+
+                    x = grids[gr_loc][0][mesh[0], None, :] # type: ignore
+                    y = grids[gr_loc][1][mesh[1], :, None] # type: ignore
+                
+                    data = numpy.maximum(numpy.minimum(
+                        interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
+                        values.max()), values.min())[None, :, :]
+                    out_file.write_partial(field, data, block=block, index=gr_lIndex) 
+
+                else:
+                    pass
 
 def blocks_from_bbox(boxes, box):
     """Return all boxes that at least partially overlap box."""

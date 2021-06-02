@@ -88,6 +88,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['sizes'] = tuple(args[k] if n < ndim else 1 for n, k in enumerate(('nxb', 'nyb', 'nzb')))
 
     # build flows dictionary
+    print(args['fields'])
     zloc = GRIDS[-1]
     used = lambda grid: ndim == 3 or grid != zloc
     args['flows'] = {field: (location, *args.get('fsource', {}).get(field, [field, location]))
@@ -140,7 +141,7 @@ PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields',
 ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
-DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields'}
+DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
@@ -174,6 +175,7 @@ def interp(**arguments: Any) -> None:
     dest: str      Path to final grid and block hdf5 files; defaults to cwd.
     ignore: bool   Ignore configuration file provided arguments, options, and flags.
     auto: bool     Force behavior to attempt guessing BASENAME and [--step INT].
+    only: bool     Only interpolate fields provided (i.e., ignore default FIELDS).     
 
     Note:
     By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
