@@ -39,6 +39,10 @@ def null_bar(*_) -> AbstractContextManager:
     """Default context manager for progress bar."""
     return nullcontext(lambda *_: None)
 
+def set_message(message: str) -> None:
+    """Provides a message capability to the progress bar."""
+    SimpleBar.message = message
+        
 class SimpleBar(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""
     progress: int = PROGRESS
@@ -46,7 +50,8 @@ class SimpleBar(threading.Thread):
     sentinal: str = SENTINAL
     blanking: str = BLANKING
     entrance: str = ENTRANCE
-    cyclings: float = CYCLINGS 
+    cyclings: float = CYCLINGS
+    message: str = ''
     
     def __enter__(self) -> Callable[[], None]:
         self.start()
@@ -92,21 +97,23 @@ class SimpleBar(threading.Thread):
 
     def flush(self, message: str) -> None:
         print(message.ljust(self.terminal), end='\r')
-    
+   
     def update(self) -> None:
         self.click += 1
 
+    update.text = set_message # type: ignore
+    
     def run(self) -> None:
         while not self.stop_event.is_set():
             time.sleep(self.sleep)
             self.calculate()
             self.flush(self.write())
-   
+    
     def write_known(self) -> str:
-        return f'{self.entrance}|{self.done}{self.left}| {self.click}/{self.total} [{self.frac:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s)'
+        return f'{self.entrance}|{self.done}{self.left}| {self.click}/{self.total} [{self.frac:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s) {self.message}'
                
     def write_unknown(self) -> str:
-        return f'{self.entrance}|{self.done}{self.left}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)'
+        return f'{self.entrance}|{self.done}{self.left}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s) {self.message}'
 
 def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""

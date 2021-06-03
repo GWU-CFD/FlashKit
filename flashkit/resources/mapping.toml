@@ -39,6 +39,8 @@
   kprocs = ['general', 'mesh', 'kprocs']
   dest   = ['general', 'paths', 'working']
   path   = ['general', 'paths', 'working']
+  nofile = ['general', 'pipes', 'nofile']
+  result = ['general', 'pipes', 'result']
   ndim   = ['general', 'space', 'ndim']
   nxb    = ['general', 'space', 'nxb']
   nyb    = ['general', 'space', 'nyb']

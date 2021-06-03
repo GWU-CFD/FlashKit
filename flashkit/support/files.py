@@ -20,17 +20,19 @@ __all__ = ['H5Manager', ]
 class H5Manager:
     """Context Manager for simple reading and writing of hdf5 files"""
     
-    def __init__(self, filename: str, mode: str = 'r', *, clean: bool = False, force: bool = False):
+    def __init__(self, filename: str, mode: str = 'r', *, 
+                 clean: bool = False, force: bool = False, nofile: bool = False):
         
         self.filename = filename
         self.mode = mode
         
         self.clean = clean
-        self.force = mode == 'r' and force 
-        
+        self.force = mode == 'r' and force
+        self.nofile = nofile
+
         self.serial = parallel.is_serial()
         self.supported = 'mpio' in h5py.registered_drivers()
-        self.safe = any((self.supported, self.serial, parallel.is_root(), self.force))
+        self.safe = any((self.supported, self.serial, parallel.is_root(), self.force)) and not nofile
 
         try:
             assert(mode in {'r', 'r+', 'w', 'w-', 'x', 'a'})
@@ -56,12 +58,17 @@ class H5Manager:
 
     def open(self) -> None:
         """Ensures proper opening of hdf5 file based on runtime enviornment."""
+        if self.nofile: return
+
         if self.clean and os.path.exists(self.filename) and parallel.is_root():
             os.remove(self.filename)
+        
         if not self.serial and self.supported:
             self.h5file = h5py.File(self.filename, self.mode, driver='mpio', comm=parallel.COMM_WORLD)
+        
         elif parallel.is_root() or self.force:
             self.h5file = h5py.File(self.filename, self.mode)
+        
         else:
             pass
 
@@ -74,9 +81,10 @@ class H5Manager:
         """Retrieve a hdf5 dataset object; UNSAFE, should wrap in parallel.squash/single."""
         return self.h5file[dataset]
 
-    def write(self, dataset: str, data: N, *, shape: tuple = None, index: parallel.Index = None):
+    def write(self, dataset: str, data: N, *, shape: tuple = None, index: parallel.Index = None) -> None:
         """Ensure proper creating and writing of hdf5 dataset based on runtime enviornment."""
-        
+        if self.nofile: return
+
         # write hdf5 file serially
         if self.serial:
             self.h5file.create_dataset(dataset, data=data)
@@ -111,7 +119,8 @@ class H5Manager:
 
     def write_partial(self, dataset: str, data: N, *, block: int, index: parallel.Index = None) -> None:
         """Ensure proper writing of hdf5 dataset based on runtime enviornment; Must create dataset first."""
-        
+        if self.nofile: return
+
         # write hdf5 file serially or with parallel support
         if self.serial or self.supported:
             self.h5file[dataset][block] = data

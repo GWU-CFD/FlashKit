@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
-import re
 import os
+import re
 import sys
 
 # internal libraries
@@ -15,8 +15,8 @@ from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
-from ...library.create_interp import interp_blocks
 from ...library.create_grid import read_coords
+from ...library.create_interp import interp_blocks
 from ...resources import CONFIG, DEFAULTS
 from ...support.grid import get_blocks, get_grids, get_shapes
 from ...support.types import Blocks
@@ -34,6 +34,8 @@ PLOT = DEFAULTS['general']['files']['plot']
 IPROCS = DEFAULTS['general']['mesh']['iprocs']
 JPROCS = DEFAULTS['general']['mesh']['jprocs']
 KPROCS = DEFAULTS['general']['mesh']['kprocs']
+RESULT = DEFAULTS['general']['pipes']['result']
+NOFILE = DEFAULTS['general']['pipes']['nofile']
 NDIM = DEFAULTS['general']['space']['ndim']
 NXB = DEFAULTS['general']['space']['nxb']
 NYB = DEFAULTS['general']['space']['nyb']
@@ -43,7 +45,9 @@ NZB = DEFAULTS['general']['space']['nzb']
 GRIDS = CONFIG['create']['block']['grids']
 NAME = CONFIG['create']['block']['name']
 SWITCH = CONFIG['create']['interp']['switch']
+LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
+PRECISION = CONFIG['create']['interp']['precision']
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 
@@ -71,8 +75,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # find the source file
     if not step_given:
         step = sorted([int(file[-4:]) for file in listdir if condition(file)])[-1]
-        if not step:
-                raise AutoError(f'Cannot automatically identify simulation file on path {path}')
+        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
         args['step'] = step
 
     # create the basename
@@ -88,7 +91,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['sizes'] = tuple(args[k] if n < ndim else 1 for n, k in enumerate(('nxb', 'nyb', 'nzb')))
 
     # build flows dictionary
-    print(args['fields'])
     zloc = GRIDS[-1]
     used = lambda grid: ndim == 3 or grid != zloc
     args['flows'] = {field: (location, *args.get('fsource', {}).get(field, [field, location]))
@@ -102,7 +104,7 @@ def attach_context(**args: Any) -> dict[str, Any]:
         args['context'] = get_bar()
     else:
         args['context'] = get_bar(null=True)
-        if False: #args['nofile']:
+        if args['nofile']:
             printer.info('Interpolating block data (no file out) ...')
         else:
             printer.info('Interpolation block data (out to file) ...')
@@ -137,9 +139,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource',
-            'basename', 'step', 'plot', 'grid', 'path', 'dest', 'auto'}
+            'basename', 'step', 'plot', 'grid', 'path', 'dest', 'auto', 'result', 'nofile'}
 ROUTE = ('create', 'interp')
-PRIORITY = {'ignore', 'coords'}
+PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
@@ -151,8 +153,15 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
+@squash
+def screen_out(*, blocks: Blocks) -> None:
+    """Output calculated fields by block to the screen."""
+    with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
+        message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
+        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
+
 @safe
-def interp(**arguments: Any) -> None:
+def interp(**arguments: Any) -> Optional[Blocks]:
     """Python application interface for using interpolation to create an initial block file.
 
     Keyword arguments:
@@ -175,7 +184,8 @@ def interp(**arguments: Any) -> None:
     dest: str      Path to final grid and block hdf5 files; defaults to cwd.
     ignore: bool   Ignore configuration file provided arguments, options, and flags.
     auto: bool     Force behavior to attempt guessing BASENAME and [--step INT].
-    only: bool     Only interpolate fields provided (i.e., ignore default FIELDS).     
+    result: bool   Return the calculated fields by block on root; defaults to {RESULT}.
+    nofile: bool   Do not write the calculated fields by block to file; defaults to {NOFILE}.
 
     Note:
     By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
@@ -186,10 +196,16 @@ def interp(**arguments: Any) -> None:
     ndim = args.pop('ndim')
     procs = args.pop('procs')
     sizes = args.pop('sizes')
+    result = args.pop('result')
+    cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
     
     if coords is None: coords = read_coords(path=path, ndim=ndim)
     shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
     grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
     centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, ndim=ndim, procs=procs, shapes=shapes, **args)
+    blocks = interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, ndim=ndim, procs=procs, shapes=shapes, **args)
+    
+    if not result: return None
+    if cmdline: screen_out(blocks=blocks)
+    return blocks

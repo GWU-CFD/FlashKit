@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, Tuple
+from typing import cast 
 
 # standard libraries
 import os
@@ -16,7 +16,7 @@ from ..core.tools import first_true
 from ..resources import CONFIG
 from ..support.files import H5Manager
 from ..support.grid import axisMesh, axisUniqueIndex, get_grids, get_shapes
-from ..support.types import N, Grids, Shapes
+from ..support.types import N, Coords, Grids, Shapes
 
 # external libraries
 import numpy
@@ -32,8 +32,8 @@ METHOD = CONFIG['create']['interp']['method']
 
 @safe
 def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename: str, flows: dict[str, tuple[str, str, str]],
-                  gridname: str, grids: Grids, ndim: int, path: str, procs: tuple[int, int, int],
-                  shapes: Shapes, step: int, context: Bar) -> None:
+                  gridname: str, grids: Grids, ndim: int, nofile: bool, path: str, procs: tuple[int, int, int],
+                  shapes: Shapes, step: int, context: Bar) -> dict[str, N]:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # define necessary filenames on the correct path
@@ -73,31 +73,38 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
     with h5py.File(lw_grd_name, 'r') as file:
         faxes = (file[axis][()] for axis in ('xxxf', 'yyyf', 'zzzf'))
         uinds = axisUniqueIndex(*lw_axisNumProcs)
-        coords = cast(Tuple[N, N, N], tuple(numpy.append(a[i][:,:-1].flatten(), a[-1,-1]) if a is not None else None for a, i in zip(faxes, uinds)))
+        coords = cast(Coords, tuple(numpy.append(a[i][:,:-1].flatten(), a[-1,-1]) if a is not None else None for a, i in zip(faxes, uinds)))
         lw_grids = get_grids(coords=coords, ndim=lw_ndim, procs=lw_axisNumProcs, sizes=lw_sizes)
         lw_shapes = get_shapes(ndim=lw_ndim, procs=lw_axisNumProcs, sizes=lw_sizes)
         del faxes, uinds, coords
 
     # open input and output files for performing the interpolation (writing the data as we go is most memory efficient)
-    with H5Manager(lw_blk_name, 'r', force=True) as inp_file, H5Manager(gr_blk_name, 'w-', clean=True) as out_file:
+    with H5Manager(lw_blk_name, 'r', force=True) as inp_file, \
+            H5Manager(gr_blk_name, 'w-', clean=True, nofile=nofile) as out_file, \
+            context(gr_lIndex.size) as progress:
 
         # create datasets in output file
+        output = {}
         for field, (location, _, _) in flows.items():
             out_file.create_dataset(field, shape=shapes[location], dtype=float)
+            output[field] = numpy.empty((gr_lIndex.size, ) + shapes[location][1:], numpy.double)
         
         # interpolate over assigned blocks
         for step, (block, mesh, bbox) in enumerate(zip(gr_lIndex.range, gr_lMesh, bndboxes[gr_lIndex.range])):
 
             # get blocks in the low grid that overlay the high grid
             lw_blocks = blocks_from_bbox(lw_bndboxes, bbox)
+            progress.text(f'from {lw_blocks}')
 
             # gather necessary information to flatten source data from low grid
+            lw_unq_center = [numpy.unique(lw_centers[:, axis]) for axis in range(3)]
             lw_flt_center = [numpy.unique(lw_centers[lw_blocks, axis]) for axis in range(3)]
             lw_flt_extent = [len(axis) for axis in lw_flt_center]
             lw_flt_bindex = [[numpy.where(lw_flt_center[axis] == coord)[0][0] 
                 for axis, coord in enumerate(block)] for block in lw_centers[lw_blocks]]
-            lw_flt_uindex = [sorted(set(ind[axis] for ind in lw_flt_bindex)) for axis in range(3)]
-            
+            lw_flt_uindex = [numpy.unique([numpy.where(lw_unq_center[axis] == coord[axis])[0][0] 
+                for coord in lw_centers[lw_blocks]]) for axis in range(3)]
+
             # interpolate each field for the working block
             for field, (gr_loc, lw_fld, lw_loc) in flows.items():
 
@@ -121,13 +128,13 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                     y = grids[gr_loc][1][mesh[1], None, :, None] # type: ignore
                     z = grids[gr_loc][2][mesh[2], :, None, None] # type: ignore
                 
-                    data = numpy.maximum(numpy.minimum(
+                    output[field][step] = numpy.maximum(numpy.minimum(
                         interpn((zzz, yyy, xxx), values, (z, y, x), method=METHOD, bounds_error=False, fill_value=None),
                         values.max()), values.min())
-                    out_file.write_partial(field, data, block=block, index=gr_lIndex) 
+                    out_file.write_partial(field, output[field][step], block=block, index=gr_lIndex) 
 
                 elif lw_ndim == 2:
-
+            
                     # interpolate cell center fields
                     xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten() # type: ignore
                     yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten() # type: ignore
@@ -140,13 +147,17 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                     x = grids[gr_loc][0][mesh[0], None, :] # type: ignore
                     y = grids[gr_loc][1][mesh[1], :, None] # type: ignore
                 
-                    data = numpy.maximum(numpy.minimum(
+                    output[field][step] = numpy.maximum(numpy.minimum(
                         interpn((yyy, xxx), values, (y, x), method=METHOD, bounds_error=False, fill_value=None),
                         values.max()), values.min())[None, :, :]
-                    out_file.write_partial(field, data, block=block, index=gr_lIndex) 
+                    out_file.write_partial(field, output[field][step], block=block, index=gr_lIndex) 
 
                 else:
                     pass
+
+            progress()
+            
+    return output
 
 def blocks_from_bbox(boxes, box):
     """Return all boxes that at least partially overlap box."""
