@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # automatic metadata access
 from flashkit import __meta__
 
+
 # -- Project information -----------------------------------------------------
 
 project = 'flashkit'
@@ -31,29 +32,49 @@ version = __meta__.__version__
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
+        'sphinx.ext.autosectionlabel',
+        'sphinx.ext.autodoc',
+        'sphinx.ext.mathjax',
+        'sphinx.ext.githubpages',
+        'sphinx.ext.intersphinx'
 ]
 
-# Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+source_suffix = '.rst'
+master_doc = 'index'
+language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['build']
 
+# do not include fully qualified names of objects with autodoc
+add_module_names = False
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'alabaster'
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+html_theme = 'sphinx_book_theme'
+html_title = ''
+html_logo = '_static/logo.png'
 html_static_path = ['_static']
+html_theme_options = {
+        'external_links': [],
+        'github_url': 'https://github.com/GWU-CFD/FlashKit',
+        }
+
+
+# -- Extension configuration -------------------------------------------------
+
+intersphinx_mapping = {'https://docs.python.org/3/': None}
+
+# export variables with epilogue
+rst_epilog = f"""
+.. |release| replace:: {release}
+.. |copyright| replace:: {copyright}
+"""
