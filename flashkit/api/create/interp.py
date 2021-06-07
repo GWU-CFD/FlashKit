@@ -130,7 +130,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  sources       = {row(f_sources)}',
         f'                  {row(l_sources)}',
         f'  plot (source) = {path}/{basename}{plot}{step:04}',
-        f'  grid (source) = {path}/{basename}{grid}{0000}',
+        f'  grid (source) = {path}/{basename}{grid}{0:04}',
         f'  block (dest)  = {dest}/{NAME}',
         f'',
         ])

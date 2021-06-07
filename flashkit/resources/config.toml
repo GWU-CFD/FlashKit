@@ -24,7 +24,7 @@
 
   [create.interp]
   method = 'linear' # interpolation kernal
-  switch = 1     # number of points before show progress  
+  switch = 1        # number of points before show progress  
   linewidth = 120   # line width if ouput to screen
   tablespad = 10    # padding for table printing
   precision = 6     # precision if output to screen
