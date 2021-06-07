@@ -1,19 +1,12 @@
 FlashKit
 ========
 
-A python based sdk and simple command line interface to assist researchers in using the FLASH code.*
+A python based sdk and simple command line interface to assist researchers in using the FLASH code.
 
-Installation
-------------
+The FlashKit library implements a useful set of abstractions to common operations reseachers perform 
+when using the FLASH software, which are avalable from either the command line or python code with a 
+consitant user interface.
 
-If you already have python 3.7 (or greater) on your system, you can install ''flashkit'' using Pip.
+Documentation for FlashKit can be found `here <https://gwu-cfd.github.io/FlashKit/index.html/>`_
 
-.. code-block:: bash
-
-   pip install flashkit
-
-
-Basic Usage
------------
-
-To be written ...
+--------------------
