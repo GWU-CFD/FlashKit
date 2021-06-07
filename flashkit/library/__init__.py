@@ -1,1 +1,1 @@
-"""Package initialization for FlashKit library code."""
+"""Library (sub-library) initialization for FlashKit."""

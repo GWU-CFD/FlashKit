@@ -2,34 +2,39 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Any, Union
 
 # standard libraries
+import re
 import os
 import sys
-import re
 
 # internal libraries
-from ...core import logging, parallel, progress, stream
 from ...core.error import AutoError
-from ...library import create_xdmf
+from ...core.logging import printer
+from ...core.parallel import safe, single 
+from ...core.progress import get_bar
+from ...core.stream import Instructions, mail
+from ...library.create_xdmf import create_xdmf
 from ...resources import CONFIG, DEFAULTS
-
-# static analysis
-if TYPE_CHECKING:
-    from typing import Any
-    S = TypeVar('S', bound = dict[str, Any])
 
 # define public interface
 __all__ = ['xdmf', ]
 
-# default constants
+# define default constants (public)
+GRID: str = DEFAULTS['general']['files']['grid']
+HIGH: int = DEFAULTS['create']['xdmf']['high']
+LOW: int = DEFAULTS['create']['xdmf']['low']
+OUT: str = DEFAULTS['general']['files']['output']
+PLOT: str = DEFAULTS['general']['files']['plot']
+SKIP: int = DEFAULTS['create']['xdmf']['skip']
+
+# define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
-BAR_SWITCH_XDMF = CONFIG['create']['xdmf']['switch']
-RANGES = ('low', 'high', 'skip') 
+BAR_SWITCH = CONFIG['create']['xdmf']['switch']
 
-def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
+def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
 
     # determine arguments passed
@@ -38,7 +43,7 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         files_given = False
         bname_given = False
     else:    
-        range_given = any(args.get(key, False) for key in RANGES)
+        range_given = any(args.get(key, False) for key in ('low', 'high', 'skip'))
         files_given = 'files' in args.keys()
         bname_given = 'basename' in args.keys()
     
@@ -53,7 +58,10 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
         condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
 
     # create the filelist (throw if not defaults present)
-    low, high, skip = (args.get(key) for key in RANGES)
+    low: int = args['low']
+    high: int = args['high']
+    skip: int = args['skip']
+    files: Union[range, list[int]] 
     if not files_given: 
         if range_given:
             high = high + 1
@@ -78,21 +86,25 @@ def adapt_arguments(**args: dict[str, Any]) -> dict[str, Any]:
     
     return args
 
-def attach_context(**args: dict[str, Any]) -> dict[str, Any]:
+def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if len(args['files']) >= BAR_SWITCH_XDMF and sys.stdout.isatty():
-        args['context'] = progress.get_available()
+    if len(args['files']) >= BAR_SWITCH and sys.stdout.isatty():
+        args['context'] = get_bar()
     else:
-        logging.printer.info('\nWriting xdmf data out to file ...')
+        args['context'] = get_bar(null=True)
+        printer.info('Writing xdmf data out to file ...')
     return args
 
-def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
+def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
-    labels = ('basename', 'dest', 'files', 'grid', 'out', 'plot', 'path')
-    basename, dest, files, grid, out, plot, source = (args.get(key) for key in labels)
+    basename = args['basename']
+    dest = os.path.relpath(args['dest'])
+    source = os.path.relpath(args['path'])
+    files = args['files']
+    grid = args['grid']
+    out = args['out']
+    plot = args['plot']
     msg_files = args.pop('message')
-    source = os.path.relpath(source)
-    dest = os.path.relpath(dest)
     message = '\n'.join([
         f'Creating xdmf file from {len(files)} simulation files',
         f'  plotfiles = {source}/{basename}{plot}xxxx',
@@ -101,39 +113,40 @@ def log_messages(**args: dict[str, Any]) -> dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    logging.printer.info(message)
+    printer.info(message)
     return args
 
-# default constants for handling the argument stream
+# define constants for handling the argument stream
 PACKAGES = {'auto', 'basename', 'dest', 'files', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
 ROUTE = ('create', 'xdmf')
 PRIORITY = {'ignore'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'auto', 'high', 'ignore', 'low', 'skip'}
 MAPPING = {'grid': 'gridname', 'out': 'filename', 'plot': 'plotname', 'path': 'source'}
-INSTRUCTIONS = stream.Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
+INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
-@parallel.single
-@stream.mail(INSTRUCTIONS)
-def process_arguments(**arguments: S) -> S:
+@single
+@mail(INSTRUCTIONS)
+def process_arguments(**arguments: Any) -> dict[str, Any]:
     """Composition of behaviors intended prior to dispatching to library."""
     return arguments
 
-def xdmf(**arguments: dict[str, Any]) -> None:
+@safe
+def xdmf(**arguments: Any) -> None:
     """Python application interface for creating xdmf from command line or python code.
 
     Keyword arguments:  
     basename: str Basename for flash simulation, will be guessed if not provided
                   (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-    low:  int     Begining number for timeseries hdf5 files; defaults to {create_xdmf.LOW}.
-    high: int     Ending number for timeseries hdf5 files; defaults to {create_xdmf.HIGH}.
-    skip: int     Number of files to skip for timeseries hdf5 files; defaults to {create_xdmf.SKIP}.
+    low: int      Begining number for timeseries hdf5 files; defaults to {LOW}.
+    high: int     Ending number for timeseries hdf5 files; defaults to {HIGH}.
+    skip: int     Number of files to skip for timeseries hdf5 files; defaults to {SKIP}.
     files: list   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
     path: str     Path to timeseries hdf5 simulation output files; defaults to cwd.
     dest: str     Path to xdmf (contains relative paths to sim data); defaults to cwd.
-    out: str      Output XDMF file name follower; defaults to a footer '{create_xdmf.OUT}'.
-    plot: str     Plot/Checkpoint file(s) name follower; defaults to '{create_xdmf.PLOT}'.
-    grid: str     Grid file(s) name follower; defaults to '{create_xdmf.GRID}'.
+    out: str      Output XDMF file name follower; defaults to a footer '{OUT}'.
+    plot: str     Plot/Checkpoint file(s) name follower; defaults to '{PLOT}'.
+    grid: str     Grid file(s) name follower; defaults to '{GRID}'.
     ignore: bool  Ignore configuration file provided arguments, options, and flags.
     auto: bool    Force behavior to attempt guessing BASENAME and [--files LIST].
 
@@ -141,4 +154,4 @@ def xdmf(**arguments: dict[str, Any]) -> None:
             the PATH will be searched for flash simulation files and all
             such files identified will be used in sorted order.\
     """
-    create_xdmf.file(**process_arguments(**arguments))
+    create_xdmf(**process_arguments(**arguments))
