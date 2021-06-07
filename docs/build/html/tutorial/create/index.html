@@ -238,7 +238,28 @@
                 
   <div class="section" id="create">
 <h1>Create<a class="headerlink" href="#create" title="Permalink to this headline">¶</a></h1>
-<p>Page under construction …</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">create</span></code> category of operations is used to generate useful pre- and post-processing files related to FLASH.</p>
+<p>The currently supported functionality is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: flashkit create [-h] &lt;command&gt; [&lt;args&gt;...]
+Create files relavent to flash execution and processing.
+
+commands:   
+block       Create an initial simulation flow field (block) hdf5 file.
+grid        Create an initial simulation domain (grid) hdf5 file.
+intrp       Create an initial flow field (block) using interpolated simulation data.
+par         Create an flash parameter file using specified templates and options.
+run         Create the appropriate flash execution shell script.
+xdmf        Create an xdmf file associated with flash simulation HDF5 output.
+
+options:
+-h, --help  Show this message and exit.
+
+Use the -h/--help flag with the above commands to
+learn more about their usage.
+</pre></div>
+</div>
+<hr class="docutils" />
+<p>Details for each operation can be found in the following discussion.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="block.html">Block</a></li>
@@ -247,6 +268,7 @@
 <li class="toctree-l1"><a class="reference internal" href="xdmf.html">Xdmf</a></li>
 </ul>
 </div>
+<hr class="docutils" />
 </div>
 
 

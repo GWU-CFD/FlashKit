@@ -32,7 +32,7 @@ on the location of execution to maximize productivity and confidence.
 Features
 --------
 
-The *FlashKit* library provides a number of useful operations for a FLASH user, which fall into several catagories.
+The *FlashKit* library provides a number of useful operations for a FLASH user, which fall into several categories.
 These are accessed in a very natural way by specifying the catagory and operations desired. Specifically, an operation
 is an inteded task such as a pre- or post-processing action and catagories are collections of related operations. In 
 this way the command line interface can provide a very 'natural language' interface to the user.
@@ -47,7 +47,7 @@ where the clouds indicate functions that are under development but are not yet c
 
 These operations are available from the command line using::
 
-    flashkit catagory operation <option> <value> <flag> ...
+    flashkit category operation <option> <value> <flag> ...
 
 They are also available from python code using the following interface:
 
@@ -57,7 +57,7 @@ They are also available from python code using the following interface:
     
     ...
 
-    flash.catagory.operation(option=value, flag=True, ...)
+    flash.category.operation(option=value, flag=True, ...)
 
 There are a few minor differences in the command line and python interfaces, these are documented.
 

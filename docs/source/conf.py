@@ -37,7 +37,8 @@ extensions = [
         'sphinx.ext.autodoc',
         'sphinx.ext.mathjax',
         'sphinx.ext.githubpages',
-        'sphinx.ext.intersphinx'
+        'sphinx.ext.intersphinx',
+        'sphinxcontrib.programoutput',
 ]
 
 templates_path = ['_templates']
@@ -48,7 +49,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['build']
+exclude_patterns = []
 
 # do not include fully qualified names of objects with autodoc
 add_module_names = False
