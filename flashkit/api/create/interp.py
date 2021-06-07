@@ -143,7 +143,7 @@ PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields',
 ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
-DROPS = {'ignore', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
+DROPS = {'ignore', 'auto', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 

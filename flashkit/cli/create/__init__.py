@@ -12,11 +12,12 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # commands
-from . import block, grid, intrp, par, run, xdmf 
+from . import block, grid, interp, par, run, xdmf 
 
 COMMANDS: DictApp = {
         'block': block.BlockCreateApp,
         'grid': grid.GridCreateApp,
+        'interp': interp.InterpCreateApp,
         'xdmf': xdmf.XdmfCreateApp,
         }
 
@@ -33,7 +34,7 @@ HELP = f"""\
 commands:   
 block       {block.__doc__}
 grid        {grid.__doc__}
-intrp       {intrp.__doc__}
+interp      {interp.__doc__}
 par         {par.__doc__}
 run         {run.__doc__}
 xdmf        {xdmf.__doc__}
