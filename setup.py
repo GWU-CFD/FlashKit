@@ -9,7 +9,7 @@ with open('README.rst', mode='r') as readme:
     long_description = readme.read()
 
 # get package metadata by parsing __meta__ module
-with open('flashkit/__meta__.py', mode='r') as source:
+with open('src/flashkit/__meta__.py', mode='r') as source:
     content = source.read().strip()
     metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
                 for key in ['__pkgname__', '__version__', '__authors__', '__contact__',
@@ -28,7 +28,8 @@ setup(
     license              = metadata['__license__'],
     keywords             = 'flash code skd and cli',
     url                  = metadata['__website__'],
-    packages             = find_packages(),
+    packages             = find_packages(where='src'),
+    package_dir          = {'': 'src'},
     include_package_data = True,
     long_description     = long_description,
     classifiers          = ['Development Status :: 2 - Pre-Alpha',
