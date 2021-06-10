@@ -5,7 +5,7 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import block
-from ...api.create.block import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, METHOD
+from ...api.create._block import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, METHOD
 from ...core.custom import patched_error, patched_exceptions
 from ...core.parse import DictStr, DictDictAny
 

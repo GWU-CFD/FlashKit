@@ -5,7 +5,7 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import interp
-from ...api.create.interp import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, PLOT, GRID
+from ...api.create._interp import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, PLOT, GRID
 from ...core.custom import patched_error, patched_exceptions
 from ...core.parse import DictStr, DictListStr
 

@@ -57,6 +57,15 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         listdir = os.listdir(source)
         condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
 
+    # create the basename
+    if not bname_given:
+        try:
+            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
+            orig_cond = condition
+            condition = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
+        except StopIteration:
+            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+    
     # create the filelist (throw if not defaults present)
     low: int = args['low']
     high: int = args['high']
@@ -77,13 +86,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         files = args['files']
         args['message'] = f'[{",".join(str(f) for f in files)}]'
 
-    # create the basename
-    if not bname_given:
-        try:
-            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
-        except StopIteration:
-            raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
-    
     return args
 
 def attach_context(**args: Any) -> dict[str, Any]:
