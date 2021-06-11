@@ -6,9 +6,12 @@ from typing import NamedTuple, TYPE_CHECKING
 
 # standard libraries
 import os
+import sys
 from functools import partial, reduce
 
 # internal libraries
+from .logging import logger
+from .parallel import is_root
 from ..resources import CONFIG, DEFAULTS, MAPPING
 
 # external libraries
@@ -23,6 +26,9 @@ if TYPE_CHECKING:
     M = MutableMapping[str, Any]
     N = Namespace
 
+# module access and module level @property(s)
+this = sys.modules[__name__]
+
 # define public interface
 __all__ = ['get_arguments', 'get_defaults']
 
@@ -36,6 +42,9 @@ LABEL = CONFIG['core']['configure']['label']
 MAX = CONFIG['core']['configure']['max']
 PAD = f'0{len(str(MAX))}'
 
+# internal member for forced delayed
+_delayed: Optional[bool] = None
+
 class Leaf(NamedTuple):
     """Definiton of a tree leaf."""
     leaf: Any
@@ -43,6 +52,11 @@ class Leaf(NamedTuple):
 
 class WalkError(Exception):
     """Raised when there is an issue walking the path.""" 
+
+def force_delayed(state: bool = True) -> None:
+    """Force the assumption of an on import or on call configure state."""
+    this._delayed = state # type: ignore
+    if is_root(): logger.debug('Force Delayed Configuration!')
 
 def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
@@ -126,5 +140,9 @@ def walk_the_tree(tree: M, stem: list[str] = []) -> list[list[str]]:
     return leaves
 
 # initialize argument factory for commandline routines
-get_arguments = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING), trees=prepare(gather(), MAPPING))
+trees_on_import = prepare(gather(), MAPPING)
 get_defaults = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING))
+def get_arguments(*, local: N = Namespace()) -> C:
+    """Provides support for delayed configuration of arguments."""
+    trees = trees_on_import if not _delayed else prepare(gather(), MAPPING)
+    return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)

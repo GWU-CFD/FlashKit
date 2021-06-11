@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import cast, NamedTuple, TYPE_CHECKING
 
 # system libraries
-import sys
 import os
+import sys
 import pkg_resources
 from functools import wraps
 

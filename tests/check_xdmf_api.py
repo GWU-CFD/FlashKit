@@ -8,6 +8,8 @@ from typing import NamedTuple
 
 # internal libraries
 from flashkit.api.create import _xdmf
+from flashkit.core.configure import force_delayed 
+from flashkit.core.custom import force_debug 
 from flashkit.core.progress import get_bar
 from flashkit.resources import CONFIG, DEFAULTS
 
@@ -25,11 +27,11 @@ class Case(NamedTuple):
     expected: dict
 
 @pytest.fixture(scope='module')
-def working(api_dir):
+def working(scratch):
     """Create the files needed for xdmf api testing."""
     
     # working directory for testing
-    xdmf_dir = api_dir.mkdir('xdmf')
+    xdmf_dir = scratch.mkdir('xdmf')
 
     # a set of plot files
     xdmf_dir.join('INS_LidDr_Cavity_hdf5_grd_0000').write('')
@@ -51,6 +53,15 @@ def working(api_dir):
     xdmf_dir.join('INS_Rayleigh_hdf5_chk_0030').write('')
     xdmf_dir.join('INS_Rayleigh_hdf5_chk_0004').write('')
 
+    # a configuation file
+    with xdmf_dir.join('flash.toml').open(mode='w') as config:
+        config.write('[create.xdmf]\n')
+        config.write("basename = 'INS_Rayleigh'\n")
+        config.write('files = [1000, 200, 30, 4]\n')
+        config.write("grid = '_hdf5_geometry_'\n")
+        config.write("plot = '_hdf5_chk_'\n")
+        config.write("out = '_paraview'\n")
+    
     # a source and destination directory
     source_dir = xdmf_dir.mkdir('source')
     source_dir.join('INS_LidDr_Cavity_hdf5_grd_0000').write('')
@@ -163,24 +174,45 @@ def case_context(working):
                 'source': str(working),
                 })
 
+@pytest.fixture()
+def case_config(working):
+    """Define using config the names and files case for the xdmf api."""
+    return Case(
+            provided={
+                },
+            expected={
+                'dest': str(working),
+                'files': [1000, 200, 30, 4],
+                'basename': 'INS_Rayleigh',
+                'context': get_bar(null=True),
+                'gridname': '_hdf5_geometry_',
+                'filename': '_paraview',
+                'plotname': '_hdf5_chk_',
+                'source': str(working),
+                })
+
 @pytest.fixture(params=[
     pytest.lazy_fixture('case_default'),
     pytest.lazy_fixture('case_auto'),
     pytest.lazy_fixture('case_manual'),
     pytest.lazy_fixture('case_paths'),
     pytest.lazy_fixture('case_context'),
+    pytest.lazy_fixture('case_config'),
     ])
 def data(request):
     """Parameterized data for testing xdmf api."""
     return request.param
 
-@pytest.mark.unit
 @pytest.mark.api
 def checking(working, data, mocker):
 
+    # force flashkit to wait to configure arguments    
+    force_debug()
+    force_delayed()
+
     # don't run library function or logging
     mocker.patch('flashkit.api.create._xdmf.create_xdmf', return_value=None)
-    mocker.patch('flashkit.api.create._xdmf.printer.info', return_value=None)
+    #mocker.patch('flashkit.api.create._xdmf.printer.info', return_value=None)
     mocker.patch('flashkit.api.create._xdmf.sys.stdout.isatty', return_value=True)
 
     # instrument desired functions
@@ -202,7 +234,7 @@ def checking(working, data, mocker):
         exp = data.expected
         files = exp['files']
         fmsgs = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
-        check = rf".*{len(data.expected['files'])}.*files.*" \
+        check = rf".*{len(data.expected['files'])}.*" \
                 rf".*{os.path.relpath(exp['source'])}/{exp['basename']}{exp['plotname']}xxxx.*" \
                 rf".*{os.path.relpath(exp['source'])}/{exp['basename']}{exp['gridname']}xxxx.*" \
                 rf".*{os.path.relpath(exp['dest'])}/{exp['basename']}{exp['filename']}.xmf.*" \

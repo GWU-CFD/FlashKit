@@ -11,6 +11,7 @@ import re
 import sys
 
 # internal libraries
+from ..core.configure import force_delayed
 from ..core.logging import logger, DEBUG
 from ..core.parallel import force_parallel, is_root, squash
 
@@ -44,12 +45,22 @@ setattr(Application, 'handle_usage', squash(Application.handle_usage))
 setattr(app, 'exit_status', exit_status._replace(usage = 0))
 
 # Create custom argparse actions
+def force_debug(state: bool = True) -> None:
+    """Force the use of debugging logging level."""
+    if state: logger.setLevel(DEBUG)
+    if is_root(): logger.debug('Force DEBUG Logging Level!')
+
 class DebugLogging(argparse.Action):
     """Create custom action for setting debug logging."""
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, True)
-        logger.setLevel(DEBUG)
-        if is_root(): logger.debug('Set Logging Level To DEBUG!')
+        force_debug()
+
+class ForceDelayed(argparse.Action):
+    """Create custom action for setting delayed configuration enviornment."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, True)
+        force_delayed()
 
 class ForceParallel(argparse.Action):
     """Create custom action for setting parallel enviornment."""
