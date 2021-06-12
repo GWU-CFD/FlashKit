@@ -1,10 +1,14 @@
 """Testing the api for xdmf operation."""
 
+# type annotations
+from typing import NamedTuple
+
 # standard libraries
 import os
 import re
 
-from typing import NamedTuple
+# external libraries
+import pytest
 
 # internal libraries
 from flashkit.api.create import _xdmf
@@ -12,9 +16,6 @@ from flashkit.core.configure import force_delayed
 from flashkit.core.custom import force_debug 
 from flashkit.core.progress import get_bar
 from flashkit.resources import CONFIG, DEFAULTS
-
-# external libraries
-import pytest
 
 # define default and config constants
 FILES = DEFAULTS['general']['files']
@@ -53,15 +54,6 @@ def working(scratch):
     xdmf_dir.join('INS_Rayleigh_hdf5_chk_0030').write('')
     xdmf_dir.join('INS_Rayleigh_hdf5_chk_0004').write('')
 
-    # a configuation file
-    with xdmf_dir.join('flash.toml').open(mode='w') as config:
-        config.write('[create.xdmf]\n')
-        config.write("basename = 'INS_Rayleigh'\n")
-        config.write('files = [1000, 200, 30, 4]\n')
-        config.write("grid = '_hdf5_geometry_'\n")
-        config.write("plot = '_hdf5_chk_'\n")
-        config.write("out = '_paraview'\n")
-    
     # a source and destination directory
     source_dir = xdmf_dir.mkdir('source')
     source_dir.join('INS_LidDr_Cavity_hdf5_grd_0000').write('')
@@ -71,6 +63,36 @@ def working(scratch):
     dest_dir = xdmf_dir.mkdir('dest')
 
     return xdmf_dir
+
+@pytest.fixture()
+def single_toml(working):
+    """Create single configuration file for api testing."""
+    with working.join('flash.toml').open(mode='w') as config:
+        config.write('[create.xdmf]\n')
+        config.write("basename = 'INS_Rayleigh'\n")
+        config.write('files = [1000, 200, 30, 4]\n')
+        config.write("grid = '_hdf5_geometry_'\n")
+        config.write("plot = '_hdf5_chk_'\n")
+        config.write("out = '_paraview'\n")
+
+@pytest.fixture()
+def nested_toml(working, scratch):
+    """Create two configuration files for api testing."""
+    with working.join('flash.toml').open(mode='w') as config:
+        config.write('[create.xdmf]\n')
+        config.write('files = [1000, 200, 30, 4]\n')
+        config.write("grid = '_hdf5_geometry_'\n")
+    
+    with scratch.join('flash.toml').open(mode='w') as config:
+        config.write('[general.files]\n')
+        config.write("grid = '_hdf5_space_'\n")
+        config.write("plot = '_hdf5_chk_'\n")
+        config.write("output = '_paraview'\n")
+        config.write('[create.xdmf]\n')
+        config.write("basename = 'INS_Rayleigh'\n")
+        config.write('high = 1000\n')
+        config.write('low = 4\n')
+        config.write('skip = 10\n')
 
 @pytest.fixture()
 def case_default(working):
@@ -174,7 +196,10 @@ def case_context(working):
                 'source': str(working),
                 })
 
-@pytest.fixture()
+@pytest.fixture(params=[
+    pytest.lazy_fixture('single_toml'),
+    pytest.lazy_fixture('nested_toml')
+    ])
 def case_config(working):
     """Define using config the names and files case for the xdmf api."""
     return Case(
@@ -205,6 +230,7 @@ def data(request):
 
 @pytest.mark.api
 def checking(working, data, mocker):
+    """ Verify that the expected api behaviors work properly."""
 
     # force flashkit to wait to configure arguments    
     force_debug()
@@ -212,7 +238,7 @@ def checking(working, data, mocker):
 
     # don't run library function or logging
     mocker.patch('flashkit.api.create._xdmf.create_xdmf', return_value=None)
-    #mocker.patch('flashkit.api.create._xdmf.printer.info', return_value=None)
+    mocker.patch('flashkit.api.create._xdmf.printer.info', return_value=None)
     mocker.patch('flashkit.api.create._xdmf.sys.stdout.isatty', return_value=True)
 
     # instrument desired functions

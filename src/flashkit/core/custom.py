@@ -46,7 +46,8 @@ setattr(app, 'exit_status', exit_status._replace(usage = 0))
 
 # Create custom argparse actions
 def force_debug(state: bool = True) -> None:
-    """Force the use of debugging logging level."""
+    """Force the use of debugging logging level;
+    needs to be here vice logging to prevent a circular import."""
     if state: logger.setLevel(DEBUG)
     if is_root(): logger.debug('Force DEBUG Logging Level!')
 

@@ -9,3 +9,6 @@ __pycache__/
 
 # Sphinx Build files
 doctrees/
+
+# Pytest files
+*.coverage

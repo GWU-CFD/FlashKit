@@ -1,49 +1,42 @@
-"""Support for importing config files along directory tree.""" 
+"""Support for importing config files along directory tree."""
 
 # type annotations
 from __future__ import annotations
-from typing import NamedTuple, TYPE_CHECKING
+from typing import Any, Iterator, NamedTuple, Optional
+from collections.abc import MutableMapping
 
 # standard libraries
+from functools import partial, reduce
 import os
 import sys
-from functools import partial, reduce
+
+# external libraries
+import toml
+from cmdkit.config import Configuration, Namespace
 
 # internal libraries
 from .logging import logger
 from .parallel import is_root
 from ..resources import CONFIG, DEFAULTS, MAPPING
 
-# external libraries
-import toml
-from cmdkit.config import Configuration, Namespace
-
-# static analysis
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
-    from typing import Any, Iterator, Optional
-    C = Configuration
-    M = MutableMapping[str, Any]
-    N = Namespace
-
 # module access and module level @property(s)
-this = sys.modules[__name__]
+THIS = sys.modules[__name__]
 
 # define public interface
 __all__ = ['get_arguments', 'get_defaults']
 
 # define configuration constants
-PATH = CONFIG['core']['configure']['path']
 BASE = CONFIG['core']['configure']['base']
 FILE = CONFIG['core']['configure']['file']
-ROOT = CONFIG['core']['configure']['root']
-USER = CONFIG['core']['configure']['user']
 LABEL = CONFIG['core']['configure']['label']
 MAX = CONFIG['core']['configure']['max']
+PATH = CONFIG['core']['configure']['path']
+ROOT = CONFIG['core']['configure']['root']
+USER = CONFIG['core']['configure']['user']
 PAD = f'0{len(str(MAX))}'
 
 # internal member for forced delayed
-_delayed: Optional[bool] = None
+_DELAYED: Optional[bool] = None
 
 class Leaf(NamedTuple):
     """Definiton of a tree leaf."""
@@ -51,11 +44,11 @@ class Leaf(NamedTuple):
     stem: list[str]
 
 class WalkError(Exception):
-    """Raised when there is an issue walking the path.""" 
+    """Raised when there is an issue walking the path."""
 
 def force_delayed(state: bool = True) -> None:
     """Force the assumption of an on import or on call configure state."""
-    this._delayed = state # type: ignore
+    THIS._DELAYED = state # type: ignore # pylint: disable=protected-access
     if is_root(): logger.debug('Force Delayed Configuration!')
 
 def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
@@ -63,23 +56,23 @@ def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
     trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
     return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
-def prepare(trees: M, book: Optional[M] = None) -> dict[str, N]:
+def prepare(trees: MutableMapping[str, Any], book: Optional[MutableMapping[str, Any]] = None) -> dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
     return {where: plant_a_tree(tree, book) for where, tree in trees.items()}
-                
-def harvest(*, trees: dict[str, N] = {}, system: N = Namespace(), local: N = Namespace()) -> C:
+
+def harvest(*, trees: dict[str, Namespace] = {}, system: Namespace = Namespace(), local: Namespace = Namespace()) -> Configuration:
     """Harvest the fruit of local and system, and the fruit of knowlege from the trees on the path."""
     return Configuration(system=system, **trees, local=local)
 
-def find_the_leaves(tree: Optional[M]) -> list[Leaf]:
+def find_the_leaves(tree: Optional[MutableMapping[str, Any]]) -> list[Leaf]:
     """Return the leaves (and their stems) of the tree; bearing their fruits and knowlege."""
     leaves = []
     if tree is not None:
         leaves = [Leaf(read_a_leaf(stem, tree), stem) for stem in walk_the_tree(tree)]
     return leaves
 
-def plant_a_tree(tree: M, book: Optional[M] = None) -> N:
-    """Suffle the leaves of the tree using the pages of a book as your guide.""" 
+def plant_a_tree(tree: MutableMapping[str, Any], book: Optional[MutableMapping[str, Any]] = None) -> Namespace:
+    """Suffle the leaves of the tree using the pages of a book as your guide."""
     plant = Namespace(tree)
     pages = find_the_leaves(book)
     for page in pages:
@@ -91,18 +84,18 @@ def plant_a_tree(tree: M, book: Optional[M] = None) -> N:
             plant.update(leaf)
     return plant
 
-def read_a_leaf(stem: list[str], tree: M) -> Optional[Any]:
+def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
     """Read the leaf at the end of the stem on the treee."""
     try:
-        return reduce(lambda branch, leaf: branch[leaf], stem, tree) 
+        return reduce(lambda branch, leaf: branch[leaf], stem, tree)
     except KeyError:
         return None
 
-def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterator[tuple[str, Optional[M]]]:
+def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
     """Walk the path, learning from the trees of knowlege (like os.walk, but opposite)"""
 
     # read the trees on the path of knowlege ...
-    tree: Optional[M] = None
+    tree: Optional[MutableMapping[str, Any]] = None
     try:
         first_step = os.path.realpath(first_step)
         tree = toml.load(os.path.join(first_step, FILE))
@@ -116,19 +109,19 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterato
     except FileNotFoundError:
         tree = None
     yield first_step, tree
-    
+
     # have we reached the end of our journey?
     next_step = os.path.realpath(os.path.join(first_step, '..'))
     last_step = None if (root is None) else os.path.realpath(os.path.expanduser(root))
     is_base_step = any(first_step.endswith(f'/{base}') for base in BASE)
     if next_step == first_step or first_step == last_step or is_base_step:
         return
-    
+
     # walk the path
     for step in walk_the_path(next_step, root):
         yield step
 
-def walk_the_tree(tree: M, stem: list[str] = []) -> list[list[str]]:
+def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[list[str]]:
     """Return the leaves of the branches."""
     leaves = []
     for branch, branches in tree.items():
@@ -139,10 +132,13 @@ def walk_the_tree(tree: M, stem: list[str] = []) -> list[list[str]]:
             leaves.append(leaf)
     return leaves
 
+# initalize configuration on import
+TREES = prepare(gather(), MAPPING)
+
 # initialize argument factory for commandline routines
-trees_on_import = prepare(gather(), MAPPING)
 get_defaults = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING))
-def get_arguments(*, local: N = Namespace()) -> C:
+
+def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
     """Provides support for delayed configuration of arguments."""
-    trees = trees_on_import if not _delayed else prepare(gather(), MAPPING)
+    trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
