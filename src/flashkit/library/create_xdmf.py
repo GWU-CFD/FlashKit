@@ -41,7 +41,7 @@ class SimulationInfo(NamedTuple):
     blocks: int
     types: list[int]
     sizes: dict[str, int]
-    fields: set[str]
+    fields: list[str]
     velflds: list[str]
 
 def author_xdmf(filenames: dict[str, str], filesteps: Sequence[int], context: Bar) -> ElementTree.Element:
@@ -105,7 +105,7 @@ def get_simulation_info(filename: str) -> SimulationInfo:
     blk_num = first_true(int_scalars, lambda l: 'globalnumblocks' in str(l[0]))[1]
     blk_sizes = {i: first_true(int_scalars, lambda l: 'n' + i + 'b' in str(l[0]))[1] for i in ('x', 'y', 'z')}
     dimension = first_true(int_scalars, lambda l: 'dimensionality' in str(l[0]))[1]
-    fields = {k.decode('utf-8') for k in unknown_names}
+    fields = [k.decode('utf-8') for k in unknown_names]
     grid = [grid[1:] for grid in {'+pm', '+ug', '+rg'} if grid in setup_call][0]
     return SimulationInfo(sim_time, grid, dimension, blk_num, node_type, blk_sizes, fields, velocity_names)
 

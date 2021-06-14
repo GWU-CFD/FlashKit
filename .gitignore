@@ -10,5 +10,21 @@ __pycache__/
 # Sphinx Build files
 doctrees/
 
-# Pytest files
-*.coverage
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+.hypothesis/
+.pytest_cache/
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/

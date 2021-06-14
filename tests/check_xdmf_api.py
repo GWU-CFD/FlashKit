@@ -11,6 +11,7 @@ import re
 import pytest
 
 # internal libraries
+from .support import change_directory
 from flashkit.api.create import _xdmf
 from flashkit.core.configure import force_delayed 
 from flashkit.core.custom import force_debug 
@@ -32,42 +33,45 @@ def working(scratch):
     """Create the files needed for xdmf api testing."""
     
     # working directory for testing
-    xdmf_dir = scratch.mkdir('xdmf')
+    xdmf_dir = scratch.joinpath('xdmf')
+    xdmf_dir.mkdir()
 
     # a set of plot files
-    xdmf_dir.join('INS_LidDr_Cavity_hdf5_grd_0000').write('')
-    xdmf_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0000').write('')
-    xdmf_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0001').write('')
-    xdmf_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0002').write('')
+    xdmf_dir.joinpath('INS_LidDr_Cavity_hdf5_grd_0000').touch()
+    xdmf_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0000').touch()
+    xdmf_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0001').touch()
+    xdmf_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0002').touch()
     
     # a second (salt) set of plot files
-    xdmf_dir.join('INS_XxAddSalt_hdf5_grd_0000').write('')
-    xdmf_dir.join('INS_XxAddSalt_hdf5_plt_cnt_0010').write('')
-    xdmf_dir.join('INS_XxAddSalt_hdf5_plt_cnt_0011').write('')
-    xdmf_dir.join('INS_XxAddSalt_hdf5_plt_cnt_0012').write('')
-    xdmf_dir.join('INS_LidDr_Cavity_forced_hdf5_plt_cnt_0000').write('')
+    xdmf_dir.joinpath('INS_XxAddSalt_hdf5_grd_0000').touch()
+    xdmf_dir.joinpath('INS_XxAddSalt_hdf5_plt_cnt_0010').touch()
+    xdmf_dir.joinpath('INS_XxAddSalt_hdf5_plt_cnt_0011').touch()
+    xdmf_dir.joinpath('INS_XxAddSalt_hdf5_plt_cnt_0012').touch()
+    xdmf_dir.joinpath('INS_LidDr_Cavity_forced_hdf5_plt_cnt_0000').touch()
     
     # a set of checkpoint files
-    xdmf_dir.join('INS_Rayleigh_hdf5_geometry_0000').write('')
-    xdmf_dir.join('INS_Rayleigh_hdf5_chk_1000').write('')
-    xdmf_dir.join('INS_Rayleigh_hdf5_chk_0200').write('')
-    xdmf_dir.join('INS_Rayleigh_hdf5_chk_0030').write('')
-    xdmf_dir.join('INS_Rayleigh_hdf5_chk_0004').write('')
+    xdmf_dir.joinpath('INS_Rayleigh_hdf5_geometry_0000').touch()
+    xdmf_dir.joinpath('INS_Rayleigh_hdf5_chk_1000').touch()
+    xdmf_dir.joinpath('INS_Rayleigh_hdf5_chk_0200').touch()
+    xdmf_dir.joinpath('INS_Rayleigh_hdf5_chk_0030').touch()
+    xdmf_dir.joinpath('INS_Rayleigh_hdf5_chk_0004').touch()
 
     # a source and destination directory
-    source_dir = xdmf_dir.mkdir('source')
-    source_dir.join('INS_LidDr_Cavity_hdf5_grd_0000').write('')
-    source_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0000').write('')
-    source_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0005').write('')
-    source_dir.join('INS_LidDr_Cavity_hdf5_plt_cnt_0010').write('')
-    dest_dir = xdmf_dir.mkdir('dest')
+    source_dir = xdmf_dir.joinpath('source')
+    source_dir.mkdir()
+    source_dir.joinpath('INS_LidDr_Cavity_hdf5_grd_0000').touch()
+    source_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0000').touch()
+    source_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0005').touch()
+    source_dir.joinpath('INS_LidDr_Cavity_hdf5_plt_cnt_0010').touch()
+    dest_dir = xdmf_dir.joinpath('dest')
+    dest_dir.mkdir()
 
     return xdmf_dir
 
 @pytest.fixture()
 def single_toml(working):
     """Create single configuration file for api testing."""
-    with working.join('flash.toml').open(mode='w') as config:
+    with working.joinpath('flash.toml').open(mode='w') as config:
         config.write('[create.xdmf]\n')
         config.write("basename = 'INS_Rayleigh'\n")
         config.write('files = [1000, 200, 30, 4]\n')
@@ -78,12 +82,12 @@ def single_toml(working):
 @pytest.fixture()
 def nested_toml(working, scratch):
     """Create two configuration files for api testing."""
-    with working.join('flash.toml').open(mode='w') as config:
+    with working.joinpath('flash.toml').open(mode='w') as config:
         config.write('[create.xdmf]\n')
         config.write('files = [1000, 200, 30, 4]\n')
         config.write("grid = '_hdf5_geometry_'\n")
     
-    with scratch.join('flash.toml').open(mode='w') as config:
+    with scratch.joinpath('flash.toml').open(mode='w') as config:
         config.write('[general.files]\n')
         config.write("grid = '_hdf5_space_'\n")
         config.write("plot = '_hdf5_chk_'\n")
@@ -167,14 +171,14 @@ def case_paths(working):
                 'dest': 'dest',
                 },
             expected={
-                'dest': str(working.join('dest')),
+                'dest': str(working.joinpath('dest')),
                 'files': range(2, 13, 5),
                 'basename': 'INS_LidDr_Cavity',
                 'context': get_bar(null=True),
                 'gridname': FILES['grid'],
                 'filename': FILES['output'],
                 'plotname': FILES['plot'],
-                'source': str(working.join('source')),
+                'source': str(working.joinpath('source')),
                 })
 
 @pytest.fixture()
@@ -230,7 +234,7 @@ def data(request):
 
 @pytest.mark.api
 def checking(working, data, mocker):
-    """ Verify that the expected api behaviors work properly."""
+    """Verify that the expected api behaviors work properly."""
 
     # force flashkit to wait to configure arguments    
     force_debug()
@@ -245,7 +249,7 @@ def checking(working, data, mocker):
     mocker.spy(_xdmf, 'create_xdmf')
     mocker.spy(_xdmf.printer, 'info')
     
-    with working.as_cwd():
+    with change_directory(working):
         _xdmf.xdmf(**data.provided)
 
         # check adapt_arguments and attached context
