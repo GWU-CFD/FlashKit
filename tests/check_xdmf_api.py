@@ -233,7 +233,7 @@ def data(request):
     return request.param
 
 @pytest.mark.api
-def checking(working, data, mocker):
+def check_xdmf(working, data, mocker):
     """Verify that the expected api behaviors work properly."""
 
     # force flashkit to wait to configure arguments    

@@ -103,24 +103,24 @@ def data(request):
     return request.param
 
 @pytest.mark.cli
-def check_help():
+def check_xdmf_help():
     """Verify that help message works properly."""
     assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --help'))
     assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -h'))
 
 @pytest.mark.cli
-def check_version():
+def check_xdmf_version():
     """Verify that help message works properly."""
     assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --version'))
     assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -v'))
 
 @pytest.mark.cli
-def check_noargs():
+def check_xdmf_noargs():
     """Verify that usage message is not used; fails in root dir."""
     assert STATUS.runtime_error == os.WEXITSTATUS(os.system('flashkit create xdmf'))
 
 @pytest.mark.cli
-def check_badargs():
+def check_xdmf_badargs():
     """Verify that bad args fails with correct exit status."""
     assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf --bob'))
     assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -w'))
@@ -128,7 +128,7 @@ def check_badargs():
     assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -b1.2'))
 
 @pytest.mark.cli
-def checking(mocker, data):
+def check_xdmf_options(mocker, data):
     """ Verify that the expected cli options work properly."""
 
     # instrument desired functions

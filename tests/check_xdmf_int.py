@@ -1,6 +1,7 @@
 """Testing the integration of xdmf operations."""
 
 # type annotations
+from __future__ import annotations
 from typing import NamedTuple
 
 # standard libraries
@@ -23,7 +24,7 @@ class Case(NamedTuple):
 @pytest.fixture(params=[
     Case('test/lidcavity/pm', '--auto', 'INS_LidDr_Cavity.xmf'),
     Case('test/lidcavity/ug', '--auto', 'INS_LidDr_Cavity.xmf'),
-    ])
+    ], ids=['lidcavity/pm', 'lidcavity/ug'])
 def data(request, example, loaded):
     """Parameterized setup for xdmf integration tests."""
     case = request.param
@@ -33,7 +34,7 @@ def data(request, example, loaded):
     return Path(case.folder).joinpath(case.output)
 
 @pytest.mark.int
-def checking(example, reference, data):
+def check_xdmf(example, reference, data):
     """Verify that the output exactly matches the reference."""
     checking = example.joinpath(data)
     standard = reference.joinpath(data)

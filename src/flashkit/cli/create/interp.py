@@ -8,6 +8,7 @@ from ...api.create import interp
 from ...api.create._interp import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, PLOT, GRID
 from ...core.custom import patched_error, patched_exceptions
 from ...core.parse import DictStr, DictListStr
+from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
@@ -65,7 +66,7 @@ class InterpCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED)
+    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
     
     ALLOW_NOARGS: bool = True
 
