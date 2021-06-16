@@ -5,7 +5,7 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import xdmf
-from ...api.create.xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
+from ...api.create._xdmf import LOW, HIGH, SKIP, PLOT, GRID, OUT
 from ...core.custom import patched_error, patched_exceptions
 from ...core.parse import ListInt
 from ...core.error import AutoError, StreamError

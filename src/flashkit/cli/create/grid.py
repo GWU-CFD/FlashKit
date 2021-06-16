@@ -5,7 +5,7 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import grid
-from ...api.create.grid import (NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, 
+from ...api.create._grid import (NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, 
         XRANGE, YRANGE, ZRANGE, XMETHOD, YMETHOD, ZMETHOD)
 from ...core.custom import patched_error, patched_exceptions
 from ...core.parse import ListFloat, DictAny
