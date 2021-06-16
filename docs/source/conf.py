@@ -35,6 +35,7 @@ version = __meta__.__version__
 extensions = [
         'sphinx.ext.autosectionlabel',
         'sphinx.ext.autodoc',
+        'sphinx.ext.napoleon',
         'sphinx.ext.mathjax',
         'sphinx.ext.githubpages',
         'sphinx.ext.intersphinx',

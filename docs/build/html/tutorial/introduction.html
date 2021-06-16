@@ -91,39 +91,39 @@
     <ul>
      <li class="toctree-l3">
       <a class="reference internal" href="create/block.html">
-       Block
+       block
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="create/grid.html">
-       Grid
+       grid
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="create/interp.html">
-       Interp
+       interp
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="create/xdmf.html">
-       Xdmf
+       xdmf
       </a>
      </li>
     </ul>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="build/index.html">
-     Build
+     build
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="job/index.html">
-     Job
+     job
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="analyze/index.html">
-     Analyze
+     analyze
     </a>
    </li>
    <li class="toctree-l2">
@@ -140,10 +140,64 @@
  </li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="../api/index.html">
    Interface
   </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+  <label for="toctree-checkbox-3">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../api/create/index.html">
+     flashkit create
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../api/create/block.html">
+       create block
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../api/create/grid.html">
+       create grid
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../api/create/interp.html">
+       create interp
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../api/create/xdmf.html">
+       create xdmf
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../api/build/index.html">
+     flashkit build
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../api/job/index.html">
+     flashkit job
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../api/analyze/index.html">
+     flashkit analyze
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../options.html">
@@ -410,7 +464,7 @@ Use the -h/--help flag with the above commands to
 learn more about their usage.
 
 Documentation and issue tracking at:
-https://github.com/alentner/flashkit
+https://github.com/GWU-CFD/FlashKit
 </pre></div>
 </div>
 <p>The FlashKit library provides help information at all levels.
@@ -425,7 +479,7 @@ Create files relavent to flash execution and processing.
 commands:   
 block       Create an initial simulation flow field (block) hdf5 file.
 grid        Create an initial simulation domain (grid) hdf5 file.
-intrp       Create an initial flow field (block) using interpolated simulation data.
+interp      Create an initial flow field (block) using interpolated simulation data.
 par         Create an flash parameter file using specified templates and options.
 run         Create the appropriate flash execution shell script.
 xdmf        Create an xdmf file associated with flash simulation HDF5 output.

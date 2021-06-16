@@ -90,39 +90,39 @@
     <ul>
      <li class="toctree-l3">
       <a class="reference internal" href="tutorial/create/block.html">
-       Block
+       block
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="tutorial/create/grid.html">
-       Grid
+       grid
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="tutorial/create/interp.html">
-       Interp
+       interp
       </a>
      </li>
      <li class="toctree-l3">
       <a class="reference internal" href="tutorial/create/xdmf.html">
-       Xdmf
+       xdmf
       </a>
      </li>
     </ul>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="tutorial/build/index.html">
-     Build
+     build
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="tutorial/job/index.html">
-     Job
+     job
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="tutorial/analyze/index.html">
-     Analyze
+     analyze
     </a>
    </li>
    <li class="toctree-l2">
@@ -139,10 +139,64 @@
  </li>
 </ul>
 <ul class="nav bd-sidenav">
- <li class="toctree-l1">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="api/index.html">
    Interface
   </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+  <label for="toctree-checkbox-3">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="api/create/index.html">
+     flashkit create
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="api/create/block.html">
+       create block
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="api/create/grid.html">
+       create grid
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="api/create/interp.html">
+       create interp
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="api/create/xdmf.html">
+       create xdmf
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="api/build/index.html">
+     flashkit build
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="api/job/index.html">
+     flashkit job
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="api/analyze/index.html">
+     flashkit analyze
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="options.html">
@@ -337,15 +391,15 @@ these will automatically be installed when you install <em>FlashKit</em> if they
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/create/index.html">Create</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorial/create/block.html">Block</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorial/create/grid.html">Grid</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorial/create/interp.html">Interp</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorial/create/xdmf.html">Xdmf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/create/block.html">block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/create/grid.html">grid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/create/interp.html">interp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/create/xdmf.html">xdmf</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial/build/index.html">Build</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial/job/index.html">Job</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial/analyze/index.html">Analyze</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/build/index.html">build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/job/index.html">job</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/analyze/index.html">analyze</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/configure.html">Configuration Files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/develop.html">Adding New Features</a></li>
 </ul>
@@ -358,7 +412,13 @@ and what available options they provide. Finally, a complete listing of avaialbl
 is also available.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/create/index.html">flashkit create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/build/index.html">flashkit build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/job/index.html">flashkit job</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/analyze/index.html">flashkit analyze</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="options.html">Options</a></li>
 </ul>
 </div>
