@@ -11,14 +11,16 @@ import re
 import sys
 
 # internal libraries
-from ..core.configure import force_delayed
-from ..core.logging import logger, DEBUG
+from ..core.configure import force_delayed, get_defaults
+from ..core.logging import logger, printer, DEBUG
 from ..core.parallel import force_parallel, is_root, squash
+from ..resources import MAPPING
 
 # external libraries
 from cmdkit import app
 from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError 
+from cmdkit.cli import Interface, ArgumentError
+from cmdkit.config import Namespace
 
 # static analysis
 if TYPE_CHECKING:
@@ -68,6 +70,20 @@ class ForceParallel(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, True)
         force_parallel()
+
+def return_options(category: str, operation: str) -> None:
+    """Force the logging of defaults and mappings for flashkit <category> <operation>."""
+    flatten = lambda value: value if not isinstance(value, Namespace) else dict(value)
+    mess_def = f'\nThe following library defaults are provided for flashkit {category} {operation}'
+    head_def = '\nOptions\t\tDefault Values\n-------\t\t--------------'
+    defaults = '\n\n'.join(f"{opt}\t\t{flatten(value)}"
+            for opt, value in get_defaults()[category][operation].items())
+    mess_map = f'\n\n\nThe following outlines the general section options, which can be mapped \nin the configuration file, that are provided for flashkit {category} {operation}'
+    head_map = '\nOptions\t\tflash.toml Sections and Options\n-------\t\t-------------------------------'
+    mappings = '\n\n'.join(f"{opt}\t\t[{'.'.join(path)}]\n\t\t{gen} = ..."
+            for opt, (*path, gen) in MAPPING[category][operation].items())
+    for message in (mess_def, head_def, defaults, mess_map, head_map, mappings):
+        printer.info(message)
 
 # Create custom error handeling interfaces (monkey patch Application)
 def patched_error(patch: str) -> Callable[..., None]:

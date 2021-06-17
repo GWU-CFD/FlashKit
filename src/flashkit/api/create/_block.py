@@ -25,18 +25,6 @@ import numpy
 # define public interface
 __all__ = ['block', ]
 
-# define default constants (public)
-NDIM = DEFAULTS['general']['space']['ndim']
-NXB = DEFAULTS['general']['space']['nxb']
-NYB = DEFAULTS['general']['space']['nyb']
-NZB = DEFAULTS['general']['space']['nzb']
-IPROCS = DEFAULTS['general']['mesh']['iprocs']
-JPROCS = DEFAULTS['general']['mesh']['jprocs']
-KPROCS = DEFAULTS['general']['mesh']['kprocs']
-FIELDS = DEFAULTS['create']['block']['fields']
-RESULT = DEFAULTS['general']['pipes']['result']
-NOFILE = DEFAULTS['general']['pipes']['nofile']
-
 # define configuration constants (internal)
 GRIDS = CONFIG['create']['block']['grids']
 METHOD = CONFIG['create']['block']['method']
@@ -135,27 +123,29 @@ def screen_out(*, blocks: Blocks) -> None:
 def block(**arguments: Any) -> Optional[Blocks]:
     """Python application interface for creating an initial block file from command line or python code.
 
-    Keyword arguments:
-    ndim: int      Number of simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
-    nxb: int       Number of grid points per block in the i direction; defaults to {NXB}.
-    nyb: int       Number of grid points per block in the j direction; defaults to {NYB}.
-    nzb: int       Number of grid points per block in the k direction; defaults to {NZB}.
-    iprocs: int    Number of blocks in the i direction; defaults to {IPROCS}.
-    jprocs: int    Number of blocks in the j direction; defaults to {JPROCS}.
-    kprocs: int    Number of blocks in the k direction; defaults to {KPROCS}.
-    fields: dict   Key/value pairs for fields (e.g., {'temp': 'center', ...}); defaults are 
-                       {FIELDS}.
-    fmethod: dict  Key/value pairs for flow initialization (e.g., {'temp': 'constant', ...}); defaults to {METHOD}.
-    fparam: dict   Key/value pairs for paramaters (e.g., {'temp': {'const': 0.5, ...}, ...}) used for each field method.
-    path: str      Path to source files used in some initialization methods (e.g., python); defaults to cwd.
-    dest: str      Path to initial block hdf5 file; defaults to cwd.
-    ignore: bool   Ignore configuration file provided arguments, options, and flags.
-    result: bool   Return the calculated fields by block on root; defaults to {RESULT}.
-    nofile: bool   Do not write the calculated fields by block to file; defaults to {NOFILE}.
+    This method creates an HDF5 file associated with the desired intial flow specification (for each
+    needed computational field), suitable for input by the FLASH application at runtime.
+
+    Keyword Arguments:
+        ndim (int):      Number of simulation dimensions (i.e., 2 or 3).
+        nxb (int):       Number of grid points per block in the i direction.
+        nyb (int):       Number of grid points per block in the j direction.
+        nzb (int):       Number of grid points per block in the k direction.
+        iprocs (int):    Number of blocks in the i direction.
+        jprocs (int):    Number of blocks in the j direction.
+        kprocs (int):    Number of blocks in the k direction.
+        fields (dict):   Key/value pairs for fields (e.g., {'temp': 'center', ...})
+        fmethod (dict):  Key/value pairs for flow initialization (e.g., {'temp': 'constant', ...}).
+        fparam (dict):   Key/value pairs for paramaters (e.g., {'temp': {'const': 0.5, ...}, ...}) used for each field method.
+        path (str):      Path to source files used in some initialization methods (e.g., python).
+        dest (str):      Path to initial block hdf5 file.
+        ignore (bool):   Ignore configuration file provided arguments, options, and flags.
+        result (bool):   Return the calculated fields by block on root.
+        nofile (bool):   Do not write the calculated fields by block to file.
 
     Note:
-    By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
-    you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
+        By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
+        you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')

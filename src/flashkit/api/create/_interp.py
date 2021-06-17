@@ -27,20 +27,6 @@ import numpy
 # define public interface
 __all__ = ['interp', ]
 
-# define default constants (public)
-FIELDS = DEFAULTS['create']['interp']['fields']
-GRID = DEFAULTS['general']['files']['grid']
-PLOT = DEFAULTS['general']['files']['plot']
-IPROCS = DEFAULTS['general']['mesh']['iprocs']
-JPROCS = DEFAULTS['general']['mesh']['jprocs']
-KPROCS = DEFAULTS['general']['mesh']['kprocs']
-RESULT = DEFAULTS['general']['pipes']['result']
-NOFILE = DEFAULTS['general']['pipes']['nofile']
-NDIM = DEFAULTS['general']['space']['ndim']
-NXB = DEFAULTS['general']['space']['nxb']
-NYB = DEFAULTS['general']['space']['nyb']
-NZB = DEFAULTS['general']['space']['nzb']
-
 # define configuration constants (internal)
 GRIDS = CONFIG['create']['block']['grids']
 NAME = CONFIG['create']['block']['name']
@@ -164,32 +150,34 @@ def screen_out(*, blocks: Blocks) -> None:
 def interp(**arguments: Any) -> Optional[Blocks]:
     """Python application interface for using interpolation to create an initial block file.
 
-    Keyword arguments:
-    ndim: int      Number of final simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
-    nxb: int       Number of final grid points per block in the i direction; defaults to {NXB}.
-    nyb: int       Number of final grid points per block in the j direction; defaults to {NYB}.
-    nzb: int       Number of final grid points per block in the k direction; defaults to {NZB}.
-    iprocs: int    Number of final blocks in the i direction; defaults to {IPROCS}.
-    jprocs: int    Number of final blocks in the j direction; defaults to {JPROCS}.
-    kprocs: int    Number of final blocks in the k direction; defaults to {KPROCS}.
-    fields: dict   Key/value pairs for final fields (e.g., {'velx': 'facex', ...}); defaults are 
-                       {FIELDS}.
-    fsource: dict  Key/value pairs for source fields (e.g., {'velx': ('cc_u', 'center'), ...}); defaults to FIELDS.
-    basename: str  Basename for flash simulation, will be guessed if not provided
-                   (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-    step: int      File number (e.g., <1,3,5,7,9>) of source timeseries output.
-    plot: str      Plot/Checkpoint source file name follower; defaults to '{PLOT}'.
-    grid: str      Grid source file name follower; defaults to '{GRID}'.
-    path: str      Path to source timeseries hdf5 simulation output files; defaults to cwd.
-    dest: str      Path to final grid and block hdf5 files; defaults to cwd.
-    ignore: bool   Ignore configuration file provided arguments, options, and flags.
-    auto: bool     Force behavior to attempt guessing BASENAME and [--step INT].
-    result: bool   Return the calculated fields by block on root; defaults to {RESULT}.
-    nofile: bool   Do not write the calculated fields by block to file; defaults to {NOFILE}.
+    This method creates an HDF5 file associated with the desired intial flow specification (by
+    interpolating from another simulation output), suitable for input by the FLASH application at runtime.
+    
+    Keyword Arguments:
+        ndim (int):      Number of final simulation dimensions (i.e., 2 or 3).
+        nxb (int):       Number of final grid points per block in the i direction.
+        nyb (int):       Number of final grid points per block in the j direction.
+        nzb (int):       Number of final grid points per block in the k direction.
+        iprocs (int):    Number of final blocks in the i direction.
+        jprocs (int):    Number of final blocks in the j direction.
+        kprocs (int):    Number of final blocks in the k direction.
+        fields (dict):   Key/value pairs for final fields (e.g., {'velx': 'facex', ...}) 
+        fsource (dict):  Key/value pairs for source fields (e.g., {'velx': ('cc_u', 'center'), ...}).
+        basename (str):  Basename for flash simulation, will be guessed if not provided
+                         (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+        step (int):      File number (e.g., <1,3,5,7,9>) of source timeseries output.
+        plot (str):      Plot/Checkpoint source file name follower.
+        grid (str):      Grid source file name follower.
+        path (str):      Path to source timeseries hdf5 simulation output files.
+        dest (str):      Path to final grid and block hdf5 files.
+        auto (bool):     Force behavior to attempt guessing BASENAME and [--step INT].
+        nofile (bool):   Do not write the calculated fields by block to file.
+        result (bool):   Return the calculated fields by block on root.
+        ignore (bool):   Ignore configuration file provided arguments, options, and flags.
 
     Note:
-    By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
-    you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
+        By default this function reads the grid data from the hdf5 file (i.e., must run create.grid() first); optionally
+        you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')

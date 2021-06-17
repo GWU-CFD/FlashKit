@@ -135,18 +135,18 @@ def xdmf(**arguments: Any) -> None:
 
     Keyword Arguments:
         basename (str): Basename for flash simulation, will be guessed if not provided
-                 (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-        low (int): Begining number for timeseries hdf5 files.
-        high (int): Ending number for timeseries hdf5 files.
-        skip (int): Number of files to skip for timeseries hdf5 files.
-        files (list): List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
-        path (str): Path to timeseries hdf5 simulation output files.
-        dest (str): Path to xdmf (contains relative paths to sim data).
-        out (str): Output XDMF file name follower.
-        plot (str): Plot/Checkpoint file(s) name follower.
-        grid (str): Grid file(s) name follower.
-        auto (bool): Force behavior to attempt guessing BASENAME and [--files LIST].
-        ignore (bool): Ignore configuration file provided arguments, options, and flags.
+                        (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+        low (int):      Begining number for timeseries hdf5 files.
+        high (int):     Ending number for timeseries hdf5 files.
+        skip (int):     Number of files to skip for timeseries hdf5 files.
+        files (list):   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
+        path (str):     Path to timeseries hdf5 simulation output files.
+        dest (str):     Path to xdmf (contains relative paths to sim data).
+        out (str):      Output XDMF file name follower.
+        plot (str):     Plot/Checkpoint file(s) name follower.
+        grid (str):     Grid file(s) name follower.
+        auto (bool):    Force behavior to attempt guessing BASENAME and [--files LIST].
+        ignore (bool):  Ignore configuration file provided arguments, options, and flags.
     
     Note:
         If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,

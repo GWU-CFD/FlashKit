@@ -113,17 +113,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="build/index.html">
-     build
+     Build
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="job/index.html">
-     job
+     Job
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="analyze/index.html">
-     analyze
+     Analyze
     </a>
    </li>
    <li class="toctree-l2">
@@ -200,8 +200,13 @@
   </ul>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="../cmdline.html">
+   Command Line Syntax
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../options.html">
-   Options
+   Configuration Options
   </a>
  </li>
 </ul>
@@ -418,9 +423,9 @@ flags:
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -h, --help           Show this message and exit.
 
-notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
-        the --path will be searched for FLASH simulation files and all
-        such files identified will be used in sorted order.
+note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
+       the --path will be searched for FLASH simulation files and all
+       such files identified will be used in sorted order.
 </pre></div>
 </div>
 </div>
@@ -452,6 +457,7 @@ options:
 -h, --help        Show this message and exit.
 -v, --version     Show the version and exit.
 -V, --verbose     Enable debug messaging.
+-O, --options     Show the available options and exit.
 -P, --parallel    Indicate Parallel execution, useful for when flashkit
                     is executed from a job script and cannot determine 
                     its parallel or serial execution status automatically.
@@ -523,9 +529,9 @@ options:
 -d, --dest     PATH  Path to intial grid hdf5 file; defaults to cwd.
 
 flags:
--I, --ignore         Ignore configuration file provided arguments, options, and flags.
--R, --result         Return the calculated coordinates. 
 -F, --nofile         Do not write the calculated coordinates to file. 
+-R, --result         Return the calculated coordinates. 
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -h, --help           Show this message and exit.
 </pre></div>
 </div>
@@ -663,7 +669,7 @@ leads to the more complete order of precidence (in decending order) for options 
 <li><p>jobs/rayleigh/flash.toml          (common options)</p></li>
 <li><p>library defaults</p></li>
 </ol>
-<p>The full specification for <a class="reference internal" href="../options.html#options"><span class="std std-ref">options</span></a> providable in configuration files can be found <a class="reference internal" href="configure.html#configuration-files"><span class="std std-ref">here</span></a>.</p>
+<p>The full specification for <a class="reference internal" href="../options.html#configuration-options"><span class="std std-ref">options</span></a> providable in configuration files can be found <a class="reference internal" href="configure.html#configuration-files"><span class="std std-ref">here</span></a>.</p>
 <hr class="docutils" />
 </div>
 </div>

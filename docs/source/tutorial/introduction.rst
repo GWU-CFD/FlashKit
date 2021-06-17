@@ -209,6 +209,6 @@ leads to the more complete order of precidence (in decending order) for options 
 #. jobs/rayleigh/flash.toml          (common options)
 #. library defaults
 
-The full specification for :ref:`options<Options>` providable in configuration files can be found :ref:`here<Configuration Files>`.
+The full specification for :ref:`options<Configuration Options>` providable in configuration files can be found :ref:`here<Configuration Files>`.
 
 --------------------

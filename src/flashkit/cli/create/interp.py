@@ -5,14 +5,16 @@ from __future__ import annotations
 
 # internal libraries
 from ...api.create import interp
-from ...api.create._interp import NDIM, NXB, NYB, NZB, IPROCS, JPROCS, KPROCS, FIELDS, PLOT, GRID
-from ...core.custom import patched_error, patched_exceptions
+from ...core.configure import get_defaults
+from ...core.custom import patched_error, patched_exceptions, return_options
 from ...core.parse import DictStr, DictListStr
 from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
 from cmdkit.cli import Interface 
+
+DEF = get_defaults().create.interp
 
 PROGRAM = f'flashkit create interp'
 
@@ -29,27 +31,27 @@ BASENAME    Basename for flash simulation, will be guessed if not provided
             (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
 
 options:
--D, --ndim     INT   Number of simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
--X, --nxb      INT   Number of grid points per block in the i direction; defaults to {NXB}.
--Y, --nyb      INT   Number of grid points per block in the j direction; defaults to {NYB}.
--Z, --nzb      INT   Number of grid points per block in the k direction; defaults to {NZB}.
--i, --iprocs   INT   Number of blocks in the i direction; defaults to {IPROCS}.
--j, --jprocs   INT   Number of blocks in the j direction; defaults to {JPROCS}.
--k, --kprocs   INT   Number of blocks in the k direction; defaults to {KPROCS}.
+-D, --ndim     INT   Number of simulation dimensions (i.e., 2 or 3); defaults to {DEF.ndim}.
+-X, --nxb      INT   Number of grid points per block in the i direction; defaults to {DEF.nxb}.
+-Y, --nyb      INT   Number of grid points per block in the j direction; defaults to {DEF.nyb}.
+-Z, --nzb      INT   Number of grid points per block in the k direction; defaults to {DEF.nzb}.
+-i, --iprocs   INT   Number of blocks in the i direction; defaults to {DEF.iprocs}.
+-j, --jprocs   INT   Number of blocks in the j direction; defaults to {DEF.jprocs}.
+-k, --kprocs   INT   Number of blocks in the k direction; defaults to {DEF.kprocs}.
 -l, --fields   DICT  Key/value pairs for final fields (e.g., <velx=facex,...>); defaults are
-                         {FIELDS}.
+                         {dict(DEF.fields)}.
 -m, --fsource  DICT  Key/value pairs for source fields (e.g., <velx=(cc_u,center),...>); defaults to FIELDS.
 -f, --step     INT   File number (e.g., <1,3,5,7,9>) of source timeseries output.
--g, --grid   STRING  Grid file(s) name follower; defaults to '{GRID}'.
--o, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{PLOT}'.
+-g, --grid   STRING  Grid file(s) name follower; defaults to '{DEF.grid}'.
+-o, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
 -p, --path     PATH  Path to source files used in some initialization methods (e.g., python); defaults to cwd.
 -d, --dest     PATH  Path to intial block hdf5 file; defaults to cwd.
 
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--step INT].
--I, --ignore         Ignore configuration file provided arguments, options, and flags.
--R, --result         Return the calculated fields by block on root. 
 -F, --nofile         Do not write the calculated coordinates to file. 
+-R, --result         Return the calculated fields by block on root. 
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -h, --help           Show this message and exit.
 
 notes:  If neither BASENAME nor -f is specified, the --path will be searched for FLASH simulation
@@ -86,12 +88,17 @@ class InterpCreateApp(Application):
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-A', '--auto', action='store_true')
-    interface.add_argument('-I', '--ignore', action='store_true')
-    interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-F', '--nofile', action='store_true')
+    interface.add_argument('-R', '--result', action='store_true')
+    interface.add_argument('-I', '--ignore', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating block using interpolatione, from command line."""
+        
+        if self.shared.options: 
+            return_options('create', 'interp')
+            return
+
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'step', 
                   'plot', 'grid', 'path', 'dest', 'auto', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}

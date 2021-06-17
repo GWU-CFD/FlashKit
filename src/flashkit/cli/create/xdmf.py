@@ -6,7 +6,7 @@ from __future__ import annotations
 # internal libraries
 from ...api.create import xdmf
 from ...core.configure import get_defaults
-from ...core.custom import patched_error, patched_exceptions
+from ...core.custom import patched_error, patched_exceptions, return_options
 from ...core.parse import ListInt
 from ...core.error import AutoError, StreamError
 
@@ -46,9 +46,9 @@ flags:
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -h, --help           Show this message and exit.
 
-notes:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
-        the --path will be searched for FLASH simulation files and all
-        such files identified will be used in sorted order.\
+note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
+       the --path will be searched for FLASH simulation files and all
+       such files identified will be used in sorted order.\
 """
 
 # default constants
@@ -78,6 +78,11 @@ class XdmfCreateApp(Application):
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
+        
+        if self.shared.options: 
+            return_options('create', 'xdmf')
+            return
+
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
                    'out', 'plot', 'grid', 'auto', 'ignore'}
         local = {key: getattr(self, key) for key in options}
