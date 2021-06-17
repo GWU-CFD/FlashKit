@@ -99,6 +99,7 @@ is also available.
     :maxdepth: 2
 
     api/index
+    cmdline
     options
 
 --------------------
@@ -126,10 +127,6 @@ Development Status
 
 | Progress
 
-.. image:: https://img.shields.io/github/milestones/open/GWU-CFD/FlashKit?style=flat-square
-    :target: https://github.com/GWU-CFD/FlashKit/milestones
-    :alt: Milestones
-
 .. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/1?style=flat-square
     :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Framework+Complete%22
     :alt: Framework Complete
@@ -141,6 +138,14 @@ Development Status
 .. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/5?style=flat-square
     :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Documentation+Complete%22
     :alt: Documentation Complete
+
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/6?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Testing+Complete%22   
+    :alt: Testing Complete
+
+.. image:: https://img.shields.io/github/milestones/open/GWU-CFD/FlashKit?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/milestones
+    :alt: Milestones
 
 |
 

@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>create xdmf</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet" />
+  <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="flashkit build" href="../build/index.html" />
+    <link rel="prev" title="create interp" href="interp.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      <img src="../../_static/logo.png" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../tutorial/index.html">
+   Tutorial
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/introduction.html">
+     Introduction
+    </a>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../tutorial/create/index.html">
+     Create
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/block.html">
+       block
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/grid.html">
+       grid
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/interp.html">
+       interp
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/xdmf.html">
+       xdmf
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/build/index.html">
+     Build
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/job/index.html">
+     Job
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/analyze/index.html">
+     Analyze
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/configure.html">
+     Configuration Files
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/develop.html">
+     Adding New Features
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../index.html">
+   Interface
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+  <label for="toctree-checkbox-3">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2 current active has-children">
+    <a class="reference internal" href="index.html">
+     flashkit create
+    </a>
+    <input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul class="current">
+     <li class="toctree-l3">
+      <a class="reference internal" href="block.html">
+       create block
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="grid.html">
+       create grid
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="interp.html">
+       create interp
+      </a>
+     </li>
+     <li class="toctree-l3 current active">
+      <a class="current reference internal" href="#">
+       create xdmf
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../build/index.html">
+     flashkit build
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../job/index.html">
+     flashkit job
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../analyze/index.html">
+     flashkit analyze
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../cmdline.html">
+   Command Line Syntax
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../options.html">
+   Configuration Options
+  </a>
+ </li>
+</ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../contributing.html">
+   Contributing
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../license.html">
+   License
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/api/create/xdmf.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="create-xdmf">
+<h1>create xdmf<a class="headerlink" href="#create-xdmf" title="Permalink to this headline">¶</a></h1>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The page defines the application programing interface specification for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> operation.</p>
+<hr class="docutils" />
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The command line interface for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> catagory of operations is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: flashkit create xdmf BASENAME [--low INT] [--high INT] [--skip INT] [&lt;opt&gt;...] [&lt;flg&gt;...]
+Create an xdmf file associated with flash simulation HDF5 output.
+
+arguments:  
+BASENAME    Basename for flash simulation, will be guessed if not provided
+            (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+
+options:
+-b, --low    INT     Begining number for timeseries hdf5 files; defaults to 0.
+-e, --high   INT     Ending number for timeseries hdf5 files; defaults to 0.
+-s, --skip   INT     Number of files to skip for timeseries hdf5 files; defaults to 1.
+-f, --files  LIST    List of file numbers (e.g., &lt;1,3,5,7,9&gt;) for timeseries.
+-p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
+-d, --dest   PATH    Path to xdmf (contains relative paths to sim data); defaults to cwd.
+-o, --out    FILE    Output XDMF file name follower; defaults to a footer &#39;&#39;.
+-i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
+-g, --grid   STRING  Grid file(s) name follower; defaults to &#39;_hdf5_grd_&#39;.
+
+flags:
+-A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-h, --help           Show this message and exit.
+
+note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
+       the --path will be searched for FLASH simulation files and all
+       such files identified will be used in sorted order.
+</pre></div>
+</div>
+<p>Please consult the discussion on <a class="reference internal" href="../../cmdline.html#command-line-syntax"><span class="std std-ref">command line syntax</span></a> for
+help in specifying the format of the above options (e.g., LIST or PATH).</p>
+<hr class="docutils" />
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The python interface for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> operation is accessed with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flashkit</span> <span class="k">import</span> <span class="n">flash</span>
+<span class="o">...</span>
+<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">xdmf</span><span class="p">(</span><span class="o">&lt;</span><span class="n">keyword</span> <span class="n">arguments</span><span class="o">&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The python interface specification for <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> is as follows:</p>
+<dl class="py function">
+<dt id="flashkit.api.create._xdmf.xdmf">
+<code class="sig-name descname"><span class="pre">xdmf</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">arguments</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><span class="pre">None</span></a><a class="headerlink" href="#flashkit.api.create._xdmf.xdmf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python application interface for creating xdmf from command line or python code.</p>
+<p>This method creates a metadata file (i.e., xdmf format) associated with a desired set of HDF5 binary
+simulation data suitable for using in supporting visualization software (e.g., Paraview). The arguments
+povide flexibility in creating this metadata file that covers most usecases (e.g., time-series 3d data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Basename for flash simulation, will be guessed if not provided
+(e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)</p></li>
+<li><p><strong>low</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Begining number for timeseries hdf5 files.</p></li>
+<li><p><strong>high</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Ending number for timeseries hdf5 files.</p></li>
+<li><p><strong>skip</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Number of files to skip for timeseries hdf5 files.</p></li>
+<li><p><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – List of file numbers (e.g., &lt;1,3,5,7,9&gt;) for timeseries.</p></li>
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to timeseries hdf5 simulation output files.</p></li>
+<li><p><strong>dest</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to xdmf (contains relative paths to sim data).</p></li>
+<li><p><strong>out</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Output XDMF file name follower.</p></li>
+<li><p><strong>plot</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Plot/Checkpoint file(s) name follower.</p></li>
+<li><p><strong>grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Grid file(s) name follower.</p></li>
+<li><p><strong>auto</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force behavior to attempt guessing BASENAME and [–files LIST].</p></li>
+<li><p><strong>ignore</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Ignore configuration file provided arguments, options, and flags.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,
+the PATH will be searched for flash simulation files and all
+such files identified will be used in sorted order.</p>
+</div>
+</dd></dl>
+
+<hr class="docutils" />
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The complete specification of library defaults values (as shown above) and mappings is as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create xdmf
+
+Options		Default Values
+-------		--------------
+high		0
+
+low		0
+
+skip		1
+
+grid		_hdf5_grd_
+
+plot		_hdf5_plt_cnt_
+
+out		
+
+dest		
+
+path		
+
+
+
+The following outlines the general section options, which can be mapped 
+in the configuration file, that are provided for flashkit create xdmf
+
+Options		flash.toml Sections and Options
+-------		-------------------------------
+grid		[general.files]
+		grid = ...
+
+plot		[general.files]
+		plot = ...
+
+out		[general.files]
+		output = ...
+
+dest		[general.paths]
+		working = ...
+
+path		[general.paths]
+		working = ...
+</pre></div>
+</div>
+<p>Please consult the tutorial discussion on <a class="reference internal" href="../../tutorial/configure.html#configuration-files"><span class="std std-ref">configuration file formating</span></a> for
+help in specifying the above options in a <cite>flash.toml</cite> file and what mapping general options are, as well
+as the full specification on FlashKit library <a class="reference internal" href="../../options.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
+<hr class="docutils" />
+</div>
+
+
+              </div>
+              
+        
+        <div class='prev-next-bottom'>
+            
+    <a class='left-prev' id="prev-link" href="interp.html" title="previous page">create interp</a>
+    <a class='right-next' id="next-link" href="../build/index.html" title="next page">flashkit build</a>
+
+        </div>
+        
+        </div>
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Aaron Lentner <aaronlentner@gwu.edu><br/>
+        
+            &copy; Copyright 2021-2021 Aaron Lentner.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  
+  </body>
+</html>

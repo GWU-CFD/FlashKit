@@ -21,14 +21,6 @@ from ...resources import CONFIG, DEFAULTS
 # define public interface
 __all__ = ['xdmf', ]
 
-# define default constants (public)
-GRID: str = DEFAULTS['general']['files']['grid']
-HIGH: int = DEFAULTS['create']['xdmf']['high']
-LOW: int = DEFAULTS['create']['xdmf']['low']
-OUT: str = DEFAULTS['general']['files']['output']
-PLOT: str = DEFAULTS['general']['files']['plot']
-SKIP: int = DEFAULTS['create']['xdmf']['skip']
-
 # define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
@@ -136,24 +128,28 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
 @safe
 def xdmf(**arguments: Any) -> None:
     """Python application interface for creating xdmf from command line or python code.
+    
+    This method creates a metadata file (i.e., xdmf format) associated with a desired set of HDF5 binary
+    simulation data suitable for using in supporting visualization software (e.g., Paraview). The arguments
+    povide flexibility in creating this metadata file that covers most usecases (e.g., time-series 3d data).
 
-    Keyword arguments:  
-    basename: str Basename for flash simulation, will be guessed if not provided
-                  (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
-    low: int      Begining number for timeseries hdf5 files; defaults to {LOW}.
-    high: int     Ending number for timeseries hdf5 files; defaults to {HIGH}.
-    skip: int     Number of files to skip for timeseries hdf5 files; defaults to {SKIP}.
-    files: list   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
-    path: str     Path to timeseries hdf5 simulation output files; defaults to cwd.
-    dest: str     Path to xdmf (contains relative paths to sim data); defaults to cwd.
-    out: str      Output XDMF file name follower; defaults to a footer '{OUT}'.
-    plot: str     Plot/Checkpoint file(s) name follower; defaults to '{PLOT}'.
-    grid: str     Grid file(s) name follower; defaults to '{GRID}'.
-    ignore: bool  Ignore configuration file provided arguments, options, and flags.
-    auto: bool    Force behavior to attempt guessing BASENAME and [--files LIST].
-
-    notes:  If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,
-            the PATH will be searched for flash simulation files and all
-            such files identified will be used in sorted order.\
-    """
+    Keyword Arguments:
+        basename (str): Basename for flash simulation, will be guessed if not provided
+                        (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+        low (int):      Begining number for timeseries hdf5 files.
+        high (int):     Ending number for timeseries hdf5 files.
+        skip (int):     Number of files to skip for timeseries hdf5 files.
+        files (list):   List of file numbers (e.g., <1,3,5,7,9>) for timeseries.
+        path (str):     Path to timeseries hdf5 simulation output files.
+        dest (str):     Path to xdmf (contains relative paths to sim data).
+        out (str):      Output XDMF file name follower.
+        plot (str):     Plot/Checkpoint file(s) name follower.
+        grid (str):     Grid file(s) name follower.
+        auto (bool):    Force behavior to attempt guessing BASENAME and [--files LIST].
+        ignore (bool):  Ignore configuration file provided arguments, options, and flags.
+    
+    Note:
+        If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,
+        the PATH will be searched for flash simulation files and all
+        such files identified will be used in sorted order."""
     create_xdmf(**process_arguments(**arguments))

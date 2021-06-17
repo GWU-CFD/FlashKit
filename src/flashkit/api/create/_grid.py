@@ -23,23 +23,6 @@ import numpy
 # define public interface
 __all__ = ['grid', ]
 
-# define default constants (public)
-NDIM = DEFAULTS['general']['space']['ndim']
-NXB = DEFAULTS['general']['space']['nxb']
-NYB = DEFAULTS['general']['space']['nyb']
-NZB = DEFAULTS['general']['space']['nzb']
-IPROCS = DEFAULTS['general']['mesh']['iprocs']
-JPROCS = DEFAULTS['general']['mesh']['jprocs']
-KPROCS = DEFAULTS['general']['mesh']['kprocs']
-XRANGE = DEFAULTS['general']['space']['xrange']
-YRANGE = DEFAULTS['general']['space']['yrange']
-ZRANGE = DEFAULTS['general']['space']['zrange']
-XMETHOD = DEFAULTS['create']['grid']['xmethod']
-YMETHOD = DEFAULTS['create']['grid']['ymethod']
-ZMETHOD = DEFAULTS['create']['grid']['zmethod']
-RESULT = DEFAULTS['general']['pipes']['result']
-NOFILE = DEFAULTS['general']['pipes']['nofile']
-
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
 COORDS = CONFIG['create']['grid']['coords']
@@ -149,29 +132,32 @@ def screen_out(*, coords: Coords, ndim: int) -> None:
 def grid(**arguments: Any) -> Optional[Coords]:
     """Python application interface for creating a initial grid file from command line or python code.
 
-    Keyword arguments:
-    ndim: int     Number of simulation dimensions (i.e., 2 or 3); defaults to {NDIM}.
-    nxb: int      Number of grid points per block in the i direction; defaults to {NXB}.
-    nyb: int      Number of grid points per block in the j direction; defaults to {NYB}.
-    nzb: int      Number of grid points per block in the k direction; defaults to {NZB}.
-    iprocs: int   Number of blocks in the i direction; defaults to {IPROCS}.
-    jprocs: int   Number of blocks in the j direction; defaults to {JPROCS}.
-    kprocs: int   Number of blocks in the k direction; defaults to {KPROCS}.
-    xrange: list  Bounding points (e.g., [0.0, 1.0]) for i direction; defaults to {XRANGE}.
-    yrange: list  Bounding points (e.g., [0.0, 1.0]) for j direction; defaults to {YRANGE}.
-    zrange: list  Bounding points (e.g., [0.0, 1.0]) for k direction; defaults to {ZRANGE}.
-    bndbox: list  Bounding box pairs (e.g., [0.0, 1.0, ...]) for each of i,j,k directions.
-    xmethod: str  Stretching method for grid points in the i directions; defaults to {XMETHOD}.
-    ymethod: str  Stretching method for grid points in the j directions; defaults to {YMETHOD}.
-    zmethod: str  Stretching method for grid points in the k directions; defaults to {ZMETHOD}.
-    xparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
-    yparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
-    zparam: dict  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
-    path: str     Path to source files used in some stretching methods (e.g., ascii); defaults to cwd.
-    dest: str     Path to initial grid hdf5 file; defaults to cwd.
-    ignore: bool  Ignore configuration file provided arguments, options, and flags.
-    result: bool  Return the calculated coordinates; defaults to {RESULT}.
-    nofile: bool  Do not write the calculated coordinates to file; defaults to {NOFILE}.
+    This method creates an HDF5 file associated with the desired spacial grid specification (on a global
+    basis using the face locations), suitable for input by the FLASH application at runtime.
+
+    Keyword Arguments:
+        ndim (int):     Number of simulation dimensions (i.e., 2 or 3).
+        nxb (int):      Number of grid points per block in the i direction.
+        nyb (int):      Number of grid points per block in the j direction.
+        nzb (int):      Number of grid points per block in the k direction.
+        iprocs (int):   Number of blocks in the i direction.
+        jprocs (int):   Number of blocks in the j direction.
+        kprocs (int):   Number of blocks in the k direction.
+        xrange (list):  Bounding points (e.g., [0.0, 1.0]) for i direction.
+        yrange (list):  Bounding points (e.g., [0.0, 1.0]) for j direction.
+        zrange (list):  Bounding points (e.g., [0.0, 1.0]) for k direction.
+        bndbox (list):  Bounding box pairs (e.g., [0.0, 1.0, ...]) for each of i,j,k directions.
+        xmethod (str):  Stretching method for grid points in the i directions.
+        ymethod (str):  Stretching method for grid points in the j directions.
+        zmethod (str):  Stretching method for grid points in the k directions.
+        xparam (dict):  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for i direction method.
+        yparam (dict):  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for j direction method.
+        zparam (dict):  Key/value pairs for paramaters (e.g., {'alpha': 0.5 ...}) used for k direction method.
+        path (str):     Path to source files used in some stretching methods (e.g., ascii).
+        dest (str):     Path to initial grid hdf5 file.
+        ignore (bool):  Ignore configuration file provided arguments, options, and flags.
+        result (bool):  Return the calculated coordinates.
+        nofile (bool):  Do not write the calculated coordinates to file.
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')

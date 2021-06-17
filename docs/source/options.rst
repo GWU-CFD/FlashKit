@@ -1,5 +1,5 @@
-Options
-=======
+Configuration Options
+=====================
 
 Page under construction, please check back later.
 
