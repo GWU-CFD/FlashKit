@@ -1,6 +1,5 @@
 """Metadata for FlashKit package."""
 
-
 __pkgname__     = 'flashkit'
 __version__     = '0.1.0'
 __authors__     = 'Aaron Lentner'

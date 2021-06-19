@@ -147,7 +147,7 @@ def xdmf(**arguments: Any) -> None:
         grid (str):     Grid file(s) name follower.
         auto (bool):    Force behavior to attempt guessing BASENAME and [--files LIST].
         ignore (bool):  Ignore configuration file provided arguments, options, and flags.
-    
+
     Note:
         If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,
         the PATH will be searched for flash simulation files and all

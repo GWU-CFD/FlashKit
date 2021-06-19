@@ -48,8 +48,8 @@ options:
 -V, --verbose     Enable debug messaging.
 -O, --options     Show the available options and exit.
 -P, --parallel    Indicate Parallel execution, useful for when flashkit
-                    is executed from a job script and cannot determine 
-                    its parallel or serial execution status automatically.
+                  is executed from a job script and cannot determine 
+                  its parallel or serial execution status automatically.
 
 files:              (Options are also pulled from files)
 ../**/flash.toml    Job tree configuration.
