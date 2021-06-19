@@ -44,6 +44,7 @@ options:
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 
 note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,

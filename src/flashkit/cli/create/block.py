@@ -44,6 +44,7 @@ flags:
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated fields by block on root. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 
 note:  This function reads grid data from an hdf5 file (i.e., must run <flashkit create grid> first); if you receive a cryptic
