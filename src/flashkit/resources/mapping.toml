@@ -45,7 +45,12 @@
   nxb    = ['general', 'space', 'nxb']
   nyb    = ['general', 'space', 'nyb']
   nzb    = ['general', 'space', 'nzb']
-  
+
+  [create.par]
+  dest   = ['general', 'paths', 'working']
+  nofile = ['general', 'pipes', 'nofile']
+  result = ['general', 'pipes', 'result']
+
   [create.xdmf]
   grid = ['general', 'files', 'grid']
   plot = ['general', 'files', 'plot']

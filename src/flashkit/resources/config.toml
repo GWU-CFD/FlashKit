@@ -29,6 +29,15 @@
   tablespad = 10    # padding for table printing
   precision = 6     # precision if output to screen
 
+  [create.par]
+  filename = 'flash.par'  # name of file holding runtime parameters
+  local    = 'local'      # default section key for local options
+  max      = 10           # maximum templates; files per level
+  name     = 4            # padding for parameter names           
+  note     = 5            # padding for parameter comments
+  sect     = 1            # padding for section footer
+  sentinal = '_'          # leading char for indexed lookup
+
   [create.xdmf]
   switch = 10   # number of files before showing progress
 
@@ -38,10 +47,10 @@
   base  = ['jobs', 'FLASH'] # default root of the tree
   file  = 'flash.toml' # name of file holding user options
   label = 'base'       # label for path var written to tree options
-  max   = 99           # maximum levels to walk building tree
+  max   = 100          # maximum levels to walk building tree
   path  = ''           # relative path to begin directory walk
   root  = 'root'       # variable in flash.toml for root of tree
-  user  = 'user'       # label for tree options in Configuration
+  user  = 'user'       # label prefix for trees in Configuration
 
   [core.logger]
   console  = '%(msg)s'  # default logging handler format

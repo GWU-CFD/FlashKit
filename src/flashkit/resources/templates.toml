@@ -1,0 +1,26 @@
+# Library specified sources for templating files using FlashKit.
+
+[parameter]
+
+  [parameter.space]
+    
+    [parameter.space.comment]
+    header = 'Size of computational volume'
+
+    [parameter.space.sources]
+    xmin = ['general', 'space', 'xrange', '_0']
+    xmax = ['general', 'space', 'xrange', '_1']
+    ymin = ['general', 'space', 'yrange', '_0']
+    ymax = ['general', 'space', 'yrange', '_1']
+    zmin = ['general', 'space', 'zrange', '_0']
+    zmax = ['general', 'space', 'zrange', '_1']
+
+  [parameter.mesh]
+
+    [parameter.mesh.comment]
+    header = 'Processor Grid (i.e., blocks)'
+
+    [parameter.mesh.sources]
+    iprocs = ['general', 'mesh', 'iprocs']
+    jprocs = ['general', 'mesh', 'jprocs']
+    kprocs = ['general', 'mesh', 'kprocs']

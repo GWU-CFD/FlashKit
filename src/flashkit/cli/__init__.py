@@ -9,7 +9,8 @@ import sys
 
 # internal libraries
 from ..__meta__ import __version__, __website__
-from ..core.custom import DebugLogging, ForceParallel, DictApp
+from ..core.custom import DictApp
+from ..core.options import DebugLogging, ForceParallel
 
 # external libraries
 from cmdkit.app import ApplicationGroup
@@ -47,6 +48,7 @@ options:
 -v, --version     Show the version and exit.
 -V, --verbose     Enable debug messaging.
 -O, --options     Show the available options and exit.
+-S, --available   List the available library defined templates and exit.
 -P, --parallel    Indicate Parallel execution, useful for when flashkit
                   is executed from a job script and cannot determine 
                   its parallel or serial execution status automatically.
@@ -72,6 +74,7 @@ class FlashKit(ApplicationGroup):
     interface.add_argument('command')
     interface.add_argument('-v', '--version', version=__version__, action='version')
     interface.add_argument('-O', '--options', action='store_true')
+    interface.add_argument('-S', '--available', action='store_true')
     interface.add_argument('-P', '--parallel', nargs=0, action=ForceParallel)
     interface.add_argument('-V', '--verbose', nargs=0, action=DebugLogging)
 

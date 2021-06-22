@@ -17,7 +17,7 @@ from cmdkit.config import Configuration, Namespace
 # internal libraries
 from .logging import logger
 from .parallel import is_root
-from ..resources import CONFIG, DEFAULTS, MAPPING
+from ..resources import CONFIG, DEFAULTS, MAPPING, TEMPLATES
 
 # module access and module level @property(s)
 THIS = sys.modules[__name__]
@@ -33,7 +33,7 @@ MAX = CONFIG['core']['configure']['max']
 PATH = CONFIG['core']['configure']['path']
 ROOT = CONFIG['core']['configure']['root']
 USER = CONFIG['core']['configure']['user']
-PAD = f'0{len(str(MAX))}'
+PAD = f'0{len(str(MAX-1))}'
 
 # internal member for forced delayed
 _DELAYED: Optional[bool] = None
@@ -51,10 +51,11 @@ def force_delayed(state: bool = True) -> None:
     THIS._DELAYED = state # type: ignore # pylint: disable=protected-access
     if is_root(): logger.debug('Force Delayed Configuration!')
 
-def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
+def gather(first_step: str = PATH, *, filename: str = FILE) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
-    trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
-    return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
+    user = USER if filename == FILE else filename.split('.')[0]
+    trees = [(where, tree) for where, tree in walk_the_path(first_step, filename=filename) if tree is not None]
+    return {f'{user}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
 
 def prepare(trees: MutableMapping[str, Any], book: Optional[MutableMapping[str, Any]] = None) -> dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
@@ -91,14 +92,14 @@ def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any
     except KeyError:
         return None
 
-def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
+def walk_the_path(first_step: str = PATH, *, filename: str = FILE, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
     """Walk the path, learning from the trees of knowlege (like os.walk, but opposite)"""
 
     # read the trees on the path of knowlege ...
     tree: Optional[MutableMapping[str, Any]] = None
     try:
         first_step = os.path.realpath(first_step)
-        tree = toml.load(os.path.join(first_step, FILE))
+        tree = toml.load(os.path.join(first_step, filename))
         if tree is not None: root = tree.get(ROOT, None)
     except PermissionError as error:
         print(error)
@@ -118,7 +119,7 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterato
         return
 
     # walk the path
-    for step in walk_the_path(next_step, root):
+    for step in walk_the_path(next_step, filename=filename, root=root):
         yield step
 
 def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[list[str]]:
@@ -142,3 +143,16 @@ def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
     """Provides support for delayed configuration of arguments."""
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
+
+def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> Configuration:
+    """Initialize template factory for commandline routines."""
+    trees: dict[str, Namespace] = dict()
+    for template in templates:
+        trees.update(**prepare(gather(filename=template)))
+    
+    if sources is not None:
+        source, *sections = sources
+        system = prepare({'system': {key: value for key, value in TEMPLATES[source].items() if key in sections}})
+        return harvest(**system, trees=trees, local=local)
+
+    return harvest(trees=trees, local=local)

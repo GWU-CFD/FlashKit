@@ -4,4 +4,4 @@
 from . import api as flash
 
 # expose python custom actions interface
-from .core import options
+from . import general as options
