@@ -65,7 +65,7 @@ def sort_templates(templates: list[str], *args) -> int:
         return src + {'local': -1, 'system': int(MAX_TEMP * MAX_LVLS * 10)}[arg] 
     except KeyError: 
         usr, lvl = arg.split('_')
-        return src + int(lvl) + {k: MAX_LVLS * 10 * n 
+        return src + MAX_LVLS - int(lvl) + {k: MAX_LVLS * 10 * n 
                 for n, k in enumerate(templates)}[usr]
 
 @squash
@@ -79,6 +79,7 @@ def author_section(section: str, layout: Sections):
     comment = layout.pop(TAGGING, {})
     header = comment.get('header', section)
     footer = comment.get('footer', None)
+    sort = sorted if comment.get('sorted', False) else lambda _: _
 
     sources = layout.pop(SOURCING, {}) 
     sinks = layout.pop(SINKING, {})
@@ -86,13 +87,13 @@ def author_section(section: str, layout: Sections):
     if not layout and not sources and section != TITLE:
         return list()
     
-    params = [(name, value) for name, value in layout.items()]
+    params = [(name, value) for name, value in sort(layout.items())]
     params.extend((name, read_a_source(stem, DEFAULTS)) for name, stem in sources.items())
 
     pad = max((len(name) for name, _ in params), default=0) + PAD_NAME
     lines = [f'# {header}', ]
     lines.extend(
-            f'{name: <{pad}} = {value}{fmt_note(comment.get(SENTINAL + name, None))}'
+            f'{name: <{pad}} = {fmt_value(value)}{fmt_note(comment.get(SENTINAL + name, None))}'
             for name, value in params)
     lines.append('' if not footer else f'# {footer}')
     lines.extend('' for _ in range(PAD_SECT))
@@ -102,8 +103,11 @@ def author_section(section: str, layout: Sections):
 def fmt_note(note: Any) -> str:
     return '' if not note else f"{'#':>{PAD_NOTE}} {note}"
 
+def fmt_value(value: Any) -> Any:
+    return f'.{str(value).lower()}.' if isinstance(value, bool) else value
+
 def order_sections(*args) -> str:
-    (section , layout), *_ = args
+    (section, layout), *_ = args
     try:
         return str({TITLE: -1, LOCAL: -2}[section])
     except KeyError:

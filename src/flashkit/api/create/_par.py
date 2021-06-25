@@ -87,6 +87,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     logger.debug(f'api -- construct contains templated info: {construct.keys()}')
 
     # filter the templates
+    logger.debug(construct)
     if not args.get('duplicates', False):
         logger.debug(f'api -- filter duplicate template entries')
         construct = construct.trim(filter_tags, key=partial(sort_templates, args['templates']))

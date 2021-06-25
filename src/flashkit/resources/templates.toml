@@ -21,6 +21,6 @@
     header = 'Processor Grid (i.e., blocks)'
 
     [parameter.mesh.sources]
-    iprocs = ['general', 'mesh', 'iprocs']
-    jprocs = ['general', 'mesh', 'jprocs']
-    kprocs = ['general', 'mesh', 'kprocs']
+    iProcs = ['general', 'mesh', 'iprocs']
+    jProcs = ['general', 'mesh', 'jprocs']
+    kProcs = ['general', 'mesh', 'kprocs']
