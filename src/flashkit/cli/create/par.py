@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 # internal libraries
-#from ...api.create import par
+from ...api.create import par
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
 from ...core.error import AutoError, StreamError
+from ...core.logging import logger
 from ...core.options import return_available, return_options
 from ...core.parse import DictAny, ListStr
 
@@ -38,7 +39,8 @@ options:
 -d, --dest     PATH  Path to parameter file; defaults to cwd.
 
 flags:
--A, --auto           Use all templates specified in all configuration files and use all sources.
+-A, --auto           Force use of all templates specified in all configuration files and library sources.
+-N, --nosources      Do not use any library specified template sources; AUTO takes precedences.
 -D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated coordinates. 
@@ -76,6 +78,7 @@ class ParCreateApp(Application):
     interface.add_argument('-s', '--sources', type=ListStr)
     interface.add_argument('-d', '--dest')
     interface.add_argument('-A', '--auto', action='store_true')
+    interface.add_argument('-N', '--nosources', action='store_true')
     interface.add_argument('-D', '--duplicates', action='store_true')
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
@@ -93,6 +96,7 @@ class ParCreateApp(Application):
             return
 
         options = {'templates', 'params', 'sources', 'dest', 'auto',
-                   'duplcates', 'ignore', 'result', 'nofile'}
+                   'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        print(**local)
+        logger.debug(f'cli -- Returning: {local}')
+        par(**local, cmdline=True)

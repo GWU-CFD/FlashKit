@@ -23,7 +23,7 @@ def force_debug(state: bool = True) -> None:
     """Force the use of debugging logging level;
     needs to be here vice logging to prevent a circular import."""
     if state: logger.setLevel(DEBUG)
-    if is_root(): logger.debug('Force DEBUG Logging Level!')
+    if is_root(): logger.debug('Force -- DEBUG Logging Level!')
 
 class DebugLogging(argparse.Action):
     """Create custom action for setting debug logging."""

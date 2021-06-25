@@ -12,7 +12,7 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
-from .logging import logger
+from .logging import logger, printer
 from ..resources import CONFIG
 
 # external libraries
@@ -151,7 +151,7 @@ def assert_unloaded() -> None:
 def force_parallel(state: bool = True) -> None:
     """Force the assumption of a parallel or serial state."""
     this._parallel = state # type: ignore
-    if is_root(): logger.debug('Force Parallel Enviornment!')
+    if is_root(): logger.debug('Force -- Parallel Enviornment!')
 
 def get_property(name: str) -> str:
     """Provide lookup support for module properties."""
@@ -204,7 +204,7 @@ def load() -> None:
     from mpi4py import MPI # type: ignore
     this._MPI = MPI # type: ignore
     if first and MPI.COMM_WORLD.Get_rank() == 0:
-        print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
+        printer.info(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
 @inject_property('MPI')
 def property_COMM_WORLD(mpi: F) -> Intracomm:

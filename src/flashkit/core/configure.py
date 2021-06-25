@@ -13,10 +13,12 @@ import sys
 # external libraries
 import toml
 from cmdkit.config import Configuration, Namespace
+from cmdkit.provider.builder import BuilderConfiguration
 
 # internal libraries
 from .logging import logger
 from .parallel import is_root
+from .tools import read_a_leaf
 from ..resources import CONFIG, DEFAULTS, MAPPING, TEMPLATES
 
 # module access and module level @property(s)
@@ -49,13 +51,13 @@ class WalkError(Exception):
 def force_delayed(state: bool = True) -> None:
     """Force the assumption of an on import or on call configure state."""
     THIS._DELAYED = state # type: ignore # pylint: disable=protected-access
-    if is_root(): logger.debug('Force Delayed Configuration!')
+    if is_root(): logger.debug('Force -- Delayed Configuration!')
 
-def gather(first_step: str = PATH, *, filename: str = FILE) ->  dict[str, dict[str, Any]]:
+def gather(first_step: str = PATH, *, filename: str = FILE, stamp: bool = True) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
     user = USER if filename == FILE else filename.split('.')[0]
     trees = [(where, tree) for where, tree in walk_the_path(first_step, filename=filename) if tree is not None]
-    return {f'{user}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
+    return {f'{user}_{steps:{PAD}}': dict(tree, **{LABEL: where}) if stamp else dict(tree) for steps, (where, tree) in enumerate(reversed(trees))}
 
 def prepare(trees: MutableMapping[str, Any], book: Optional[MutableMapping[str, Any]] = None) -> dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
@@ -84,13 +86,6 @@ def plant_a_tree(tree: MutableMapping[str, Any], book: Optional[MutableMapping[s
                 leaf = {step: leaf}
             plant.update(leaf)
     return plant
-
-def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
-    """Read the leaf at the end of the stem on the treee."""
-    try:
-        return reduce(lambda branch, leaf: branch[leaf], stem, tree)
-    except KeyError:
-        return None
 
 def walk_the_path(first_step: str = PATH, *, filename: str = FILE, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
     """Walk the path, learning from the trees of knowlege (like os.walk, but opposite)"""
@@ -144,15 +139,18 @@ def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
 
-def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> Configuration:
+def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> BuilderConfiguration:
     """Initialize template factory for commandline routines."""
+    
+    logger.debug(f'core -- build a collection of templates {templates}')
     trees: dict[str, Namespace] = dict()
     for template in templates:
-        trees.update(**prepare(gather(filename=template)))
+        trees.update(**prepare(gather(filename=template, stamp=False)))
     
     if sources is not None:
         source, *sections = sources
+        logger.debug(f'core -- append sourcing tags from library template {sections}')
         system = prepare({'system': {key: value for key, value in TEMPLATES[source].items() if key in sections}})
-        return harvest(**system, trees=trees, local=local)
+        return BuilderConfiguration(**system, **trees, local=local)
 
-    return harvest(trees=trees, local=local)
+    return BuilderConfiguration(**trees, local=local)

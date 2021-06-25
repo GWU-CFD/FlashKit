@@ -31,12 +31,18 @@
 
   [create.par]
   filename = 'flash.par'  # name of file holding runtime parameters
-  local    = 'local'      # default section key for local options
-  max      = 10           # maximum templates; files per level
-  name     = 4            # padding for parameter names           
-  note     = 5            # padding for parameter comments
-  sect     = 1            # padding for section footer
+  filemax  = 10           # maximum templates; files per level
+  padname  = 4            # padding for parameter names           
+  padnote  = 5            # padding for parameter comments
+  padsect  = 0            # padding for section footer
   sentinal = '_'          # leading char for indexed lookup
+  tagging  = 'comment'    # section key for tagging variables
+  sourcing = 'sources'    # section key for sourcing data
+  sinking  = 'sinks'      # section key for sinking data
+  title    = 'title'      # section key for the title
+  local    = 'local'      # section key for the title
+  supports = ['header', 'footer', 'number'] # supported tags
+  nosource = ['2d']       # library templates (parameter) keys ignored
 
   [create.xdmf]
   switch = 10   # number of files before showing progress
@@ -54,10 +60,10 @@
 
   [core.logger]
   console  = '%(msg)s'  # default logging handler format
-  debugger = '%(name)s - %(message)s' # verbose logging handler format
+  debugger = '%(name)s %(module)s %(funcName)s - %(message)s' # verbose logging handler format
   logger   = 'FlashKit' # name of the flashkit logger
   printer  = 'console'  # name of the flashkit logger
-  simple   = true       # use print() vice logger
+  simple   = false       # use print() vice logger
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi
