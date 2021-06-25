@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Callable
 
 # standard libraries
 import os
@@ -79,7 +79,7 @@ def author_section(section: str, layout: Sections):
     comment = layout.pop(TAGGING, {})
     header = comment.get('header', section)
     footer = comment.get('footer', None)
-    sort = sorted if comment.get('sorted', False) else lambda _: _
+    sort = comment.get('sorted', False)
 
     sources = layout.pop(SOURCING, {}) 
     sinks = layout.pop(SINKING, {})
@@ -87,7 +87,11 @@ def author_section(section: str, layout: Sections):
     if not layout and not sources and section != TITLE:
         return list()
     
-    params = [(name, value) for name, value in sort(layout.items())]
+    if sort:
+        params = [(name, value) for name, value in sorted(layout.items())]
+    else:
+        params = [(name, value) for name, value in layout.items()]
+    
     params.extend((name, read_a_source(stem, DEFAULTS)) for name, stem in sources.items())
 
     pad = max((len(name) for name, _ in params), default=0) + PAD_NAME
