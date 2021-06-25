@@ -10,7 +10,7 @@ import argparse
 from ..core.configure import force_delayed, get_defaults
 from ..core.logging import logger, printer, DEBUG
 from ..core.parallel import force_parallel, is_root
-from ..resources import MAPPING
+from ..resources import MAPPING, TEMPLATES
 
 # external libraries
 from cmdkit.config import Namespace
@@ -43,9 +43,19 @@ class ForceParallel(argparse.Action):
         setattr(namespace, self.dest, True)
         force_parallel()
 
-def return_available(category: str) -> None:
-    """Force the logging of avaialable template options for flashkit."""
-    pass
+def return_available(category: str, tags: list[str]) -> None:
+    """Force the logging of available template options for flashkit."""
+    printer.info(
+            f'The following library template key/value pairs are provided:\n'
+            f'with the tags of <{tags}> defined in each section')
+    for section, layout in TEMPLATES[category].items():
+        printer.info(f'\n Section: {section}\n')
+        for tag, values in layout.items():
+            if tag in tags:
+                printer.info(
+                    f'Parameter\t{tag}\n'
+                    f'---------\t{"-"*len(tag)}')
+                printer.info('\n'.join(f'{tmp}\t\t{value}' for tmp, value in values.items()))
 
 def return_options(category: str, operation: str) -> None:
     """Force the logging of defaults and mappings for flashkit <category> <operation>."""

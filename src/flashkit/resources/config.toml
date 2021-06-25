@@ -31,6 +31,7 @@
 
   [create.par]
   filename = 'flash.par'  # name of file holding runtime parameters
+  template = 'templates'  # variable in flash.toml for templates
   filemax  = 10           # maximum templates; files per level
   padname  = 4            # padding for parameter names           
   padnote  = 5            # padding for parameter comments

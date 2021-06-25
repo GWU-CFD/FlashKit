@@ -29,6 +29,9 @@ __all__ = ['par', ]
 
 # define configuration constants (internal)
 FILENAME = CONFIG['create']['par']['filename']
+TEMPLATE = CONFIG['create']['par']['template']
+TAGGING = CONFIG['create']['par']['tagging']
+LOCAL = CONFIG['create']['par']['local']
 NOSOURCE = CONFIG['create']['par']['nosource']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
@@ -60,9 +63,9 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         logger.debug(f'api -- finding templates in all configuration files')
         arguments = get_arguments()
         args['templates'] = list(dict.fromkeys([template 
-            for space, paths in reversed(arguments.whereis('templates').items())
+            for space, paths in reversed(arguments.whereis(TEMPLATE).items())
             for path in paths 
-            for template in read_a_leaf([space, 'templates'], arguments.namespaces) # type: ignore
+            for template in read_a_leaf([space, TEMPLATE], arguments.namespaces) # type: ignore
             ]))
 
     # find the sources 
@@ -74,7 +77,11 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # read and combine the templates
     files = [file + '.toml' for file in args['templates']]
     logger.debug(f'api -- read and combine all templates {files}')
-    local = Namespace() if 'params' not in args else Namespace({'local': args['params']})
+    if 'params' in args:
+        local = Namespace({LOCAL: args['params']})
+        local[LOCAL][TAGGING] = {'header': 'Command Line Provided Parameters'}
+    else:
+        local = Namespace()
     sources = ['parameter', ] + args['sources']
     construct = get_templates(local=local, sources=sources, templates=files)
     logger.debug(f'api -- construct contains templated info: {construct.keys()}')

@@ -92,7 +92,7 @@ class ParCreateApp(Application):
             return
 
         if self.shared.available:
-            return_available('parameter')
+            return_available('parameter', ['sources'])
             return
 
         options = {'templates', 'params', 'sources', 'dest', 'auto',
