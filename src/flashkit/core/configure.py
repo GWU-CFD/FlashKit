@@ -24,8 +24,8 @@ from ..resources import CONFIG, DEFAULTS, MAPPING, TEMPLATES
 # module access and module level @property(s)
 THIS = sys.modules[__name__]
 
-# define public interface
-__all__ = ['get_arguments', 'get_defaults']
+# define library (public) interface
+__all__ = ['get_arguments', 'get_defaults', 'get_templates']
 
 # define configuration constants
 BASE = CONFIG['core']['configure']['base']
@@ -132,25 +132,31 @@ def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[
 TREES = prepare(gather(), MAPPING)
 
 # initialize argument factory for commandline routines
-get_defaults = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING))
+def get_defaults(*, local: Namespace = Namespace()) -> Configuration:
+    """Constructs arguments from local and system defaults.""" 
+    logger.debug(f'core -- Prepairing to build arguments.')
+    return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING))
 
 def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
-    """Provides support for delayed configuration of arguments."""
+    """Constructs arguments from local, user files, and system defaults;
+    also provides support for delayed configuration of file sourced arguments
+    until the method call occurs, otherwise this happens on module import."""
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
+    logger.debug(f'core -- Prepairing to build arguments (Delayed was {_DELAYED}).')
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
 
 def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> BuilderConfiguration:
     """Initialize template factory for commandline routines."""
     
-    logger.debug(f'core -- build a collection of templates {templates}')
     trees: dict[str, Namespace] = dict()
     for template in templates:
         trees.update(**prepare(gather(filename=template, stamp=False)))
+    logger.debug(f'core -- Built a collection of templates from files.')
     
     if sources is not None:
         source, *sections = sources
-        logger.debug(f'core -- append sourcing tags from library template {sections}')
         system = prepare({'system': {key: value for key, value in TEMPLATES[source].items() if key in sections}})
+        logger.debug(f'core -- Appended templates with sections from library defaults.')
         return BuilderConfiguration(**system, **trees, local=local)
 
     return BuilderConfiguration(**trees, local=local)

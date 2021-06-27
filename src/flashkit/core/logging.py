@@ -11,7 +11,7 @@ import logging
 # internal libraries
 from ..resources import CONFIG
 
-# define public interface
+# define library (public) interface
 __all__ = ['CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN',
            'console', 'debugger', 'logger', 'printer', ]
 

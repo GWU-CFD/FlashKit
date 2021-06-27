@@ -79,4 +79,3 @@ def return_options(category: str, operation: str) -> None:
         f'{mappings}\n'
         )
     printer.info(message)
-

@@ -36,15 +36,13 @@ NOSOURCE = CONFIG['create']['par']['nosource']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
-    logger.debug(f'api -- Provided: {args}')
 
     # determine arguments passed
     if args.get('auto', False):
-        logger.debug(f'api -- force auto behavior for templates and sources')
         templates_given = False
         sources_given = False
+        logger.debug(f'api -- Forced auto behavior for templates and sources.')
     else:    
-        logger.debug(f'api -- user or defaults for templates and sources')
         templates_given = 'templates' in args.keys()
         if args['nosources']:
             sources_given = True
@@ -52,46 +50,45 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         else:
             sources_given = 'sources' in args.keys()
         if not all((templates_given, sources_given)):
-            raise AutoError('Templates and sources must be given!; or use --auto')
+            raise AutoError('Templates and sources must be given; or use --auto.')
+        logger.debug(f'api -- Using provided or defaults for templates and sources.')
 
     # resolve proper absolute directory paths
-    logger.debug(f'api -- fully resolve the destination path')
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
+    logger.debug(f'api -- Fully resolved the destination path.')
 
     # find the templates 
     if not templates_given:
-        logger.debug(f'api -- finding templates in all configuration files')
         arguments = get_arguments()
         args['templates'] = list(dict.fromkeys([template 
             for space, paths in reversed(arguments.whereis(TEMPLATE).items())
             for path in paths 
             for template in read_a_leaf([space, TEMPLATE], arguments.namespaces) # type: ignore
             ]))
+        logger.debug(f'api -- Identified templates using all configuration files.')
 
     # find the sources 
     if not sources_given:
-        logger.debug(f'api -- using the library sources')
         args['sources'] = [source for source in TEMPLATES['parameter'].keys()
                 if source not in NOSOURCE]
+        logger.debug(f'api -- Used the library default sources.')
 
     # read and combine the templates
     files = [file + '.toml' for file in args['templates']]
-    logger.debug(f'api -- read and combine all templates {files}')
     if 'params' in args:
         local = Namespace({LOCAL: args['params']})
         local[LOCAL][TAGGING] = {'header': 'Command Line Provided Parameters'}
+        logger.debug(f'api -- Appended local parameters provided.')
     else:
         local = Namespace()
     sources = ['parameter', ] + args['sources']
     construct = get_templates(local=local, sources=sources, templates=files)
-    logger.debug(f'api -- construct contains templated info: {construct.keys()}')
+    logger.debug(f'api -- Constructed combined templated info.')
 
     # filter the templates
-    logger.debug(construct)
     if not args.get('duplicates', False):
-        logger.debug(f'api -- filter duplicate template entries')
         construct = construct.trim(filter_tags, key=partial(sort_templates, args['templates']))
-        logger.debug(f'api -- construct trimmed to: {construct.keys()}')
+        logger.debug(f'api -- Combined template was trimmed.')
     args['construct'] = construct
 
     return args
@@ -101,6 +98,7 @@ def attach_context(**args: Any) -> dict[str, Any]:
     if sys.stdout.isatty():
         if args['nofile']: printer.info('No File Output!\n')
         args['context'] = get_bar()
+        logger.debug(f'api -- Attached a dynamic progress context')
     else:
         args['context'] = get_bar(null=True)
         if args['nofile']:

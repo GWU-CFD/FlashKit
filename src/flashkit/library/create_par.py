@@ -48,7 +48,6 @@ def author_par(*, template: Template) -> Lines:
         lines.extend(author_section(section, layout))
     return lines
 
-@safe
 def filter_tags(key: str) -> bool:
     """Define the filter function for supported keys."""
     try:
@@ -56,7 +55,6 @@ def filter_tags(key: str) -> bool:
     except IndexError:
         raise LibraryError('Templates do not support empty keys!') 
 
-@safe
 def sort_templates(templates: list[str], *args) -> int:
     """Define the sorting algorythm to implement template precedence."""
     (arg, *path), *_ = args
@@ -108,7 +106,9 @@ def fmt_note(note: Any) -> str:
     return '' if not note else f"{'#':>{PAD_NOTE}} {note}"
 
 def fmt_value(value: Any) -> Any:
-    return f'.{str(value).lower()}.' if isinstance(value, bool) else value
+    return {bool: f'.{str(value).lower()}.',
+            str: f'"{value}"'
+            }.get(type(value), value)
 
 def order_sections(*args) -> str:
     (section, layout), *_ = args
