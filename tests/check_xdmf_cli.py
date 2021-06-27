@@ -11,6 +11,7 @@ import pytest
 from cmdkit.app import ExitStatus 
 
 # internal libraries
+from .support import change_directory
 from flashkit.cli import main
 from flashkit.cli.create import xdmf
 
@@ -103,37 +104,42 @@ def data(request):
     return request.param
 
 @pytest.mark.cli
-def check_xdmf_help():
+def check_xdmf_help(scratch):
     """Verify that help message works properly."""
-    assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --help'))
-    assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -h'))
+    with change_directory(scratch):
+        assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --help'))
+        assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -h'))
 
 @pytest.mark.cli
-def check_xdmf_version():
+def check_xdmf_version(scratch):
     """Verify that help message works properly."""
-    assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --version'))
-    assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -v'))
+    with change_directory(scratch):
+        assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf --version'))
+        assert STATUS.success == os.WEXITSTATUS(os.system('flashkit create xdmf -v'))
 
 @pytest.mark.cli
-def check_xdmf_noargs():
+def check_xdmf_noargs(scratch):
     """Verify that usage message is not used; fails in root dir."""
-    assert STATUS.runtime_error == os.WEXITSTATUS(os.system('flashkit create xdmf'))
+    with change_directory(scratch):
+        assert STATUS.runtime_error == os.WEXITSTATUS(os.system('flashkit create xdmf'))
 
 @pytest.mark.cli
-def check_xdmf_badargs():
+def check_xdmf_badargs(scratch):
     """Verify that bad args fails with correct exit status."""
-    assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf --bob'))
-    assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -w'))
-    assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -f"1/2"'))
-    assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -b1.2'))
+    with change_directory(scratch):
+        assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf --bob'))
+        assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -w'))
+        assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -f"1/2"'))
+        assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -b1.2'))
 
 @pytest.mark.cli
-def check_xdmf_options(mocker, data):
+def check_xdmf_options(scratch, data, mocker):
     """ Verify that the expected cli options work properly."""
 
     # instrument desired functions
     mocker.patch('sys.argv', ['flashkit', 'create', 'xdmf'] + data.provided)
     mocker.spy(xdmf, 'xdmf')
 
-    assert STATUS.runtime_error == main()
-    xdmf.xdmf.assert_called_with(**data.expected)
+    with change_directory(scratch):
+        assert STATUS.runtime_error == main()
+        xdmf.xdmf.assert_called_with(**data.expected)

@@ -242,12 +242,12 @@ def check_xdmf(working, data, mocker):
 
     # don't run library function or logging
     mocker.patch('flashkit.api.create._xdmf.create_xdmf', return_value=None)
-    mocker.patch('flashkit.api.create._xdmf.printer.info', return_value=None)
+    mocker.patch('flashkit.api.create._xdmf.logger.info', return_value=None)
     mocker.patch('flashkit.api.create._xdmf.sys.stdout.isatty', return_value=True)
 
     # instrument desired functions
     mocker.spy(_xdmf, 'create_xdmf')
-    mocker.spy(_xdmf.printer, 'info')
+    mocker.spy(_xdmf.logger, 'info')
     
     with change_directory(working):
         _xdmf.xdmf(**data.provided)
@@ -257,7 +257,7 @@ def check_xdmf(working, data, mocker):
         
         # check attached context message
         if len(data.expected['files']) < SWITCH:
-            _xdmf.printer.info.assert_any_call('Writing xdmf data out to file ...')
+            _xdmf.logger.info.assert_any_call('Writing xdmf data out to file ...')
 
         # check logging
         found = False
@@ -269,7 +269,7 @@ def check_xdmf(working, data, mocker):
                 rf".*{os.path.relpath(exp['source'])}/{exp['basename']}{exp['gridname']}xxxx.*" \
                 rf".*{os.path.relpath(exp['dest'])}/{exp['basename']}{exp['filename']}.xmf.*" \
                 rf".*{fmsgs}.*"
-        for message, kwargs in _xdmf.printer.info.call_args_list:
+        for message, kwargs in _xdmf.logger.info.call_args_list:
             if re.search(check, message[0], flags=re.DOTALL):
                 found = True
         assert found == True
