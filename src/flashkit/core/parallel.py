@@ -12,7 +12,7 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
-from .logging import logger, printer
+from .logging import logger
 from ..resources import CONFIG
 
 # external libraries
@@ -205,7 +205,7 @@ def load() -> None:
     from mpi4py import MPI # type: ignore
     this._MPI = MPI # type: ignore
     if first and MPI.COMM_WORLD.Get_rank() == 0:
-        printer.info(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
+        logger.info(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
 @inject_property('MPI')
 def property_COMM_WORLD(mpi: F) -> Intracomm:

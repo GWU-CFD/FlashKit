@@ -60,11 +60,13 @@
   user  = 'user'       # label prefix for trees in Configuration
 
   [core.logger]
-  console  = '%(msg)s'  # default logging handler format
-  debugger = '%(name)s %(module)s %(funcName)s - %(message)s' # verbose logging handler format
+  console  = '%(message)s'  # console logging handler format
+  error = '%(levelname)s - %(message)s' # stderr logging handler format
+  record = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
+  trace = '%(asctime)s - %(message)s' # traceback logging handler format
   logger   = 'FlashKit' # name of the flashkit logger
-  printer  = 'console'  # name of the flashkit logger
-  simple   = false       # use print() vice logger
+  logfile = 'flashkit.log' # name of the standard logging file
+  excfile = 'traceback.log' # name of the traceback logging file
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi

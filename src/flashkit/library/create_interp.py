@@ -9,7 +9,6 @@ import os
 
 # internal libraries
 from ..core.error import LibraryError
-from ..core.logging import printer
 from ..core.parallel import Index, safe
 from ..core.progress import Bar
 from ..core.tools import first_true

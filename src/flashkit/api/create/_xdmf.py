@@ -10,8 +10,8 @@ import os
 import sys
 
 # internal libraries
-from ...core.error import AutoError
-from ...core.logging import printer
+from ...core.error import AutoError, error
+from ...core.logging import logger
 from ...core.parallel import safe, single 
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -82,11 +82,12 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if len(args['files']) >= BAR_SWITCH and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        printer.info('Writing xdmf data out to file ...')
+    noattach = not len(args['files']) >= BAR_SWITCH and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
+    message = ''.join([
+            'Writing xdmf data out to file ...',
+            ])
+    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -107,7 +108,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'       xxxx = {msg_files}',
         f'',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # define constants for handling the argument stream
@@ -153,3 +154,8 @@ def xdmf(**arguments: Any) -> None:
         the PATH will be searched for flash simulation files and all
         such files identified will be used in sorted order."""
     create_xdmf(**process_arguments(**arguments))
+
+@error('Unable to create xdmf file!')
+def _xdmf(**kwargs):
+    """Python interface to the xdmf function."""
+    return xdmf(**kwargs)

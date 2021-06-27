@@ -3,11 +3,13 @@
 # type annotations
 from __future__ import annotations
 
+# standard libraries
+from pprint import pformat 
+
 # internal libraries
-from ...api.create import par
+from ...api.create._par import par
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
-from ...core.error import AutoError, StreamError
 from ...core.logging import logger
 from ...core.options import return_available, return_options
 from ...core.parse import DictAny, ListStr
@@ -69,7 +71,7 @@ class ParCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
 
     ALLOW_NOARGS: bool = True
 
@@ -98,5 +100,5 @@ class ParCreateApp(Application):
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returning: {local}')
+        logger.debug(f'cli -- Returning: {pformat(local)}')
         par(**local, cmdline=True)

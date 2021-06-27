@@ -8,7 +8,7 @@ import argparse
 
 # internal libraries
 from ..core.configure import force_delayed, get_defaults
-from ..core.logging import logger, printer, DEBUG
+from ..core.logging import force_debug
 from ..core.parallel import force_parallel, is_root
 from ..resources import MAPPING, TEMPLATES
 
@@ -16,14 +16,8 @@ from ..resources import MAPPING, TEMPLATES
 from cmdkit.config import Namespace
 
 # define library (public) interface
-__all__ = ['force_debug', 'return_available', 'return_options',
+__all__ = ['return_available', 'return_options',
            'DebugLogging', 'ForceDelayed', 'ForceParallel']
-
-def force_debug(state: bool = True) -> None:
-    """Force the use of debugging logging level;
-    needs to be here vice logging to prevent a circular import."""
-    if state: logger.setLevel(DEBUG)
-    if is_root(): logger.debug('Force -- DEBUG Logging Level!')
 
 class DebugLogging(argparse.Action):
     """Create custom action for setting debug logging."""
@@ -45,17 +39,17 @@ class ForceParallel(argparse.Action):
 
 def return_available(category: str, tags: list[str]) -> None:
     """Force the logging of available template options for flashkit."""
-    printer.info(
+    print(
             f'The following library template key/value pairs are provided:\n'
             f'with the tags of <{tags}> defined in each section')
     for section, layout in TEMPLATES[category].items():
-        printer.info(f'\n Section: {section}\n')
+        print(f'\n Section: {section}\n')
         for tag, values in layout.items():
             if tag in tags:
-                printer.info(
+                print(
                     f'Parameter\t{tag}\n'
                     f'---------\t{"-"*len(tag)}')
-                printer.info('\n'.join(f'{tmp}\t\t{value}' for tmp, value in values.items()))
+                print('\n'.join(f'{tmp}\t\t{value}' for tmp, value in values.items()))
 
 def return_options(category: str, operation: str) -> None:
     """Force the logging of defaults and mappings for flashkit <category> <operation>."""
@@ -78,4 +72,4 @@ def return_options(category: str, operation: str) -> None:
         f'-------\t\t-------------------------------\n'
         f'{mappings}\n'
         )
-    printer.info(message)
+    print(message)

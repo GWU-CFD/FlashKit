@@ -9,7 +9,8 @@ import os
 import sys
 
 # internal libraries
-from ...core.logging import printer
+from ...core.error import AutoError, error
+from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -66,14 +67,13 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Calculating block data (no file out) ...')
-        else:
-            printer.info('Writing block data out to file ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
+    message = ''.join([
+            'Calculating block data',
+            ' (no file out)' if args['nofile'] else '',
+            ' ...'])
+    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -95,7 +95,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  with_opts  = {options}',
         f'',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -117,7 +117,7 @@ def screen_out(*, blocks: Blocks) -> None:
     """Output calculated fields by block to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
-        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
+        print(f'\nFields for blocks on root are as follows:\n{message}')
 
 @safe
 def block(**arguments: Any) -> Optional[Blocks]:
@@ -167,3 +167,8 @@ def block(**arguments: Any) -> Optional[Blocks]:
     if not result: return None
     if cmdline: screen_out(blocks=blocks)
     return blocks
+
+@error('Unable to create block file!')
+def _block(**kwargs):
+    """Python interface to the block function."""
+    return block(**kwargs)

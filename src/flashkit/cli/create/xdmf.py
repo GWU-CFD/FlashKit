@@ -4,10 +4,9 @@
 from __future__ import annotations
 
 # internal libraries
-from ...api.create import xdmf
+from ...api.create._xdmf import xdmf
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
-from ...core.error import AutoError, StreamError
 from ...core.options import return_options
 from ...core.parse import ListInt
 
@@ -61,7 +60,7 @@ class XdmfCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
 
     ALLOW_NOARGS: bool = True
 

@@ -9,7 +9,8 @@ import os
 import sys
 
 # internal libraries
-from ...core.logging import printer
+from ...core.error import AutoError, error
+from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -70,14 +71,13 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Calculating grid data (no file out) ...')
-        else:
-            printer.info('Writing grid data out to file ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
+    message = ''.join([
+            'Calculating grid data',
+            ' (no file out)' if args['nofile'] else '',
+            ' ...'])
+    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -101,7 +101,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  with_opts = {options}',
         f'',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -126,7 +126,7 @@ def screen_out(*, coords: Coords, ndim: int) -> None:
     """Output calculated coordinates to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{a}:\n{c}' for a, c in zip(COORDS, coords[:ndim]))
-        printer.info(f'\nCoordinates are as follows:\n{message}')
+        print(f'\nCoordinates are as follows:\n{message}')
 
 @safe
 def grid(**arguments: Any) -> Optional[Coords]:
@@ -173,3 +173,8 @@ def grid(**arguments: Any) -> Optional[Coords]:
     if not result: return None
     if cmdline: screen_out(coords=coords, ndim=ndim)
     return coords
+
+@error('Unable to create grid file!')
+def _grid(**kwargs):
+    """Python interface to the grid function."""
+    return grid(**kwargs)

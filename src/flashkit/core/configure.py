@@ -97,10 +97,8 @@ def walk_the_path(first_step: str = PATH, *, filename: str = FILE, root: Optiona
         tree = toml.load(os.path.join(first_step, filename))
         if tree is not None: root = tree.get(ROOT, None)
     except PermissionError as error:
-        print(error)
         raise WalkError('Unable to walk the path (... of night in pursuit of knowlege?)!')
     except toml.TomlDecodeError as error:
-        print(error)
         raise WalkError('Unable to read from the tree (... of good and evil?)!')
     except FileNotFoundError:
         tree = None

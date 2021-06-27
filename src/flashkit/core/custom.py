@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # internal libraries
-from ..core.logging import logger 
-from ..core.parallel import is_root, squash
+from ..core.logging import handle_exception, logger 
+from ..core.parallel import squash
 
 # external libraries
 from cmdkit import app
@@ -53,8 +53,6 @@ def patched_exceptions(patch: str, errors: Iterable[Type[Exception]] = [Exceptio
 def patched_logging(patch: str) -> Callable[[Exception], int]:
     """Factory for patching custom exeption handlers."""
     def wrapper(exception: Exception, status: int = exit_status.runtime_error) -> int:
-        message, *_ = exception.args
-        message = f'{type(exception).__name__}( {message} )'
-        if is_root(): Application.log_critical('\n'.join((patch, message)))
+        handle_exception(exception, patch)
         return status
     return wrapper

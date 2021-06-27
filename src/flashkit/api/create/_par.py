@@ -11,8 +11,8 @@ from functools import partial
 
 # internal libraries
 from ...core.configure import get_arguments, get_templates
-from ...core.error import AutoError
-from ...core.logging import logger, printer
+from ...core.error import AutoError, error
+from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -44,7 +44,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         logger.debug(f'api -- Forced auto behavior for templates and sources.')
     else:    
         templates_given = 'templates' in args.keys()
-        if args['nosources']:
+        if args.get('nosources', False):
             sources_given = True
             args['sources'] = list()
         else:
@@ -95,16 +95,14 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if sys.stdout.isatty():
-        if args['nofile']: printer.info('No File Output!\n')
-        args['context'] = get_bar()
-        logger.debug(f'api -- Attached a dynamic progress context')
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Processing templates and authoring par (no file out) ...')
-        else:
-            printer.info('Processing templates and authoring par (out to file) ...')
+    noattach = not sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
+    if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
+    message = ''.join([
+            'Processing templates and authoring par',
+            ' (no file out)' if args['nofile'] else '',
+            ' ...'])
+    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -121,7 +119,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  output        = {os.path.join(dest, FILENAME)}',
         f'',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -142,9 +140,9 @@ def process_arguments(**arguments: Any) -> dict[str, Any]:
 @squash
 def screen_out(*, lines: list[str]) -> None:
     """Output authored parameter file to the screen."""
-    printer.info(f'\nThe authored parameter file is as follows:\n')
+    print(f'\nThe authored parameter file is as follows:\n')
     for line in lines:
-        printer.info(line)
+        print(line)
 
 @safe
 def par(**arguments: Any) -> Optional[Any]:
@@ -193,3 +191,8 @@ def par(**arguments: Any) -> Optional[Any]:
     if not result: return None
     if cmdline: screen_out(lines=lines)
     return lines
+
+@error('Unable to create par file!')
+def _par(**kwargs):
+    """Python interface to the par function."""
+    return par(**kwargs)
