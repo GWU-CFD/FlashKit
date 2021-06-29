@@ -28,7 +28,6 @@ coverage.xml
 
 # mypy
 .mypy_cache/
-*.log
 
 # linting
 .pylintrc
