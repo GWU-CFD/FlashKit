@@ -10,7 +10,7 @@ import os
 import sys
 
 # internal libraries
-from ...core.error import AutoError, error
+from ...core.error import AutoError
 from ...core.logging import logger
 from ...core.parallel import safe, single 
 from ...core.progress import get_bar
@@ -154,8 +154,3 @@ def xdmf(**arguments: Any) -> None:
         the PATH will be searched for flash simulation files and all
         such files identified will be used in sorted order."""
     create_xdmf(**process_arguments(**arguments))
-
-@error('Unable to create xdmf file!')
-def _xdmf(**kwargs):
-    """Python interface to the xdmf function."""
-    return xdmf(**kwargs)

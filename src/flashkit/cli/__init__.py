@@ -2,17 +2,15 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Type
 
 # standard libraries
 import sys
 
 # internal libraries
 from ..__meta__ import __version__, __website__
+from ..core import logging
 from ..core.custom import DictApp
-from ..core.logging import attach_cli_handlers
 from ..core.options import DebugLogging, ForceParallel
-from ..core.parallel import is_root
 
 # external libraries
 from cmdkit.app import ApplicationGroup
@@ -20,9 +18,6 @@ from cmdkit.cli import Interface
 
 # command groups
 from . import create, build, job
-
-if is_root():
-    attach_cli_handlers()
 
 COMMANDS: DictApp = {
         'create': create.CreateApp,

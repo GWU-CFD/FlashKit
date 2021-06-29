@@ -9,7 +9,7 @@ import os
 import sys
 
 # internal libraries
-from ...core.error import AutoError, error
+from ...core.error import AutoError
 from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
@@ -173,8 +173,3 @@ def grid(**arguments: Any) -> Optional[Coords]:
     if not result: return None
     if cmdline: screen_out(coords=coords, ndim=ndim)
     return coords
-
-@error('Unable to create grid file!')
-def _grid(**kwargs):
-    """Python interface to the grid function."""
-    return grid(**kwargs)

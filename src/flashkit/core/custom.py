@@ -2,10 +2,13 @@
 
 # type annotations
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Type
+
+# standard libraries
+import logging
 
 # internal libraries
-from ..core.logging import handle_exception, logger 
+from ..core.error import handle_exception
 from ..core.parallel import squash
 
 # external libraries
@@ -15,12 +18,13 @@ from cmdkit.cli import ArgumentError
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Iterable, Type
     DictApp = Dict[str, Type[Application]]
 
 # deal w/ runtime import
 else:
     DictApp = None
+
+logger = logging.getLogger(__name__)
 
 # define library (public) interface
 __all__ = ['patched_error', 'patched_exceptions', ]
@@ -55,4 +59,5 @@ def patched_logging(patch: str) -> Callable[[Exception], int]:
     def wrapper(exception: Exception, status: int = exit_status.runtime_error) -> int:
         handle_exception(exception, patch)
         return status
+    logger.debug(f'core -- Providing a wrapper for patched exception handler.')
     return wrapper

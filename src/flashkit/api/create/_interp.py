@@ -10,7 +10,7 @@ import re
 import sys
 
 # internal libraries
-from ...core.error import AutoError, error
+from ...core.error import AutoError
 from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
@@ -196,8 +196,3 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     if not result: return None
     if cmdline: screen_out(blocks=blocks)
     return blocks
-
-@error('Unable to create block file!')
-def _interp(**kwargs):
-    """Python interface to the interp function."""
-    return interp(**kwargs)

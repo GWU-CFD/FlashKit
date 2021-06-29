@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import cast, NamedTuple, TYPE_CHECKING
 
 # standard libraries
+import logging
 from functools import wraps, reduce
 
 # internal libraries
 from .configure import get_arguments, get_defaults
 from .error import StreamError
-from .logging import logger
 from ..resources import CONFIG
 
 # static analysis
@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 # deal w/ runtime cast
 else:
     F = None
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['Instructions', 'build', 'extract', 'mail', 'pack', 'patch', 

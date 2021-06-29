@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast, NamedTuple, TYPE_CHECKING
 
 # system libraries
+import logging
 import os
 import sys
 import pkg_resources
@@ -12,7 +13,6 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
-from .logging import logger
 from ..resources import CONFIG
 
 # external libraries
@@ -30,6 +30,8 @@ if TYPE_CHECKING:
 # deal w/ runtime cast
 else:
     F = None
+
+logger = logging.getLogger(__name__)
 
 # module access and module level @property(s)
 this = sys.modules[__name__]

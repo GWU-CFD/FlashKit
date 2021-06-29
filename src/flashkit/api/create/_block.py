@@ -9,8 +9,7 @@ import os
 import sys
 
 # internal libraries
-from ...core.error import AutoError, error
-from ...core.logging import logger
+from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -167,8 +166,3 @@ def block(**arguments: Any) -> Optional[Blocks]:
     if not result: return None
     if cmdline: screen_out(blocks=blocks)
     return blocks
-
-@error('Unable to create block file!')
-def _block(**kwargs):
-    """Python interface to the block function."""
-    return block(**kwargs)

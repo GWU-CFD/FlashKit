@@ -6,9 +6,10 @@ from typing import Any, Iterator, NamedTuple, Optional
 from collections.abc import MutableMapping
 
 # standard libraries
-from functools import partial, reduce
+import logging
 import os
 import sys
+from functools import partial, reduce
 
 # external libraries
 import toml
@@ -16,10 +17,10 @@ from cmdkit.config import Configuration, Namespace
 from cmdkit.provider.builder import BuilderConfiguration
 
 # internal libraries
-from .logging import logger
-from .parallel import is_root
 from .tools import read_a_leaf
 from ..resources import CONFIG, DEFAULTS, MAPPING, TEMPLATES
+
+logger = logging.getLogger(__name__)
 
 # module access and module level @property(s)
 THIS = sys.modules[__name__]
@@ -51,7 +52,7 @@ class WalkError(Exception):
 def force_delayed(state: bool = True) -> None:
     """Force the assumption of an on import or on call configure state."""
     THIS._DELAYED = state # type: ignore # pylint: disable=protected-access
-    if is_root(): logger.debug('Force -- Delayed Configuration!')
+    logger.debug('Force -- Delayed Configuration!')
 
 def gather(first_step: str = PATH, *, filename: str = FILE, stamp: bool = True) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""

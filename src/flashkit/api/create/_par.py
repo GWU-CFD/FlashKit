@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Any, Optional
 
 # standard libraries
+import logging
 import os
 import sys
 from functools import partial
 
 # internal libraries
 from ...core.configure import get_arguments, get_templates
-from ...core.error import AutoError, error
-from ...core.logging import logger
+from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -23,6 +23,8 @@ from ...support.types import Template
 
 # external libraries
 from cmdkit.config import Namespace
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['par', ]
@@ -191,8 +193,3 @@ def par(**arguments: Any) -> Optional[Any]:
     if not result: return None
     if cmdline: screen_out(lines=lines)
     return lines
-
-@error('Unable to create par file!')
-def _par(**kwargs):
-    """Python interface to the par function."""
-    return par(**kwargs)

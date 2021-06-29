@@ -9,7 +9,7 @@ import argparse
 # internal libraries
 from ..core.configure import force_delayed, get_defaults
 from ..core.logging import force_debug
-from ..core.parallel import force_parallel, is_root
+from ..core.parallel import force_parallel
 from ..resources import MAPPING, TEMPLATES
 
 # external libraries
