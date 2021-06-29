@@ -100,11 +100,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     noattach = not sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
     if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
-    message = ''.join([
-            'Processing templates and authoring par',
-            ' (no file out)' if args['nofile'] else '',
-            ' ...'])
-    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -113,6 +108,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     sources = args['sources']
     params = list(args.get('params', {}).keys())
     dest = os.path.relpath(args['dest'])
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating FLASH parameter file by processing the following:',
         f'  templates     = {templates}',
@@ -120,6 +116,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  parameters    = {params}',
         f'  output        = {os.path.join(dest, FILENAME)}',
         f'',
+        f'Processing templates and authoring par{nofile} ...',
         ])
     logger.info(message)
     return args

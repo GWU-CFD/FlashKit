@@ -88,11 +88,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
-    message = ''.join([
-            'Interpolating block data (',
-            'no file out' if args['nofile'] else 'out to file',
-            ') ...'])
-    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -108,6 +103,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     f_sources = tuple(args['flows'].get(field)[1] for field in fields)
     l_sources = tuple(args['flows'].get(field)[2] for field in fields)
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating block file by interpolationg simulation files:',
         f'                  {row(fields)}',
@@ -118,6 +114,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  grid (source) = {path}/{basename}{grid}{0:04}',
         f'  block (dest)  = {dest}/{NAME}',
         f'',
+        f'Interpolating block data{nofile} ...',
         ])
     logger.info(message)
     return args

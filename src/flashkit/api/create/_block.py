@@ -67,11 +67,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
-    message = ''.join([
-            'Calculating block data',
-            ' (no file out)' if args['nofile'] else '',
-            ' ...'])
-    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -84,6 +79,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     pad = max((len(key) for key in params.keys()), default=1)
     options = '\n               '.join(f'{k:{pad}}: {v},' for k, v in params.items())
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating initial block file from specification:',
         f'               {row(fields)}',
@@ -92,6 +88,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  block_file = {dest}/{NAME}',
         f'  with_opts  = {options}',
         f'',
+        f'  Calculating block data{nofile} ...',
         ])
     logger.info(message)
     return args

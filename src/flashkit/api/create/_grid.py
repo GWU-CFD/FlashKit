@@ -72,11 +72,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
-    message = ''.join([
-            'Calculating grid data',
-            ' (no file out)' if args['nofile'] else '',
-            ' ...'])
-    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -91,6 +86,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     grids = tuple(s * p if m not in user else '?' for s, p, m in zip(args['sizes'], args['procs'], methods))
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating initial grid file from specification:',
         f'  grid_pnts = {grids}',
@@ -99,6 +95,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  grid_file = {dest}/{NAME}',
         f'  with_opts = {options}',
         f'',
+        f'Calculating grid data{nofile} ...',
         ])
     logger.info(message)
     return args

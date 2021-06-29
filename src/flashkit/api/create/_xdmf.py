@@ -84,10 +84,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     noattach = not len(args['files']) >= BAR_SWITCH and sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
-    message = ''.join([
-            'Writing xdmf data out to file ...',
-            ])
-    logger.info(message)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -107,6 +103,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  xdmf_file = {dest}/{basename}{out}.xmf',
         f'       xxxx = {msg_files}',
         f'',
+        f'Writing xdmf data out to file ...',
         ])
     logger.info(message)
     return args
