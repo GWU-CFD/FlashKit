@@ -9,7 +9,7 @@ if TYPE_CHECKING:
    
     # standard libraries
     from typing import Any, Dict, List, Optional, Tuple
-    from collections.abc import MutableSequence, Sequence
+    from collections.abc import MutableMapping, MutableSequence, Sequence
 
     # external libraries
     import numpy
@@ -30,6 +30,9 @@ if TYPE_CHECKING:
     Sections = Dict[str, Any]
     Lines = List[str]
     Template = Dict[str, Sections]  
+    
+    # configure annotations
+    Tree = MutableMapping[str, Any]
 
     # xdmf tag annotations
     TagAttr = Tuple[str, Dict[str, str]]
@@ -53,6 +56,9 @@ else:
     Sections = None
     Lines = None
     Template = None  
+    
+    # configure annotations
+    Tree = None
 
     # xdmf tag annotations
     TagAttr = None

@@ -7,7 +7,7 @@ from __future__ import annotations
 from pprint import pformat 
 
 # internal libraries
-from ...api.create._par import par
+from ...api.create import par
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
 from ...core.logging import logger

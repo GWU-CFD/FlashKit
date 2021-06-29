@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 # internal libraries
-from ...api.create._interp import interp
+from ...api.create import interp
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
 from ...core.options import return_options

@@ -255,10 +255,6 @@ def check_xdmf(working, data, mocker):
         # check adapt_arguments and attached context
         _xdmf.create_xdmf.assert_called_with(**data.expected)
         
-        # check attached context message
-        if len(data.expected['files']) < SWITCH:
-            _xdmf.logger.info.assert_any_call('Writing xdmf data out to file ...')
-
         # check logging
         found = False
         exp = data.expected
@@ -268,7 +264,8 @@ def check_xdmf(working, data, mocker):
                 rf".*{os.path.relpath(exp['source'])}/{exp['basename']}{exp['plotname']}xxxx.*" \
                 rf".*{os.path.relpath(exp['source'])}/{exp['basename']}{exp['gridname']}xxxx.*" \
                 rf".*{os.path.relpath(exp['dest'])}/{exp['basename']}{exp['filename']}.xmf.*" \
-                rf".*{fmsgs}.*"
+                rf".*{fmsgs}.*"\
+                rf".*Writing xdmf data out to file.*"
         for message, kwargs in _xdmf.logger.info.call_args_list:
             if re.search(check, message[0], flags=re.DOTALL):
                 found = True

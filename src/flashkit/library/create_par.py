@@ -9,12 +9,10 @@ import os
 from functools import reduce
 
 # internal libraries
-from ..core.configure import get_templates, get_defaults
 from ..core.error import LibraryError
-from ..core.logging import logger
 from ..core.parallel import safe, single, squash
 from ..resources import CONFIG
-from ..support.types import Lines, Sections, Template
+from ..support.types import Lines, Sections, Template, Tree
 
 # external libraries
 import toml
@@ -37,15 +35,12 @@ SINKING = CONFIG['create']['par']['sinking']
 TITLE = CONFIG['create']['par']['title']
 LOCAL = CONFIG['create']['par']['local']
 
-# define library defaults
-DEFAULTS = get_defaults()
-
 @single
-def author_par(*, template: Template) -> Lines:
+def author_par(*, template: Template, sources: Tree) -> Lines:
     """Author a flash.par file from section templates."""
     lines: list[str] = list()
     for section, layout in sorted(template.items(), key=order_sections):
-        lines.extend(author_section(section, layout))
+        lines.extend(author_section(section, layout, sources))
     return lines
 
 def filter_tags(key: str) -> bool:
@@ -73,7 +68,7 @@ def write_par(*, lines: Lines, path: str) -> None:
         for line in lines:
             file.write(line + '\n')
 
-def author_section(section: str, layout: Sections):
+def author_section(section: str, layout: Sections, tree: Tree):
     comment = layout.pop(TAGGING, {})
     header = comment.get('header', section)
     footer = comment.get('footer', None)
@@ -90,7 +85,7 @@ def author_section(section: str, layout: Sections):
     else:
         params = [(name, value) for name, value in layout.items()]
     
-    params.extend((name, read_a_source(stem, DEFAULTS)) for name, stem in sources.items())
+    params.extend((name, read_a_source(stem, tree)) for name, stem in sources.items())
 
     pad = max((len(name) for name, _ in params), default=0) + PAD_NAME
     lines = [f'# {header}', ]

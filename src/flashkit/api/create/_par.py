@@ -11,7 +11,7 @@ import sys
 from functools import partial
 
 # internal libraries
-from ...core.configure import get_arguments, get_templates
+from ...core.configure import get_arguments, get_defaults, get_templates
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
@@ -19,7 +19,7 @@ from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
 from ...library.create_par import author_par, filter_tags, sort_templates, write_par
 from ...resources import CONFIG, TEMPLATES
-from ...support.types import Template
+from ...support.types import Template, Tree
 
 # external libraries
 from cmdkit.config import Namespace
@@ -75,6 +75,9 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
                 if source not in NOSOURCE]
         logger.debug(f'api -- Used the library default sources.')
 
+    # find the lookup for sources
+    args['tree'] = get_defaults() if args.get('ignore', False) else get_arguments()
+
     # read and combine the templates
     files = [file + '.toml' for file in args['templates']]
     if 'params' in args:
@@ -127,7 +130,7 @@ ROUTE = ('create', 'par')
 PRIORITY = {'ignore', 'cmdline'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'auto', 'nosources', 'templates', 'params', 'sources', 'duplicates'}
-MAPPING = {'construct': 'template'}
+MAPPING = {'construct': 'template', 'tree': 'sources'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single

@@ -17,7 +17,7 @@ def first_true(iterable, predictor):
 def is_ipython() -> bool:
     """Determine if in interactive session."""
     try: 
-        get_ipython()
+        get_ipython() # type: ignore
         return True
     except:
         return False
