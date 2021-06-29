@@ -9,7 +9,6 @@ import os
 import sys
 
 # internal libraries
-from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
