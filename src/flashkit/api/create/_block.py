@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import sys
 
@@ -20,6 +21,8 @@ from ...support.types import Blocks
 
 # external libraries
 import numpy
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['block', ]

@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import re
 import sys
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.logging import logger
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -23,6 +23,8 @@ from ...support.types import Blocks
 
 # external libraries
 import numpy
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['interp', ]

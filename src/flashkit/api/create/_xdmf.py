@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Union
 
 # standard libraries
-import re
+import logging
 import os
+import re
 import sys
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.logging import logger
 from ...core.parallel import safe, single 
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -20,6 +20,8 @@ from ...resources import CONFIG, DEFAULTS
 
 # define public interface
 __all__ = ['xdmf', ]
+
+logger = logging.getLogger(__name__)
 
 # define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
