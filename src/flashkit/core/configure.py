@@ -14,7 +14,7 @@ from functools import partial, reduce
 # external libraries
 import toml
 from cmdkit.config import Configuration, Namespace
-from cmdkit.provider.builder import BuilderConfiguration
+from cmdkit.contrib.builder import BuilderConfiguration
 
 # internal libraries
 from .tools import read_a_leaf
