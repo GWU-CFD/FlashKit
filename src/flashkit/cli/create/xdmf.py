@@ -6,9 +6,9 @@ from __future__ import annotations
 # internal libraries
 from ...api.create import xdmf
 from ...core.configure import get_defaults
-from ...core.custom import patched_error, patched_exceptions, return_options
+from ...core.custom import patched_error, patched_exceptions
+from ...core.options import return_options
 from ...core.parse import ListInt
-from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
@@ -27,8 +27,8 @@ HELP = f"""\
 {USAGE}
 
 arguments:  
-BASENAME    Basename for flash simulation, will be guessed if not provided
-            (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+BASENAME     STRING  Basename for flash simulation, will be guessed if not provided
+                     (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
 
 options:
 -b, --low    INT     Begining number for timeseries hdf5 files; defaults to {DEF.low}.
@@ -60,7 +60,7 @@ class XdmfCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
 
     ALLOW_NOARGS: bool = True
 

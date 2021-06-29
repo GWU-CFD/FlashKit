@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import re
 import sys
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -23,6 +23,8 @@ from ...support.types import Blocks
 
 # external libraries
 import numpy
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['interp', ]
@@ -86,14 +88,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Interpolating block data (no file out) ...')
-        else:
-            printer.info('Interpolation block data (out to file) ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -109,6 +105,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     f_sources = tuple(args['flows'].get(field)[1] for field in fields)
     l_sources = tuple(args['flows'].get(field)[2] for field in fields)
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating block file by interpolationg simulation files:',
         f'                  {row(fields)}',
@@ -119,8 +116,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  grid (source) = {path}/{basename}{grid}{0:04}',
         f'  block (dest)  = {dest}/{NAME}',
         f'',
+        f'Interpolating block data{nofile} ...',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -144,7 +142,7 @@ def screen_out(*, blocks: Blocks) -> None:
     """Output calculated fields by block to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
-        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
+        print(f'\nFields for blocks on root are as follows:\n{message}')
 
 @safe
 def interp(**arguments: Any) -> Optional[Blocks]:

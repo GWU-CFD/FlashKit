@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import sys
 
 # internal libraries
-from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -21,6 +21,8 @@ from ...support.types import Blocks
 
 # external libraries
 import numpy
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['block', ]
@@ -66,14 +68,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Calculating block data (no file out) ...')
-        else:
-            printer.info('Writing block data out to file ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -86,6 +82,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     pad = max((len(key) for key in params.keys()), default=1)
     options = '\n               '.join(f'{k:{pad}}: {v},' for k, v in params.items())
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating initial block file from specification:',
         f'               {row(fields)}',
@@ -94,8 +91,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  block_file = {dest}/{NAME}',
         f'  with_opts  = {options}',
         f'',
+        f'  Calculating block data{nofile} ...',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -117,7 +115,7 @@ def screen_out(*, blocks: Blocks) -> None:
     """Output calculated fields by block to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
-        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
+        print(f'\nFields for blocks on root are as follows:\n{message}')
 
 @safe
 def block(**arguments: Any) -> Optional[Blocks]:

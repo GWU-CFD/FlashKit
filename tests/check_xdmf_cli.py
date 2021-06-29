@@ -128,7 +128,7 @@ def check_xdmf_badargs():
     assert STATUS.bad_argument == os.WEXITSTATUS(os.system('flashkit create xdmf -b1.2'))
 
 @pytest.mark.cli
-def check_xdmf_options(mocker, data):
+def check_xdmf_options(data, mocker):
     """ Verify that the expected cli options work properly."""
 
     # instrument desired functions

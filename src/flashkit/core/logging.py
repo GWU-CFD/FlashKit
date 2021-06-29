@@ -5,68 +5,70 @@ from __future__ import annotations
 from typing import Union
 
 # standard libraries
-import sys
 import logging
+import os
+import sys
 
 # internal libraries
+from .parallel import is_root
 from ..resources import CONFIG
 
-# define public interface
-__all__ = ['CONSOLE', 'DEBUG', 'INFO', 'LOGGER', 'VERBOSE', 'WARN',
-           'console', 'debugger', 'logger', 'printer', ]
+# define library (public) interface
+__all__ = ['force_debug', ]
 
 # default constants
 CONSOLE = CONFIG['core']['logger']['console']
-DEBUGGER = CONFIG['core']['logger']['debugger']
-LOGGER = CONFIG['core']['logger']['logger']
-PRINTER = CONFIG['core']['logger']['printer']
-SIMPLE = CONFIG['core']['logger']['simple']
+ERROR = CONFIG['core']['logger']['error']
+RECORD = CONFIG['core']['logger']['record']
+TRACE = CONFIG['core']['logger']['trace']
+LOGFILE = CONFIG['core']['logger']['logfile']
+EXCFILE = CONFIG['core']['logger']['excfile']
 
-# provide logging constants
-DEBUG = logging.DEBUG
-INFO = logging.INFO
-WARN = logging.WARN
-
-class Simple:
-    """Interface consistant but uses print.""" 
-    def __init__(self):
-        self.level = INFO
-
-    def setLevel(self, level: int) -> None:
-        self.level = level
-
-    def debug(self, message: str) -> None:
-        self.write(message)
-
-    def info(self, message: str) -> None:
-        self.write(message)
-    
-    def warn(self, message: str) -> None:
-        self.write(message)
-
-    def write(self, message: str) -> None:
-        print(message)
+HOME = os.path.expanduser('~/.flashkit')
 
 # Configure a console handler
 console = logging.StreamHandler(sys.stdout)
-console.setLevel(INFO)
+console.setLevel(logging.INFO)
+console.addFilter(lambda record: record.levelno <= logging.INFO)
 console.setFormatter(logging.Formatter(CONSOLE))
 
 # Configure a stderr handler
-debugger = logging.StreamHandler(sys.stderr)
-debugger.setLevel(DEBUG)
-debugger.setFormatter(logging.Formatter(DEBUGGER))
+error = logging.StreamHandler(sys.stderr)
+error.setLevel(logging.WARNING)
+error.addFilter(lambda record: logging.CRITICAL > record.levelno >= logging.WARNING)
+error.setFormatter(logging.Formatter(ERROR))
 
-# Initialize flashkit printer (console logging)
-printer: Union[Simple, logging.Logger]
-if SIMPLE:
-    printer = Simple()
-else:
-    printer = logging.getLogger(PRINTER)
-    printer.addHandler(console)
-printer.setLevel(INFO)  
+# Configure a record handler
+record = logging.FileHandler(os.path.join(HOME, LOGFILE), delay=True)
+record.setLevel(logging.DEBUG)
+record.addFilter(lambda record: record.levelno < logging.CRITICAL)
+record.setFormatter(logging.Formatter(RECORD, '%Y-%m-%d %H:%M:%S'))
+
+# Configure a traceback handler
+tracer = logging.FileHandler(os.path.join(HOME, EXCFILE), delay=True)
+tracer.setLevel(logging.CRITICAL)
+tracer.addFilter(lambda record: record.levelno >= logging.CRITICAL)
+tracer.setFormatter(logging.Formatter(TRACE, '%Y-%m-%d %H:%M:%S'))
+
+# Configure a handler for non-root processes
+default = logging.NullHandler()
 
 # Initialize flashkit logger
-logger = logging.getLogger(LOGGER)
-logger.setLevel(WARN)
-logger.addHandler(debugger)
+logger = logging.getLogger('flashkit')
+logger.addHandler(default)
+logger.setLevel(logging.INFO)
+
+if is_root():
+    if not os.path.exists(HOME):
+        os.makedirs(HOME)
+    
+    logger.addHandler(record)
+    logger.addHandler(tracer)
+    logger.info('########## Flashkit Called ##########')
+    logger.addHandler(console)
+    logger.addHandler(error)
+
+def force_debug(state: bool = True) -> None:
+    """Force the use of debugging logging level"""
+    if state: logger.setLevel(logging.DEBUG)
+    logger.debug('Force -- DEBUG Logging Level!')

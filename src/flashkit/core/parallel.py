@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast, NamedTuple, TYPE_CHECKING
 
 # system libraries
+import logging
 import os
 import sys
 import pkg_resources
@@ -12,7 +13,6 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
-from .logging import logger
 from ..resources import CONFIG
 
 # external libraries
@@ -31,11 +31,13 @@ if TYPE_CHECKING:
 else:
     F = None
 
+logger = logging.getLogger(__name__)
+
 # module access and module level @property(s)
 this = sys.modules[__name__]
 PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', ) 
 
-# define public interface
+# define library (public) interface
 __all__ = list(PROPERTIES) + ['Index', 
         'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
         'is_loaded', 'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
@@ -83,6 +85,7 @@ class Index:
         width = avg + 1 if rank < res else avg 
         low   =  rank      * (avg + 1)     if rank < res else res * (avg + 1) + (rank - res    ) * avg
         high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
+        logger.debug(f'Index -- Created a simple Index for distributed operations.')
         return cls(width=width, low=low, high=high, size=tasks)
 
     def _tasksMatchSize(self, axisTasks: Sequence[int]) -> None:
@@ -151,7 +154,7 @@ def assert_unloaded() -> None:
 def force_parallel(state: bool = True) -> None:
     """Force the assumption of a parallel or serial state."""
     this._parallel = state # type: ignore
-    if is_root(): logger.debug('Force Parallel Enviornment!')
+    logger.debug('Force -- Parallel Enviornment!')
 
 def get_property(name: str) -> str:
     """Provide lookup support for module properties."""
@@ -204,7 +207,7 @@ def load() -> None:
     from mpi4py import MPI # type: ignore
     this._MPI = MPI # type: ignore
     if first and MPI.COMM_WORLD.Get_rank() == 0:
-        print(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
+        logger.info(f'\nLoaded Python MPI interface, using the {MPIDIST} library.\n')
 
 @inject_property('MPI')
 def property_COMM_WORLD(mpi: F) -> Intracomm:
@@ -236,6 +239,7 @@ def guard(function: F) -> F:
     def wrapper(*args, **kwargs):
         assert_unloaded()
         assert_serial()
+        logger.debug(f'Guard -- Guarded a call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -249,6 +253,7 @@ def guarantee(*, strict: bool = False) -> D:
         def wrapper(*args, **kwargs):
             if strict: assert_parallel()
             load()
+            logger.debug(f'Guarantee -- Guarded a call into <{function.__name__}>.')
             return function(*args, **kwargs)
         return cast(F, wrapper)
     return decorator
@@ -262,6 +267,7 @@ def limit(number: int) -> D:
         @wraps(function)
         def wrapper(*args, **kwargs):
             if not is_lower(number): return 
+            logger.debug(f'Limit -- Guarded a call into <{function.__name__}>.')
             return function(*args, **kwargs)
         return cast(F, wrapper)
     return decorator
@@ -276,10 +282,12 @@ def many(number: Optional[int] = None, *, root: bool = True) -> D:
             if is_serial(): return function(*args, **kwargs)
             load()
             if number is None or is_lower(number):
+                logger.debug(f'Many -- Guarded a call into <{function.__name__}>.')
                 result = function(*args, **kwargs)
             else:
                 result = None
             if root: return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
+            logger.debug(f'Many -- Gathering results of a call into <{function.__name__}>.')
             return this._MPI.COMM_WORLD.allgather(result)
         return cast(F, wrapper)
     return decorator
@@ -290,6 +298,7 @@ def safe(function: F) -> F:
     safe (and sensical) to call in both parallel and serial enviornments."""
     @wraps(function)
     def wrapper(*args, **kwargs):
+        logger.debug(f'Safe -- Passing through the call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -300,6 +309,7 @@ def squash(function: F) -> F:
     @wraps(function)
     def wrapper(*args, **kwargs):
         if not is_root(): return
+        logger.debug(f'Squash -- Guarded the call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -310,8 +320,10 @@ def single(function: F) -> F:
         if is_serial(): return function(*args, **kwargs)
         load()
         if is_root():
+            logger.debug(f'Single -- Guarded the call into <{function.__name__}>.')
             result = function(*args, **kwargs)
         else:
             result = None
+        logger.debug(f'Single -- Distributing result of a call into <{function.__name__}>.')
         return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
     return cast(F, wrapper)

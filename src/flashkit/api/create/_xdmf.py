@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Union
 
 # standard libraries
-import re
+import logging
 import os
+import re
 import sys
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.logging import printer
 from ...core.parallel import safe, single 
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -20,6 +20,8 @@ from ...resources import CONFIG, DEFAULTS
 
 # define public interface
 __all__ = ['xdmf', ]
+
+logger = logging.getLogger(__name__)
 
 # define default and configuration constants (internal)
 STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
@@ -82,11 +84,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if len(args['files']) >= BAR_SWITCH and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        printer.info('Writing xdmf data out to file ...')
+    noattach = not len(args['files']) >= BAR_SWITCH and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -106,8 +105,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  xdmf_file = {dest}/{basename}{out}.xmf',
         f'       xxxx = {msg_files}',
         f'',
+        f'Writing xdmf data out to file ...',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # define constants for handling the argument stream

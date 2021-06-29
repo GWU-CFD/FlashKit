@@ -42,7 +42,10 @@
 
   [create.interp]
   fields = {velx='facex', vely='facey', velz='facez', temp='center'}
-  
+ 
+  [create.par]
+  sources = ['space', 'mesh']
+
   [create.xdmf]
   high = 0
   low  = 0
