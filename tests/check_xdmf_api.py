@@ -14,7 +14,7 @@ import pytest
 from .support import change_directory
 from flashkit.api.create import _xdmf
 from flashkit.core.configure import force_delayed
-from flashkit.core.options import force_debug
+from flashkit.core.logging import force_debug
 from flashkit.core.progress import get_bar
 from flashkit.resources import CONFIG, DEFAULTS
 
