@@ -4,19 +4,21 @@
 from __future__ import annotations
 
 # standard libraries
+import logging
 from pprint import pformat 
 
 # internal libraries
 from ...api.create import par
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
-from ...core.logging import logger
 from ...core.options import return_available, return_options
 from ...core.parse import DictAny, ListStr
 
 # external libraries
 from cmdkit.app import Application
 from cmdkit.cli import Interface
+
+logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.par
 
@@ -100,5 +102,5 @@ class ParCreateApp(Application):
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returning: {pformat(local)}')
+        logger.debug(f'cli -- Returning:\n{pformat(local)}')
         par(**local, cmdline=True)
