@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>create xdmf</title>
+    <title>create par</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet" />
   <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -34,8 +34,8 @@
     <script src="../../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="flashkit build" href="../build/index.html" />
-    <link rel="prev" title="create par" href="par.html" />
+    <link rel="next" title="create xdmf" href="xdmf.html" />
+    <link rel="prev" title="create interp" href="interp.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -185,13 +185,13 @@
        create interp
       </a>
      </li>
-     <li class="toctree-l3">
-      <a class="reference internal" href="par.html">
+     <li class="toctree-l3 current active">
+      <a class="current reference internal" href="#">
        create par
       </a>
      </li>
-     <li class="toctree-l3 current active">
-      <a class="current reference internal" href="#">
+     <li class="toctree-l3">
+      <a class="reference internal" href="xdmf.html">
        create xdmf
       </a>
      </li>
@@ -282,7 +282,7 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="../../_sources/api/create/xdmf.rst.txt"><button type="button"
+        <a class="dropdown-buttons" href="../../_sources/api/create/par.rst.txt"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
                 data-placement="left">.rst</button></a>
         <!-- Download PDF via print -->
@@ -315,95 +315,105 @@
         
               <div>
                 
-  <div class="section" id="create-xdmf">
-<h1>create xdmf<a class="headerlink" href="#create-xdmf" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="create-par">
+<h1>create par<a class="headerlink" href="#create-par" title="Permalink to this headline">¶</a></h1>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p>The page defines the application programing interface specification for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> operation.</p>
+<p>The page defines the application programing interface specification for the <code class="docutils literal notranslate"><span class="pre">par</span></code> operation.</p>
 <hr class="docutils" />
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p>The command line interface for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> catagory of operations is:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: flashkit create xdmf BASENAME [--low INT] [--high INT] [--skip INT] [&lt;opt&gt;...] [&lt;flg&gt;...]
-Create an xdmf file associated with flash simulation HDF5 output.
+<p>The command line interface for the <code class="docutils literal notranslate"><span class="pre">par</span></code> catagory of operations is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: flashkit create par TEMPLATES [&lt;flg&gt;...]
+Create an flash parameter file using specified templates and sources.
 
 arguments:  
-BASENAME     STRING  Basename for flash simulation, will be guessed if not provided
-                     (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+TEMPLATES      LIST  Specify a list of template files (e.g., rayleigh) to search for, without the
+                     &#39;.toml&#39; extension. These will be combined and used to create the flash.par file.
 
 options:
--b, --low    INT     Begining number for timeseries hdf5 files; defaults to 0.
--e, --high   INT     Ending number for timeseries hdf5 files; defaults to 0.
--s, --skip   INT     Number of files to skip for timeseries hdf5 files; defaults to 1.
--f, --files  LIST    List of file numbers (e.g., &lt;1,3,5,7,9&gt;) for timeseries.
--p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
--d, --dest   PATH    Path to xdmf (contains relative paths to sim data); defaults to cwd.
--o, --out    FILE    Output XDMF file name follower; defaults to a footer &#39;&#39;.
--c, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
--g, --grid   STRING  Grid file(s) name follower; defaults to &#39;_hdf5_grd_&#39;.
--q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to &#39;forced&#39;.
+-p, --params   DICT  Specific parameters; which are collected in a section at the end of the parameter file.
+-s, --sources  LIST  Which library defined sources to use for filling sections from configuration files;
+                     defaults to [&#39;space&#39;, &#39;mesh&#39;] --&gt; will fill domain and processor grid parameters).
+-d, --dest     PATH  Path to parameter file; defaults to cwd.
 
 flags:
--A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
--B, --find           Force behavior to attempt guessing [--files LIST].
+-A, --auto           Force use of all templates specified in all configuration files and library sources.
+-N, --nosources      Do not use any library specified template sources; AUTO takes precedences.
+-D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
+-F, --nofile         Do not write the calculated coordinates to file. 
+-R, --result         Return the calculated coordinates. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
+-S, --available      List the available library defined sources and exit.
 -h, --help           Show this message and exit.
 
-note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
-       the --path will be searched for FLASH simulation files and all
-       such files identified will be used in sorted order.
+notes:  If duplicates are not allowed, only the most significant instance of a parameter will be written to
+        the parameter file, which means the parameter will be based on the depth-first-merge of all relavent 
+        templates (and not SOURCES from configuration file variables, which is also the case with --ignore).
+
+        The order of precedence for parameters with potential duplicate entries in ascending order is:
+        0) specificed sources retrieved from library defaults
+        1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
+        2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
+        3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
+        4) parameters provided at the command line.
 </pre></div>
 </div>
 <p>Please consult the discussion on <a class="reference internal" href="../../cmdline.html#command-line-syntax"><span class="std std-ref">command line syntax</span></a> for
-help in specifying the format of the above options (e.g., LIST or PATH).</p>
+help in specifying the format of the above options (e.g., LIST or DICT).</p>
 <hr class="docutils" />
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p>The python interface for the <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> operation is accessed with the following code:</p>
+<p>The python interface for the <code class="docutils literal notranslate"><span class="pre">par</span></code> operation is accessed with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flashkit</span> <span class="k">import</span> <span class="n">flash</span>
 <span class="o">...</span>
-<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">xdmf</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">par</span><span class="p">(</span><span class="n">option</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The python interface specification for <code class="docutils literal notranslate"><span class="pre">xdmf</span></code> is as follows:</p>
+<p>The python interface specification for <code class="docutils literal notranslate"><span class="pre">par</span></code> is as follows:</p>
 <dl class="py function">
-<dt id="flashkit.api.create._xdmf.xdmf">
-<code class="sig-name descname"><span class="pre">xdmf</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">arguments</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><span class="pre">None</span></a><a class="headerlink" href="#flashkit.api.create._xdmf.xdmf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Python application interface for creating xdmf from command line or python code.</p>
-<p>This method creates a metadata file (i.e., xdmf format) associated with a desired set of HDF5 binary
-simulation data suitable for using in supporting visualization software (e.g., Paraview). The arguments
-povide flexibility in creating this metadata file that covers most usecases (e.g., time-series 3d data).</p>
+<dt id="flashkit.api.create._par.par">
+<code class="sig-name descname"><span class="pre">par</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">arguments</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#flashkit.api.create._par.par" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python application interface for using templates to create a FLASH runtime parameter file.</p>
+<p>This method creates a FLASH parameter file (INI format) using options and specified templates
+implemented in toml files to enable runtime context to the creation of parameter files. This
+supports improved consitancy, reproducability, and confidence in research. Additionally, the
+intent is to preserve human readability of the produced FLASH parameter file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>basename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Basename for flash simulation, will be guessed if not provided
-(e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)</p></li>
-<li><p><strong>low</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Begining number for timeseries hdf5 files.</p></li>
-<li><p><strong>high</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Ending number for timeseries hdf5 files.</p></li>
-<li><p><strong>skip</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Number of files to skip for timeseries hdf5 files.</p></li>
-<li><p><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – List of file numbers (e.g., &lt;1,3,5,7,9&gt;) for timeseries.</p></li>
-<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to timeseries hdf5 simulation output files.</p></li>
-<li><p><strong>dest</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to xdmf (contains relative paths to sim data).</p></li>
-<li><p><strong>out</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Output XDMF file name follower.</p></li>
-<li><p><strong>plot</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Plot/Checkpoint file(s) name follower.</p></li>
-<li><p><strong>grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Grid file(s) name follower.</p></li>
-<li><p><strong>force</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Plot/Checkpoint file(s) substring to ignore.</p></li>
-<li><p><strong>auto</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force behavior to attempt guessing BASENAME and [–files LIST].</p></li>
-<li><p><strong>find</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force behavior to attempt guessing [–files LIST].</p></li>
+<li><p><strong>templates</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – Specify a list of template files (e.g., rayleigh) to search for, without the
+‘.toml’ extension. These will be combined and used to create the flash.par file.</p></li>
+<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – Specific parameters; which are collected in a section at the end of the parameter file.</p></li>
+<li><p><strong>sources</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – Which library defined sources to use for filling sections from configuration files.</p></li>
+<li><p><strong>dest</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to parameter file.</p></li>
+<li><p><strong>auto</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force use all templates specified in all configuration files and library sources.</p></li>
+<li><p><strong>nosources</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Do not use any library specified template sources; AUTO takes precedences.</p></li>
+<li><p><strong>duplicates</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Allow the writing of duplicate parameters if there are multiple matches.</p></li>
+<li><p><strong>nofile</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Do not write the calculated coordinates to file.</p></li>
+<li><p><strong>result</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Return the calculated coordinates.</p></li>
 <li><p><strong>ignore</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Ignore configuration file provided arguments, options, and flags.</p></li>
 </ul>
 </dd>
 </dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If neither BASENAME nor either of [LOW/HIGH/SKIP] or -f is specified,
-the PATH will be searched for flash simulation files and all
-such files identified will be used in sorted order.</p>
-</div>
+<p class="rubric">Notes</p>
+<p>If duplicates are not allowed, only the most significant instance of a parameter will be written to
+the parameter file, which means the parameter will be based on the depth-first-merge of all relavent
+templates (and not SOURCES from configuration file variables, which is also the case with –ignore).</p>
+<dl class="simple">
+<dt>The order of precedence for parameters with potential duplicate entries in ascending order is.</dt><dd><ol class="arabic simple" start="0">
+<li><p>specificed sources retrieved from library defaults</p></li>
+<li><p>depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,</p></li>
+<li><p>depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,</p></li>
+<li><p>depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,</p></li>
+<li><p>parameters provided at the command line.</p></li>
+</ol>
+</dd>
+</dl>
 </dd></dl>
 
 <hr class="docutils" />
@@ -411,48 +421,65 @@ such files identified will be used in sorted order.</p>
 <div class="line"><br /></div>
 </div>
 <p>The complete specification of library defaults values (as shown above) and mappings is as follows:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create xdmf:
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create par:
 
 Options		Default Values
 -------		--------------
-high		0
-low		0
-skip		1
-grid		_hdf5_grd_
-force		forced
-plot		_hdf5_plt_cnt_
-out		--
+sources		[&#39;space&#39;, &#39;mesh&#39;]
 dest		--
-path		--
+nofile		False
+result		False
 
 
 The following outlines the general section options, which can be mapped
-in the configuration file, that are provided for flashkit create xdmf:
+in the configuration file, that are provided for flashkit create par:
 
 Options		flash.toml Sections and Options
 -------		-------------------------------
-grid		[general.files]
-		grid = ...
-
-force		[general.files]
-		forced = ...
-
-plot		[general.files]
-		plot = ...
-
-out		[general.files]
-		output = ...
-
 dest		[general.paths]
 		working = ...
 
-path		[general.paths]
-		working = ...
+nofile		[general.pipes]
+		nofile = ...
+
+result		[general.pipes]
+		result = ...
 </pre></div>
 </div>
 <p>Please consult the tutorial discussion on <a class="reference internal" href="../../tutorial/configure.html#configuration-files"><span class="std std-ref">configuration file formating</span></a> for
 help in specifying the above options in a <cite>flash.toml</cite> file and what mapping general options are, as well
 as the full specification on FlashKit library <a class="reference internal" href="../../configure.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
+<hr class="docutils" />
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The complete specification of library template sources is as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library template key/value pairs are provided:
+with the tags of &lt;[&#39;sources&#39;]&gt; defined in each section
+
+ Section: space
+
+Parameter	sources
+---------	-------
+xmin		[&#39;general&#39;, &#39;space&#39;, &#39;xrange&#39;, &#39;_0&#39;]
+xmax		[&#39;general&#39;, &#39;space&#39;, &#39;xrange&#39;, &#39;_1&#39;]
+ymin		[&#39;general&#39;, &#39;space&#39;, &#39;yrange&#39;, &#39;_0&#39;]
+ymax		[&#39;general&#39;, &#39;space&#39;, &#39;yrange&#39;, &#39;_1&#39;]
+zmin		[&#39;general&#39;, &#39;space&#39;, &#39;zrange&#39;, &#39;_0&#39;]
+zmax		[&#39;general&#39;, &#39;space&#39;, &#39;zrange&#39;, &#39;_1&#39;]
+
+ Section: mesh
+
+Parameter	sources
+---------	-------
+iProcs		[&#39;general&#39;, &#39;mesh&#39;, &#39;iprocs&#39;]
+jProcs		[&#39;general&#39;, &#39;mesh&#39;, &#39;jprocs&#39;]
+kProcs		[&#39;general&#39;, &#39;mesh&#39;, &#39;kprocs&#39;]
+</pre></div>
+</div>
+<p>Please consult the tutorial discussion on <a class="reference internal" href="../../tutorial/template.html#template-files"><span class="std std-ref">template file formating</span></a> for
+help in applying the above sources in a template file and what template sources are, as well
+as the full specification on FlashKit library <a class="reference internal" href="../../templates.html#template-options"><span class="std std-ref">templates</span></a>.</p>
 <hr class="docutils" />
 </div>
 
@@ -462,8 +489,8 @@ as the full specification on FlashKit library <a class="reference internal" href
         
         <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="par.html" title="previous page">create par</a>
-    <a class='right-next' id="next-link" href="../build/index.html" title="next page">flashkit build</a>
+    <a class='left-prev' id="prev-link" href="interp.html" title="previous page">create interp</a>
+    <a class='right-next' id="next-link" href="xdmf.html" title="next page">create xdmf</a>
 
         </div>
         

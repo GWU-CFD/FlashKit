@@ -36,6 +36,7 @@ The interface specification each of the operations within the ``create`` catagor
     block
     grid
     interp
+    par
     xdmf
 
 --------------------

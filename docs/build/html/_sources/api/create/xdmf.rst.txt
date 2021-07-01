@@ -26,7 +26,7 @@ The python interface for the ``xdmf`` operation is accessed with the following c
 
     from flashkit import flash
     ...
-    flash.create.xdmf(<keyword arguments>)
+    flash.create.xdmf(options=value, flag=True, ...)
 
 The python interface specification for ``xdmf`` is as follows:
 

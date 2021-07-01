@@ -105,6 +105,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="create/par.html">
+       par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="create/xdmf.html">
        xdmf
       </a>
@@ -129,6 +134,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="configure.html">
      Configuration Files
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="template.html">
+     Template Files
     </a>
    </li>
    <li class="toctree-l2">
@@ -176,6 +186,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="../api/create/par.html">
+       create par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="../api/create/xdmf.html">
        create xdmf
       </a>
@@ -205,8 +220,13 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../options.html">
+  <a class="reference internal" href="../configure.html">
    Configuration Options
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../templates.html">
+   Template Options
   </a>
  </li>
 </ul>
@@ -389,6 +409,8 @@ Creating xdmf file from 26 simulation files
        xxxx = [0,1,2,3,4, ...]
 
 Writing xdmf data out to file ...
+[?25l[?25h|████████████████████████████████████████| 26/26 [100%] in 0.5s (54.95/s)
+[?25l[?25h|████████████████████████████████████████| 0 in 0.5s (0.00/s)
 </pre></div>
 </div>
 <p>You may see a different output if there are no FLASH simulation output files in your current working directory.</p>
@@ -404,8 +426,8 @@ usage: flashkit create xdmf BASENAME [--low INT] [--high INT] [--skip INT] [&lt;
 Create an xdmf file associated with flash simulation HDF5 output.
 
 arguments:  
-BASENAME    Basename for flash simulation, will be guessed if not provided
-            (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+BASENAME     STRING  Basename for flash simulation, will be guessed if not provided
+                     (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
 
 options:
 -b, --low    INT     Begining number for timeseries hdf5 files; defaults to 0.
@@ -415,12 +437,15 @@ options:
 -p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
 -d, --dest   PATH    Path to xdmf (contains relative paths to sim data); defaults to cwd.
 -o, --out    FILE    Output XDMF file name follower; defaults to a footer &#39;&#39;.
--i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
+-c, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
 -g, --grid   STRING  Grid file(s) name follower; defaults to &#39;_hdf5_grd_&#39;.
+-q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to &#39;forced&#39;.
 
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
+-B, --find           Force behavior to attempt guessing [--files LIST].
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 
 note:  If neither BASENAME nor either of [-b/-e/-s] or -f is specified,
@@ -458,9 +483,10 @@ options:
 -v, --version     Show the version and exit.
 -V, --verbose     Enable debug messaging.
 -O, --options     Show the available options and exit.
+-S, --available   List the available library defined templates and exit.
 -P, --parallel    Indicate Parallel execution, useful for when flashkit
-                    is executed from a job script and cannot determine 
-                    its parallel or serial execution status automatically.
+                  is executed from a job script and cannot determine 
+                  its parallel or serial execution status automatically.
 
 files:              (Options are also pulled from files)
 ../**/flash.toml    Job tree configuration.
@@ -486,7 +512,7 @@ commands:
 block       Create an initial simulation flow field (block) hdf5 file.
 grid        Create an initial simulation domain (grid) hdf5 file.
 interp      Create an initial flow field (block) using interpolated simulation data.
-par         Create an flash parameter file using specified templates and options.
+par         Create an flash parameter file using specified templates and sources.
 run         Create the appropriate flash execution shell script.
 xdmf        Create an xdmf file associated with flash simulation HDF5 output.
 
@@ -532,6 +558,7 @@ flags:
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated coordinates. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 </pre></div>
 </div>
@@ -547,6 +574,7 @@ Creating initial grid file from specification:
   with_opts = 
 
 Calculating grid data (no file out) ...
+[?25l[?25h|████████████████████████████████████████| 0 in 0.0s (0.00/s)
 
 Coordinates are as follows:
 x:
@@ -632,6 +660,7 @@ Creating initial grid file from specification:
   with_opts = 
 
 Calculating grid data (no file out) ...
+[?25l[?25h|████████████████████████████████████████| 0 in 0.0s (0.00/s)
 
 Coordinates are as follows:
 x:
@@ -669,7 +698,7 @@ leads to the more complete order of precidence (in decending order) for options 
 <li><p>jobs/rayleigh/flash.toml          (common options)</p></li>
 <li><p>library defaults</p></li>
 </ol>
-<p>The full specification for <a class="reference internal" href="../options.html#configuration-options"><span class="std std-ref">options</span></a> providable in configuration files can be found <a class="reference internal" href="configure.html#configuration-files"><span class="std std-ref">here</span></a>.</p>
+<p>The full specification for <a class="reference internal" href="../configure.html#configuration-options"><span class="std std-ref">options</span></a> providable in configuration files can be found <a class="reference internal" href="configure.html#configuration-files"><span class="std std-ref">here</span></a>.</p>
 <hr class="docutils" />
 </div>
 </div>

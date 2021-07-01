@@ -105,6 +105,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/par.html">
+       par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="../../tutorial/create/xdmf.html">
        xdmf
       </a>
@@ -129,6 +134,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="../../tutorial/configure.html">
      Configuration Files
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/template.html">
+     Template Files
     </a>
    </li>
    <li class="toctree-l2">
@@ -176,6 +186,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="par.html">
+       create par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="xdmf.html">
        create xdmf
       </a>
@@ -205,8 +220,13 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../../options.html">
+  <a class="reference internal" href="../../configure.html">
    Configuration Options
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../templates.html">
+   Template Options
   </a>
  </li>
 </ul>
@@ -334,6 +354,7 @@ flags:
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated coordinates. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 </pre></div>
 </div>
@@ -346,7 +367,7 @@ help in specifying the format of the above options (e.g., LIST or DICT).</p>
 <p>The python interface for the <code class="docutils literal notranslate"><span class="pre">grid</span></code> operation is accessed with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flashkit</span> <span class="k">import</span> <span class="n">flash</span>
 <span class="o">...</span>
-<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="o">&lt;</span><span class="n">keyword</span> <span class="n">arguments</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The python interface specification for <code class="docutils literal notranslate"><span class="pre">grid</span></code> is as follows:</p>
@@ -391,48 +412,31 @@ basis using the face locations), suitable for input by the FLASH application at 
 <div class="line"><br /></div>
 </div>
 <p>The complete specification of library defaults values (as shown above) and mappings is as follows:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create grid
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create grid:
 
 Options		Default Values
 -------		--------------
 xmethod		uniform
-
 ymethod		uniform
-
 zmethod		uniform
-
 iprocs		1
-
 jprocs		1
-
 kprocs		1
-
-dest		
-
-path		
-
+dest		--
+path		--
 nofile		False
-
 result		False
-
 ndim		2
-
 nxb		64
-
 nyb		64
-
 nzb		64
-
 xrange		[0.0, 1.0]
-
 yrange		[0.0, 1.0]
-
 zrange		[0.0, 1.0]
 
 
-
-The following outlines the general section options, which can be mapped 
-in the configuration file, that are provided for flashkit create grid
+The following outlines the general section options, which can be mapped
+in the configuration file, that are provided for flashkit create grid:
 
 Options		flash.toml Sections and Options
 -------		-------------------------------
@@ -481,7 +485,7 @@ zrange		[general.space]
 </div>
 <p>Please consult the tutorial discussion on <a class="reference internal" href="../../tutorial/configure.html#configuration-files"><span class="std std-ref">configuration file formating</span></a> for
 help in specifying the above options in a <cite>flash.toml</cite> file and what mapping general options are, as well
-as the full specification on FlashKit library <a class="reference internal" href="../../options.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
+as the full specification on FlashKit library <a class="reference internal" href="../../configure.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
 <hr class="docutils" />
 </div>
 

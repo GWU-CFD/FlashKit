@@ -173,12 +173,12 @@ def par(**arguments: Any) -> Optional[Any]:
         the parameter file, which means the parameter will be based on the depth-first-merge of all relavent 
         templates (and not SOURCES from configuration file variables, which is also the case with --ignore).
 
-        The order of precedence for parameters with potential duplicate entries in ascending order is:
-            0) specificed sources retrieved from library defaults
-            1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
-            2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
-            3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
-            4) parameters provided at the command line.
+        The order of precedence for parameters with potential duplicate entries in ascending order is.
+          0) specificed sources retrieved from library defaults
+          1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
+          2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
+          3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
+          4) parameters provided at the command line.
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')

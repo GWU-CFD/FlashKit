@@ -34,7 +34,7 @@
     <script src="../../_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="create xdmf" href="xdmf.html" />
+    <link rel="next" title="create par" href="par.html" />
     <link rel="prev" title="create grid" href="grid.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -105,6 +105,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/par.html">
+       par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="../../tutorial/create/xdmf.html">
        xdmf
       </a>
@@ -129,6 +134,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="../../tutorial/configure.html">
      Configuration Files
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tutorial/template.html">
+     Template Files
     </a>
    </li>
    <li class="toctree-l2">
@@ -176,6 +186,11 @@
       </a>
      </li>
      <li class="toctree-l3">
+      <a class="reference internal" href="par.html">
+       create par
+      </a>
+     </li>
+     <li class="toctree-l3">
       <a class="reference internal" href="xdmf.html">
        create xdmf
       </a>
@@ -205,8 +220,13 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../../options.html">
+  <a class="reference internal" href="../../configure.html">
    Configuration Options
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../templates.html">
+   Template Options
   </a>
  </li>
 </ul>
@@ -326,15 +346,18 @@ options:
 -m, --fsource  DICT  Key/value pairs for source fields (e.g., &lt;velx=(cc_u,center),...&gt;); defaults to FIELDS.
 -f, --step     INT   File number (e.g., &lt;1,3,5,7,9&gt;) of source timeseries output.
 -g, --grid   STRING  Grid file(s) name follower; defaults to &#39;_hdf5_grd_&#39;.
--o, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
+-c, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to &#39;_hdf5_plt_cnt_&#39;.
+-q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to &#39;forced&#39;.
 -p, --path     PATH  Path to source files used in some initialization methods (e.g., python); defaults to cwd.
 -d, --dest     PATH  Path to intial block hdf5 file; defaults to cwd.
 
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--step INT].
+-B, --find           Force behavior to attempt guessing [--step INT].
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated fields by block on root. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
 
 notes:  If neither BASENAME nor -f is specified, the --path will be searched for FLASH simulation
@@ -351,7 +374,7 @@ help in specifying the format of the above options (e.g., LIST or DICT).</p>
 <p>The python interface for the <code class="docutils literal notranslate"><span class="pre">interp</span></code> operation is accessed with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flashkit</span> <span class="k">import</span> <span class="n">flash</span>
 <span class="o">...</span>
-<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="o">&lt;</span><span class="n">keyword</span> <span class="n">arguments</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">option</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The python interface specification for <code class="docutils literal notranslate"><span class="pre">interp</span></code> is as follows:</p>
@@ -378,9 +401,11 @@ interpolating from another simulation output), suitable for input by the FLASH a
 <li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – File number (e.g., &lt;1,3,5,7,9&gt;) of source timeseries output.</p></li>
 <li><p><strong>plot</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Plot/Checkpoint source file name follower.</p></li>
 <li><p><strong>grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Grid source file name follower.</p></li>
+<li><p><strong>force</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Plot/Checkpoint file(s) substring to ignore.</p></li>
 <li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to source timeseries hdf5 simulation output files.</p></li>
 <li><p><strong>dest</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – Path to final grid and block hdf5 files.</p></li>
 <li><p><strong>auto</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force behavior to attempt guessing BASENAME and [–step INT].</p></li>
+<li><p><strong>find</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Force behavior to attempt guessing [–step INT].</p></li>
 <li><p><strong>nofile</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Do not write the calculated fields by block to file.</p></li>
 <li><p><strong>result</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Return the calculated fields by block on root.</p></li>
 <li><p><strong>ignore</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Ignore configuration file provided arguments, options, and flags.</p></li>
@@ -399,47 +424,37 @@ you can provide the result from grid creation directly by using an optional keyw
 <div class="line"><br /></div>
 </div>
 <p>The complete specification of library defaults values (as shown above) and mappings is as follows:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create interp
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>The following library defaults are provided for flashkit create interp:
 
 Options		Default Values
 -------		--------------
 fields		{&#39;velx&#39;: &#39;facex&#39;, &#39;vely&#39;: &#39;facey&#39;, &#39;velz&#39;: &#39;facez&#39;, &#39;temp&#39;: &#39;center&#39;}
-
 grid		_hdf5_grd_
-
+force		forced
 plot		_hdf5_plt_cnt_
-
 iprocs		1
-
 jprocs		1
-
 kprocs		1
-
-dest		
-
-path		
-
+dest		--
+path		--
 nofile		False
-
 result		False
-
 ndim		2
-
 nxb		64
-
 nyb		64
-
 nzb		64
 
 
-
-The following outlines the general section options, which can be mapped 
-in the configuration file, that are provided for flashkit create interp
+The following outlines the general section options, which can be mapped
+in the configuration file, that are provided for flashkit create interp:
 
 Options		flash.toml Sections and Options
 -------		-------------------------------
 grid		[general.files]
 		grid = ...
+
+force		[general.files]
+		forced = ...
 
 plot		[general.files]
 		plot = ...
@@ -480,7 +495,7 @@ nzb		[general.space]
 </div>
 <p>Please consult the tutorial discussion on <a class="reference internal" href="../../tutorial/configure.html#configuration-files"><span class="std std-ref">configuration file formating</span></a> for
 help in specifying the above options in a <cite>flash.toml</cite> file and what mapping general options are, as well
-as the full specification on FlashKit library <a class="reference internal" href="../../options.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
+as the full specification on FlashKit library <a class="reference internal" href="../../configure.html#configuration-options"><span class="std std-ref">options</span></a>.</p>
 <hr class="docutils" />
 </div>
 
@@ -491,7 +506,7 @@ as the full specification on FlashKit library <a class="reference internal" href
         <div class='prev-next-bottom'>
             
     <a class='left-prev' id="prev-link" href="grid.html" title="previous page">create grid</a>
-    <a class='right-next' id="next-link" href="xdmf.html" title="next page">create xdmf</a>
+    <a class='right-next' id="next-link" href="par.html" title="next page">create par</a>
 
         </div>
         

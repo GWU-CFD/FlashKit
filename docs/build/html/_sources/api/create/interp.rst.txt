@@ -26,7 +26,7 @@ The python interface for the ``interp`` operation is accessed with the following
 
     from flashkit import flash
     ...
-    flash.create.interp(<keyword arguments>)
+    flash.create.interp(option=value, flag=True, ...)
 
 The python interface specification for ``interp`` is as follows:
 

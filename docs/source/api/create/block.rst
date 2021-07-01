@@ -26,7 +26,7 @@ The python interface for the ``block`` operation is accessed with the following 
 
     from flashkit import flash
     ...
-    flash.create.block(<keyword arguments>)
+    flash.create.block(options=value, flags=True, ...)
 
 The python interface specification for ``block`` is as follows:
 

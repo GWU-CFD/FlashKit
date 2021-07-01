@@ -26,7 +26,7 @@ The python interface for the ``grid`` operation is accessed with the following c
 
     from flashkit import flash
     ...
-    flash.create.grid(<keyword arguments>)
+    flash.create.grid(options=value, flag=True, ...)
 
 The python interface specification for ``grid`` is as follows:
 

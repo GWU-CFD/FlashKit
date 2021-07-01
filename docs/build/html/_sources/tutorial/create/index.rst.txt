@@ -16,6 +16,7 @@ Details for each operation can be found in the following discussion.
     block
     grid
     interp
+    par
     xdmf
 
 --------------------
