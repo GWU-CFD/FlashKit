@@ -36,8 +36,6 @@ SWITCH = CONFIG['create']['interp']['switch']
 LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
 PRECISION = CONFIG['create']['interp']['precision']
-STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
-STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
@@ -46,8 +44,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     if args.get('auto', False):
         step_given = False
         bname_given = False
-    else:    
-        step_given = 'step' in args.keys()
+    else:
+        step_given = False if args.get('find', False) else 'step' in args.keys()
         bname_given = 'basename' in args.keys()
     
     # resolve proper absolute directory paths
@@ -56,22 +54,25 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     path = args['path']
 
     # prepare conditions in order to arrange a list of files to process
+    str_include = re.compile(args['plot'])
+    str_exclude = re.compile(args['force'])
     if not step_given or not bname_given:
         listdir = os.listdir(path)
-        condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
-
-    # find the source file
-    if not step_given:
-        step = sorted([int(file[-4:]) for file in listdir if condition(file)])[-1]
-        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
-        args['step'] = step
+        orig_cond = lambda file: re.search(str_include, file) and not re.search(str_exclude, file)
 
     # create the basename
     if not bname_given:
         try:
-            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
+            args['basename'], *_ = next(filter(orig_cond, (file for file in listdir))).split(str_include.pattern)
         except StopIteration:
             raise AutoError(f'Cannot automatically parse basename for simulation files on path {path}')
+    full_cond = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
+
+    # find the source file
+    if not step_given:
+        step = sorted([int(file[-4:]) for file in listdir if full_cond(file)])[-1]
+        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
+        args['step'] = step
 
     # gather arguments into appropriate tuples
     ndim = args['ndim']
@@ -123,11 +124,11 @@ def log_messages(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource',
-            'basename', 'step', 'plot', 'grid', 'path', 'dest', 'auto', 'result', 'nofile'}
+            'basename', 'step', 'plot', 'grid', 'force', 'path', 'dest', 'auto', 'find', 'result', 'nofile'}
 ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
-DROPS = {'ignore', 'auto', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
+DROPS = {'ignore', 'auto', 'find', 'force', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
@@ -166,9 +167,11 @@ def interp(**arguments: Any) -> Optional[Blocks]:
         step (int):      File number (e.g., <1,3,5,7,9>) of source timeseries output.
         plot (str):      Plot/Checkpoint source file name follower.
         grid (str):      Grid source file name follower.
+        force (str):     Plot/Checkpoint file(s) substring to ignore.
         path (str):      Path to source timeseries hdf5 simulation output files.
         dest (str):      Path to final grid and block hdf5 files.
         auto (bool):     Force behavior to attempt guessing BASENAME and [--step INT].
+        find (bool):     Force behavior to attempt guessing [--step INT].
         nofile (bool):   Do not write the calculated fields by block to file.
         result (bool):   Return the calculated fields by block on root.
         ignore (bool):   Ignore configuration file provided arguments, options, and flags.

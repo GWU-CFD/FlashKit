@@ -23,9 +23,7 @@ __all__ = ['xdmf', ]
 
 logger = logging.getLogger(__name__)
 
-# define default and configuration constants (internal)
-STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
-STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
+# define configuration constants (internal)
 BAR_SWITCH = CONFIG['create']['xdmf']['switch']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
@@ -36,9 +34,13 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         range_given = False
         files_given = False
         bname_given = False
-    else:    
-        range_given = any(args.get(key, False) for key in ('low', 'high', 'skip'))
-        files_given = 'files' in args.keys()
+    else:
+        if args.get('find', False):
+            range_given = False
+            files_given = False
+        else:
+            range_given = any(args.get(key, False) for key in ('low', 'high', 'skip'))
+            files_given = 'files' in args.keys()
         bname_given = 'basename' in args.keys()
     
     # resolve proper absolute directory paths
@@ -47,18 +49,19 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     source = args['path']
 
     # prepare conditions in order to arrange a list of files to process
+    str_include = re.compile(args['plot'])
+    str_exclude = re.compile(args['force'])
     if (not files_given and not range_given) or not bname_given:
         listdir = os.listdir(source)
-        condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
+        orig_cond = lambda file: re.search(str_include, file) and not re.search(str_exclude, file)
 
     # create the basename
     if not bname_given:
         try:
-            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
-            orig_cond = condition
-            condition = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
+            args['basename'], *_ = next(filter(orig_cond, (file for file in listdir))).split(str_include.pattern)
         except StopIteration:
             raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
+    full_cond = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
     
     # create the filelist (throw if not defaults present)
     low: int = args['low']
@@ -71,7 +74,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             files = range(low, high, skip)
             args['message'] = f'range({low}, {high}, {skip})'
         else:
-            files = sorted([int(file[-4:]) for file in listdir if condition(file)])
+            files = sorted([int(file[-4:]) for file in listdir if full_cond(file)])
             args['message'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
             if not files:
                 raise AutoError(f'Cannot automatically identify simulation files on path {source}')
@@ -111,11 +114,11 @@ def log_messages(**args: Any) -> dict[str, Any]:
     return args
 
 # define constants for handling the argument stream
-PACKAGES = {'auto', 'basename', 'dest', 'files', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
+PACKAGES = {'auto', 'basename', 'dest', 'files', 'find', 'force', 'grid', 'high', 'low', 'out', 'path', 'plot', 'skip'}
 ROUTE = ('create', 'xdmf')
 PRIORITY = {'ignore'}
 CRATES = (adapt_arguments, log_messages, attach_context)
-DROPS = {'auto', 'high', 'ignore', 'low', 'skip'}
+DROPS = {'auto', 'find', 'force', 'high', 'ignore', 'low', 'skip'}
 MAPPING = {'grid': 'gridname', 'out': 'filename', 'plot': 'plotname', 'path': 'source'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
@@ -145,7 +148,9 @@ def xdmf(**arguments: Any) -> None:
         out (str):      Output XDMF file name follower.
         plot (str):     Plot/Checkpoint file(s) name follower.
         grid (str):     Grid file(s) name follower.
+        force (str):    Plot/Checkpoint file(s) substring to ignore.
         auto (bool):    Force behavior to attempt guessing BASENAME and [--files LIST].
+        find (bool):    Force behavior to attempt guessing [--files LIST].
         ignore (bool):  Ignore configuration file provided arguments, options, and flags.
 
     Note:
