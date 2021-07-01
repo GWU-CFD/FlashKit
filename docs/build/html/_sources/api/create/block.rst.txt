@@ -14,7 +14,7 @@ The command line interface for the ``block`` catagory of operations is:
 .. program-output:: flashkit create block --help
 
 Please consult the discussion on :ref:`command line syntax<Command Line Syntax>` for 
-help in specifying the format of the above options (e.g., LIST or DICT).
+help in formating the above options (e.g., LIST or DICT).
 
 --------------------
 

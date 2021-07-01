@@ -23,7 +23,7 @@ The python interface for the ``create`` catagory of operations is accessed with 
 
     from flashkit import flash
     ...
-    flash.create.<operation>(<keyword arguments>)
+    flash.create.operation(options=value, flag=True, ...)
 
 --------------------
 

@@ -90,18 +90,13 @@
     </label>
     <ul>
      <li class="toctree-l3">
-      <a class="reference internal" href="../../tutorial/create/block.html">
-       block
-      </a>
-     </li>
-     <li class="toctree-l3">
       <a class="reference internal" href="../../tutorial/create/grid.html">
        grid
       </a>
      </li>
      <li class="toctree-l3">
-      <a class="reference internal" href="../../tutorial/create/interp.html">
-       interp
+      <a class="reference internal" href="../../tutorial/create/block.html">
+       block
       </a>
      </li>
      <li class="toctree-l3">
@@ -112,6 +107,11 @@
      <li class="toctree-l3">
       <a class="reference internal" href="../../tutorial/create/xdmf.html">
        xdmf
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../tutorial/create/interp.html">
+       interp
       </a>
      </li>
     </ul>
@@ -227,6 +227,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../../templates.html">
    Template Options
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../python.html">
+   Python Interface
   </a>
  </li>
 </ul>
@@ -351,7 +356,7 @@ learn more about their usage.
 <p>The python interface for the <code class="docutils literal notranslate"><span class="pre">create</span></code> catagory of operations is accessed with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flashkit</span> <span class="k">import</span> <span class="n">flash</span>
 <span class="o">...</span>
-<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.&lt;</span><span class="n">operation</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&lt;</span><span class="n">keyword</span> <span class="n">arguments</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="n">flash</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 <hr class="docutils" />
