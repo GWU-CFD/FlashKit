@@ -14,7 +14,7 @@ The command line interface for the ``grid`` catagory of operations is:
 .. program-output:: flashkit create grid --help
 
 Please consult the discussion on :ref:`command line syntax<Command Line Syntax>` for 
-help in specifying the format of the above options (e.g., LIST or DICT).
+help in formating the above options (e.g., LIST or DICT).
 
 --------------------
 
@@ -26,7 +26,7 @@ The python interface for the ``grid`` operation is accessed with the following c
 
     from flashkit import flash
     ...
-    flash.create.grid(<keyword arguments>)
+    flash.create.grid(options=value, flag=True, ...)
 
 The python interface specification for ``grid`` is as follows:
 

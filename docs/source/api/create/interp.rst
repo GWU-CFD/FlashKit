@@ -14,7 +14,7 @@ The command line interface for the ``interp`` catagory of operations is:
 .. program-output:: flashkit create interp --help
 
 Please consult the discussion on :ref:`command line syntax<Command Line Syntax>` for 
-help in specifying the format of the above options (e.g., LIST or DICT).
+help in formating the above options (e.g., LIST or DICT).
 
 --------------------
 
@@ -26,7 +26,7 @@ The python interface for the ``interp`` operation is accessed with the following
 
     from flashkit import flash
     ...
-    flash.create.interp(<keyword arguments>)
+    flash.create.interp(option=value, flag=True, ...)
 
 The python interface specification for ``interp`` is as follows:
 

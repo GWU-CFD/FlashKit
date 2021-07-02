@@ -16,7 +16,9 @@ with open('src/flashkit/__meta__.py', mode='r') as source:
                             '__license__', '__website__', '__description__']}
 
 # core dependancies
-DEPENDANCIES = ['cmdkit', 'toml', 'psutil', 'h5py', 'numpy', 'scipy']
+DEPENDANCIES = [
+        'cmdkit @ git+https://github.com/alentner/CmdKit.git@provider#egg=cmdkit-2.7.0', 
+        'toml', 'psutil', 'h5py', 'numpy', 'scipy']
 OPTIONAL_PKG = {'mpi' : ['mpi4py', ], 'bar' : ['alive_progress', ], }
 
 setup(
@@ -41,4 +43,5 @@ setup(
                             'License :: OSI Approved :: MIT License', ],
     entry_points         = {'console_scripts': ['flashkit=flashkit.cli:main', ]},
     install_requires     = DEPENDANCIES,
-    extras_require       = OPTIONAL_PKG, )
+    extras_require       = OPTIONAL_PKG, 
+    )

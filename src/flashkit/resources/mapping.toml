@@ -33,6 +33,7 @@
 
   [create.interp]
   grid   = ['general', 'files', 'grid']
+  force  = ['general', 'files', 'forced']
   plot   = ['general', 'files', 'plot']
   iprocs = ['general', 'mesh', 'iprocs']
   jprocs = ['general', 'mesh', 'jprocs']
@@ -52,8 +53,9 @@
   result = ['general', 'pipes', 'result']
 
   [create.xdmf]
-  grid = ['general', 'files', 'grid']
-  plot = ['general', 'files', 'plot']
-  out  = ['general', 'files', 'output']
-  dest = ['general', 'paths', 'working']
-  path = ['general', 'paths', 'working']
+  grid  = ['general', 'files', 'grid']
+  force = ['general', 'files', 'forced']
+  plot  = ['general', 'files', 'plot']
+  out   = ['general', 'files', 'output']
+  dest  = ['general', 'paths', 'working']
+  path  = ['general', 'paths', 'working']

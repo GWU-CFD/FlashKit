@@ -14,7 +14,7 @@ The command line interface for the ``xdmf`` catagory of operations is:
 .. program-output:: flashkit create xdmf --help
 
 Please consult the discussion on :ref:`command line syntax<Command Line Syntax>` for 
-help in specifying the format of the above options (e.g., LIST or PATH).
+help in formating the above options (e.g., LIST or PATH).
 
 --------------------
 
@@ -26,7 +26,7 @@ The python interface for the ``xdmf`` operation is accessed with the following c
 
     from flashkit import flash
     ...
-    flash.create.xdmf(<keyword arguments>)
+    flash.create.xdmf(options=value, flag=True, ...)
 
 The python interface specification for ``xdmf`` is as follows:
 
