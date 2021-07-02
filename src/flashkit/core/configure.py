@@ -6,24 +6,27 @@ from typing import Any, Iterator, NamedTuple, Optional
 from collections.abc import MutableMapping
 
 # standard libraries
-from functools import partial, reduce
+import logging
 import os
 import sys
+from functools import partial, reduce
 
 # external libraries
 import toml
 from cmdkit.config import Configuration, Namespace
+from cmdkit.contrib.builder import BuilderConfiguration
 
 # internal libraries
-from .logging import logger
-from .parallel import is_root
-from ..resources import CONFIG, DEFAULTS, MAPPING
+from .tools import read_a_leaf
+from ..resources import CONFIG, DEFAULTS, MAPPING, TEMPLATES
+
+logger = logging.getLogger(__name__)
 
 # module access and module level @property(s)
 THIS = sys.modules[__name__]
 
-# define public interface
-__all__ = ['get_arguments', 'get_defaults']
+# define library (public) interface
+__all__ = ['get_arguments', 'get_defaults', 'get_templates']
 
 # define configuration constants
 BASE = CONFIG['core']['configure']['base']
@@ -33,7 +36,7 @@ MAX = CONFIG['core']['configure']['max']
 PATH = CONFIG['core']['configure']['path']
 ROOT = CONFIG['core']['configure']['root']
 USER = CONFIG['core']['configure']['user']
-PAD = f'0{len(str(MAX))}'
+PAD = f'0{len(str(MAX-1))}'
 
 # internal member for forced delayed
 _DELAYED: Optional[bool] = None
@@ -49,12 +52,13 @@ class WalkError(Exception):
 def force_delayed(state: bool = True) -> None:
     """Force the assumption of an on import or on call configure state."""
     THIS._DELAYED = state # type: ignore # pylint: disable=protected-access
-    if is_root(): logger.debug('Force Delayed Configuration!')
+    logger.debug('Force -- Delayed Configuration!')
 
-def gather(first_step: str = PATH) ->  dict[str, dict[str, Any]]:
+def gather(first_step: str = PATH, *, filename: str = FILE, stamp: bool = True) ->  dict[str, dict[str, Any]]:
     """Walk the steps on the path to read the trees of configuration."""
-    trees = [(where, tree) for where, tree in walk_the_path(first_step) if tree is not None]
-    return {f'{USER}_{steps:{PAD}}': dict(tree, **{LABEL: where}) for steps, (where, tree) in enumerate(reversed(trees))}
+    user = USER if filename == FILE else filename.split('.')[0]
+    trees = [(where, tree) for where, tree in walk_the_path(first_step, filename=filename) if tree is not None]
+    return {f'{user}_{steps:{PAD}}': dict(tree, **{LABEL: where}) if stamp else dict(tree) for steps, (where, tree) in enumerate(reversed(trees))}
 
 def prepare(trees: MutableMapping[str, Any], book: Optional[MutableMapping[str, Any]] = None) -> dict[str, Namespace]:
     """Prepare all the trees and plant them for harvest, creating a forest."""
@@ -84,27 +88,18 @@ def plant_a_tree(tree: MutableMapping[str, Any], book: Optional[MutableMapping[s
             plant.update(leaf)
     return plant
 
-def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
-    """Read the leaf at the end of the stem on the treee."""
-    try:
-        return reduce(lambda branch, leaf: branch[leaf], stem, tree)
-    except KeyError:
-        return None
-
-def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
+def walk_the_path(first_step: str = PATH, *, filename: str = FILE, root: Optional[str] = None) -> Iterator[tuple[str, Optional[MutableMapping[str, Any]]]]:
     """Walk the path, learning from the trees of knowlege (like os.walk, but opposite)"""
 
     # read the trees on the path of knowlege ...
     tree: Optional[MutableMapping[str, Any]] = None
     try:
         first_step = os.path.realpath(first_step)
-        tree = toml.load(os.path.join(first_step, FILE))
+        tree = toml.load(os.path.join(first_step, filename))
         if tree is not None: root = tree.get(ROOT, None)
     except PermissionError as error:
-        print(error)
         raise WalkError('Unable to walk the path (... of night in pursuit of knowlege?)!')
     except toml.TomlDecodeError as error:
-        print(error)
         raise WalkError('Unable to read from the tree (... of good and evil?)!')
     except FileNotFoundError:
         tree = None
@@ -118,7 +113,7 @@ def walk_the_path(first_step: str = PATH, root: Optional[str] = None) -> Iterato
         return
 
     # walk the path
-    for step in walk_the_path(next_step, root):
+    for step in walk_the_path(next_step, filename=filename, root=root):
         yield step
 
 def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[list[str]]:
@@ -136,9 +131,31 @@ def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[
 TREES = prepare(gather(), MAPPING)
 
 # initialize argument factory for commandline routines
-get_defaults = partial(harvest, **prepare({'system': DEFAULTS}, MAPPING))
+def get_defaults(*, local: Namespace = Namespace()) -> Configuration:
+    """Constructs arguments from local and system defaults.""" 
+    logger.debug(f'core -- Prepairing to build arguments.')
+    return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING))
 
 def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
-    """Provides support for delayed configuration of arguments."""
+    """Constructs arguments from local, user files, and system defaults;
+    also provides support for delayed configuration of file sourced arguments
+    until the method call occurs, otherwise this happens on module import."""
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
+    logger.debug(f'core -- Prepairing to build arguments (Delayed was {_DELAYED}).')
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
+
+def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> BuilderConfiguration:
+    """Initialize template factory for commandline routines."""
+    
+    trees: dict[str, Namespace] = dict()
+    for template in templates:
+        trees.update(**prepare(gather(filename=template, stamp=False)))
+    logger.debug(f'core -- Built a collection of templates from files.')
+    
+    if sources is not None:
+        source, *sections = sources
+        system = prepare({'system': {key: value for key, value in TEMPLATES[source].items() if key in sections}})
+        logger.debug(f'core -- Appended templates with sections from library defaults.')
+        return BuilderConfiguration(**system, **trees, local=local)
+
+    return BuilderConfiguration(**trees, local=local)

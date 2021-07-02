@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import re
 import sys
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -24,6 +24,8 @@ from ...support.types import Blocks
 # external libraries
 import numpy
 
+logger = logging.getLogger(__name__)
+
 # define public interface
 __all__ = ['interp', ]
 
@@ -34,8 +36,6 @@ SWITCH = CONFIG['create']['interp']['switch']
 LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
 PRECISION = CONFIG['create']['interp']['precision']
-STR_EXCLUDE = re.compile(DEFAULTS['general']['files']['forced'])
-STR_INCLUDE = re.compile(DEFAULTS['general']['files']['plot'])
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
@@ -44,8 +44,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     if args.get('auto', False):
         step_given = False
         bname_given = False
-    else:    
-        step_given = 'step' in args.keys()
+    else:
+        step_given = False if args.get('find', False) else 'step' in args.keys()
         bname_given = 'basename' in args.keys()
     
     # resolve proper absolute directory paths
@@ -54,22 +54,25 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     path = args['path']
 
     # prepare conditions in order to arrange a list of files to process
+    str_include = re.compile(args['plot'])
+    str_exclude = re.compile(args['force'])
     if not step_given or not bname_given:
         listdir = os.listdir(path)
-        condition = lambda file: re.search(STR_INCLUDE, file) and not re.search(STR_EXCLUDE, file)
-
-    # find the source file
-    if not step_given:
-        step = sorted([int(file[-4:]) for file in listdir if condition(file)])[-1]
-        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
-        args['step'] = step
+        orig_cond = lambda file: re.search(str_include, file) and not re.search(str_exclude, file)
 
     # create the basename
     if not bname_given:
         try:
-            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(STR_INCLUDE.pattern)
+            args['basename'], *_ = next(filter(orig_cond, (file for file in listdir))).split(str_include.pattern)
         except StopIteration:
             raise AutoError(f'Cannot automatically parse basename for simulation files on path {path}')
+    full_cond = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
+
+    # find the source file
+    if not step_given:
+        step = sorted([int(file[-4:]) for file in listdir if full_cond(file)])[-1]
+        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
+        args['step'] = step
 
     # gather arguments into appropriate tuples
     ndim = args['ndim']
@@ -86,14 +89,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Interpolating block data (no file out) ...')
-        else:
-            printer.info('Interpolation block data (out to file) ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -109,6 +106,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     f_sources = tuple(args['flows'].get(field)[1] for field in fields)
     l_sources = tuple(args['flows'].get(field)[2] for field in fields)
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating block file by interpolationg simulation files:',
         f'                  {row(fields)}',
@@ -119,17 +117,18 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  grid (source) = {path}/{basename}{grid}{0:04}',
         f'  block (dest)  = {dest}/{NAME}',
         f'',
+        f'Interpolating block data{nofile} ...',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
 PACKAGES = {'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource',
-            'basename', 'step', 'plot', 'grid', 'path', 'dest', 'auto', 'result', 'nofile'}
+            'basename', 'step', 'plot', 'grid', 'force', 'path', 'dest', 'auto', 'find', 'result', 'nofile'}
 ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
-DROPS = {'ignore', 'auto', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
+DROPS = {'ignore', 'auto', 'find', 'force', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
 MAPPING = {'grid': 'gridname', 'plot': 'filename'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
@@ -144,7 +143,7 @@ def screen_out(*, blocks: Blocks) -> None:
     """Output calculated fields by block to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{f}:\n{b}' for f, b in blocks.items())
-        printer.info(f'\nFields for blocks on root are as follows:\n{message}')
+        print(f'\nFields for blocks on root are as follows:\n{message}')
 
 @safe
 def interp(**arguments: Any) -> Optional[Blocks]:
@@ -168,9 +167,11 @@ def interp(**arguments: Any) -> Optional[Blocks]:
         step (int):      File number (e.g., <1,3,5,7,9>) of source timeseries output.
         plot (str):      Plot/Checkpoint source file name follower.
         grid (str):      Grid source file name follower.
+        force (str):     Plot/Checkpoint file(s) substring to ignore.
         path (str):      Path to source timeseries hdf5 simulation output files.
         dest (str):      Path to final grid and block hdf5 files.
         auto (bool):     Force behavior to attempt guessing BASENAME and [--step INT].
+        find (bool):     Force behavior to attempt guessing [--step INT].
         nofile (bool):   Do not write the calculated fields by block to file.
         result (bool):   Return the calculated fields by block on root.
         ignore (bool):   Ignore configuration file provided arguments, options, and flags.

@@ -92,15 +92,17 @@ You can also checkout the following detailed guides for understanding all of the
 
 Full documentation of the application programing interface (API) for *FlashKit* is available as well.
 You should consult this documentation with specific questions conderning how specific operations will behave
-and what available options they provide. Finally, a complete listing of avaialble configuration file options
-is also available.
+and what available options they provide. Finally, a complete listing of avaialble configuration file options,
+template file specifications and options, and differences in the python interface are also available.
 
 .. toctree::
     :maxdepth: 2
 
     api/index
     cmdline
-    options
+    configure
+    templates
+    python
 
 --------------------
 

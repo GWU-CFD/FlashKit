@@ -13,6 +13,7 @@ how to develop new features for inclusion into the FlashKit library.
     job/index
     analyze/index
     configure
+    template
     develop
 
 --------------------

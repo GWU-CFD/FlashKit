@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import cast, NamedTuple, TYPE_CHECKING
 
 # standard libraries
+import logging
 from functools import wraps, reduce
 
 # internal libraries
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
 # deal w/ runtime cast
 else:
     F = None
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['Instructions', 'build', 'extract', 'mail', 'pack', 'patch', 
@@ -69,8 +72,10 @@ def build(crates: Sequence[F]) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Build -- Provided: {stream.keys()}')
             for crate in crates:
                 stream = crate(**stream)
+            logger.debug(f'Build -- Returned: {stream.keys()}')
             return function(**stream)
         return cast(F, wrapper)
     return decorator
@@ -80,6 +85,7 @@ def extract(packages: Iterable[str]) -> D:
     """Extract packages from the stream."""
     def decorator(function: F) -> F:
         def wrapper(**stream):
+            logger.debug(f'Extract -- Provided: {stream.keys()}')
             return {key: value for key, value in stream.items() if key in packages}
         return cast(F, wrapper)
     return decorator
@@ -92,6 +98,7 @@ def mail(packages: Iterable[str], route: Sequence[str], priority: Iterable[str],
         @wraps(function)
         @handler
         def wrapper(**stream):
+            logger.debug(f'Mail -- Provided: {stream.keys()}')
             return ship(packages, route, priority)(build(crates)(prune(drops, mapping)(function)))(**stream)
         return cast(F, wrapper)
     return decorator
@@ -102,6 +109,7 @@ def pack(packages: Iterable[str], route: Sequence[str], priority: Iterable[str])
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Pack -- Provided: {stream.keys()}')
             holds = {key: stream.get(key, None) for key in priority}
             holds = {key: item for key, item in holds.items() if item is not None}
             stream = {key: stream.get(key, None) for key in packages}
@@ -109,6 +117,7 @@ def pack(packages: Iterable[str], route: Sequence[str], priority: Iterable[str])
             for leg in reversed(route):
                 stream = {leg: stream}
             stream.update(**holds)
+            logger.debug(f'Pack -- Returned: {stream.keys()}')
             return function(**stream)
         return cast(F, wrapper)
     return decorator
@@ -118,8 +127,10 @@ def patch(function: F) -> F:
     dispatch = {True: get_defaults, False: get_arguments}
     @wraps(function)
     def wrapper(**stream):
+        logger.debug(f'Patch -- Provided: {stream.keys()}')
         ignore = stream.get(IGNORE, False)
         stream = dispatch[ignore](local=stream)
+        logger.debug(f'Patch -- Returned: {stream.keys()}')
         return function(**stream)
     return cast(F, wrapper)
 
@@ -129,6 +140,7 @@ def prune(drops: Iterable[str], mapping: Mapping[str, str]) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Prune -- Provided: {stream.keys()}')
             return strip(drops)(translate(mapping)(function))(**stream)
         return cast(F, wrapper)
     return decorator
@@ -139,10 +151,12 @@ def unpack(route: Sequence[str], priority: Iterable[str]) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Unpack -- Provided: {stream.keys()}')
             holds = {key: stream.pop(key, None) for key in priority}
             holds = {key: item for key, item in holds.items() if item is not None}
             stream = reduce(lambda branch, leaf: branch[leaf], route, stream)
             stream.update(**holds)
+            logger.debug(f'Unpack -- Returned: {stream.keys()}')
             return function(**stream)
         return cast(F, wrapper)
     return decorator
@@ -153,6 +167,7 @@ def ship(packages: Iterable[str], route: Sequence[str], priority: Iterable[str])
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Ship -- Provided: {stream.keys()}')
             return pack(packages, route, priority)(patch(unpack(route, priority)(function)))(**stream)
         return cast(F, wrapper)
     return decorator
@@ -163,8 +178,10 @@ def strip(drops: Iterable[str]) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Strip -- Provided: {stream.keys()}')
             for drop in drops:
                 stream.pop(drop, None)
+            logger.debug(f'Strip -- Returned: {stream.keys()}')
             return function(**stream)
         return cast(F, wrapper)
     return decorator
@@ -175,10 +192,12 @@ def translate(mapping: Mapping[str, str]) -> D:
     def decorator(function: F) -> F:
         @wraps(function)
         def wrapper(**stream):
+            logger.debug(f'Translate -- Provided: {stream.keys()}')
             for key, value in mapping.items():
                 store = stream.pop(key, None)
                 if store is not None:
                     stream[value] = store
+            logger.debug(f'Translate -- Returned: {stream.keys()}')
             return function(**stream)
         return cast(F, wrapper)
     return decorator

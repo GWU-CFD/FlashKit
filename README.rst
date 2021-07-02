@@ -7,6 +7,6 @@ The FlashKit library implements a useful set of abstractions to common operation
 when using the FLASH software, which are avalable from either the command line or python code with a 
 consitant user interface.
 
-Documentation for FlashKit can be found `here <https://gwu-cfd.github.io/FlashKit/index.html>`_
+Documentation for FlashKit can be found `here <https://flashkit.readthedocs.io/>`_
 
 --------------------

@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Any, Optional 
 
 # standard libraries
+import logging
 import os
 import sys
 
 # internal libraries
-from ...core.logging import printer
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
@@ -19,6 +19,8 @@ from ...support.types import Coords
 
 # external libraries
 import numpy
+
+logger = logging.getLogger(__name__)
 
 # define public interface
 __all__ = ['grid', ]
@@ -70,14 +72,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    if any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty():
-        args['context'] = get_bar()
-    else:
-        args['context'] = get_bar(null=True)
-        if args['nofile']:
-            printer.info('Calculating grid data (no file out) ...')
-        else:
-            printer.info('Writing grid data out to file ...')
+    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -92,6 +88,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     grids = tuple(s * p if m not in user else '?' for s, p, m in zip(args['sizes'], args['procs'], methods))
     lows = tuple(l if m not in user else '?' for l, m in zip(args['ranges_low'], methods))
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
+    nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating initial grid file from specification:',
         f'  grid_pnts = {grids}',
@@ -100,8 +97,9 @@ def log_messages(**args: Any) -> dict[str, Any]:
         f'  grid_file = {dest}/{NAME}',
         f'  with_opts = {options}',
         f'',
+        f'Calculating grid data{nofile} ...',
         ])
-    printer.info(message)
+    logger.info(message)
     return args
 
 # default constants for handling the argument stream
@@ -126,7 +124,7 @@ def screen_out(*, coords: Coords, ndim: int) -> None:
     """Output calculated coordinates to the screen."""
     with numpy.printoptions(precision=PRECISION, linewidth=LINEWIDTH, threshold=numpy.inf):
         message = "\n\n".join(f'{a}:\n{c}' for a, c in zip(COORDS, coords[:ndim]))
-        printer.info(f'\nCoordinates are as follows:\n{message}')
+        print(f'\nCoordinates are as follows:\n{message}')
 
 @safe
 def grid(**arguments: Any) -> Optional[Coords]:

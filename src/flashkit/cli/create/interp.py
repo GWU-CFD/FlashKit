@@ -6,9 +6,9 @@ from __future__ import annotations
 # internal libraries
 from ...api.create import interp
 from ...core.configure import get_defaults
-from ...core.custom import patched_error, patched_exceptions, return_options
+from ...core.custom import patched_error, patched_exceptions
+from ...core.options import return_options
 from ...core.parse import DictStr, DictListStr
-from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
@@ -43,12 +43,14 @@ options:
 -m, --fsource  DICT  Key/value pairs for source fields (e.g., <velx=(cc_u,center),...>); defaults to FIELDS.
 -f, --step     INT   File number (e.g., <1,3,5,7,9>) of source timeseries output.
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{DEF.grid}'.
--o, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
+-c, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
+-q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to '{DEF.force}'.
 -p, --path     PATH  Path to source files used in some initialization methods (e.g., python); defaults to cwd.
 -d, --dest     PATH  Path to intial block hdf5 file; defaults to cwd.
 
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--step INT].
+-B, --find           Force behavior to attempt guessing [--step INT].
 -F, --nofile         Do not write the calculated coordinates to file. 
 -R, --result         Return the calculated fields by block on root. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
@@ -69,7 +71,7 @@ class InterpCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
     
     ALLOW_NOARGS: bool = True
 
@@ -86,9 +88,11 @@ class InterpCreateApp(Application):
     interface.add_argument('-f', '--step', type=int)
     interface.add_argument('-g', '--grid')
     interface.add_argument('-o', '--plot')
+    interface.add_argument('-q', '--force')
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-A', '--auto', action='store_true')
+    interface.add_argument('-B', '--find', action='store_true')
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
@@ -101,6 +105,6 @@ class InterpCreateApp(Application):
             return
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'step', 
-                  'plot', 'grid', 'path', 'dest', 'auto', 'ignore', 'result', 'nofile'}
+                  'plot', 'grid', 'force', 'path', 'dest', 'auto', 'find', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
         interp(**local, cmdline=True)

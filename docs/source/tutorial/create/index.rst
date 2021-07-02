@@ -9,13 +9,16 @@ The currently supported functionality is:
 
 --------------------
 
-Details for each operation can be found in the following discussion.
+Details for each operation can be found in the following discussion,
+the order of which is in the spirit of what an analyst would need in
+setting up a simulation job (i.e., inputs -> outputs).
 
 .. toctree::
 
-    block
     grid
-    interp
+    block
+    par
     xdmf
+    interp
 
 --------------------

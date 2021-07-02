@@ -6,9 +6,9 @@ from __future__ import annotations
 # internal libraries
 from ...api.create import xdmf
 from ...core.configure import get_defaults
-from ...core.custom import patched_error, patched_exceptions, return_options
+from ...core.custom import patched_error, patched_exceptions
+from ...core.options import return_options
 from ...core.parse import ListInt
-from ...core.error import AutoError, StreamError
 
 # external libraries
 from cmdkit.app import Application
@@ -27,8 +27,8 @@ HELP = f"""\
 {USAGE}
 
 arguments:  
-BASENAME    Basename for flash simulation, will be guessed if not provided
-            (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
+BASENAME     STRING  Basename for flash simulation, will be guessed if not provided
+                     (e.g., INS_LidDr_Cavity for files INS_LidDr_Cavity_hdf5_plt_cnt_xxxx)
 
 options:
 -b, --low    INT     Begining number for timeseries hdf5 files; defaults to {DEF.low}.
@@ -38,11 +38,13 @@ options:
 -p, --path   PATH    Path to timeseries hdf5 simulation output files; defaults to cwd.
 -d, --dest   PATH    Path to xdmf (contains relative paths to sim data); defaults to cwd.
 -o, --out    FILE    Output XDMF file name follower; defaults to a footer '{DEF.out}'.
--i, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
+-c, --plot   STRING  Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{DEF.grid}'.
+-q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to '{DEF.force}'.
 
 flags:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
+-B, --find           Force behavior to attempt guessing [--files LIST].
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
@@ -60,7 +62,7 @@ class XdmfCreateApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     setattr(interface, 'error', patched_error(STR_FAILED))
-    exceptions = patched_exceptions(STR_FAILED, {AutoError, StreamError, OSError})
+    exceptions = patched_exceptions(STR_FAILED)
 
     ALLOW_NOARGS: bool = True
 
@@ -72,9 +74,11 @@ class XdmfCreateApp(Application):
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
     interface.add_argument('-o', '--out')
-    interface.add_argument('-i', '--plot')
+    interface.add_argument('-c', '--plot')
     interface.add_argument('-g', '--grid')
+    interface.add_argument('-q', '--force')
     interface.add_argument('-A', '--auto', action='store_true')
+    interface.add_argument('-B', '--find', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
 
     def run(self) -> None:
@@ -85,6 +89,6 @@ class XdmfCreateApp(Application):
             return
 
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
-                   'out', 'plot', 'grid', 'auto', 'ignore'}
+                   'out', 'plot', 'grid', 'force', 'auto', 'find', 'ignore'}
         local = {key: getattr(self, key) for key in options}
         xdmf(**local)

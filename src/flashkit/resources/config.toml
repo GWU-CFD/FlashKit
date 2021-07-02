@@ -29,6 +29,22 @@
   tablespad = 10    # padding for table printing
   precision = 6     # precision if output to screen
 
+  [create.par]
+  filename = 'flash.par'  # name of file holding runtime parameters
+  template = 'templates'  # variable in flash.toml for templates
+  filemax  = 10           # maximum templates; files per level
+  padname  = 4            # padding for parameter names           
+  padnote  = 5            # padding for parameter comments
+  padsect  = 0            # padding for section footer
+  sentinal = '_'          # leading char for indexed lookup
+  tagging  = 'comment'    # section key for tagging variables
+  sourcing = 'sources'    # section key for sourcing data
+  sinking  = 'sinks'      # section key for sinking data
+  title    = 'title'      # section key for the title
+  local    = 'local'      # section key for the title
+  supports = ['header', 'footer', 'number'] # supported tags
+  nosource = ['2d']       # library templates (parameter) keys ignored
+
   [create.xdmf]
   switch = 10   # number of files before showing progress
 
@@ -38,17 +54,18 @@
   base  = ['jobs', 'FLASH'] # default root of the tree
   file  = 'flash.toml' # name of file holding user options
   label = 'base'       # label for path var written to tree options
-  max   = 99           # maximum levels to walk building tree
+  max   = 100          # maximum levels to walk building tree
   path  = ''           # relative path to begin directory walk
   root  = 'root'       # variable in flash.toml for root of tree
-  user  = 'user'       # label for tree options in Configuration
+  user  = 'user'       # label prefix for trees in Configuration
 
   [core.logger]
-  console  = '%(msg)s'  # default logging handler format
-  debugger = '%(name)s - %(message)s' # verbose logging handler format
-  logger   = 'FlashKit' # name of the flashkit logger
-  printer  = 'console'  # name of the flashkit logger
-  simple   = true       # use print() vice logger
+  console  = '%(message)s'  # console logging handler format
+  error = '%(levelname)s - %(message)s' # stderr logging handler format
+  record = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
+  trace = '%(asctime)s - %(message)s' # traceback logging handler format
+  logfile = 'flashkit.log' # name of the standard logging file
+  excfile = 'traceback.log' # name of the traceback logging file
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi

@@ -9,6 +9,7 @@ __pycache__/
 
 # Sphinx Build files
 doctrees/
+docs/build/
 
 # Jupyter Notebook
 .ipynb_checkpoints

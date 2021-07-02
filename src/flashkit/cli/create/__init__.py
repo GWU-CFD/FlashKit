@@ -18,6 +18,7 @@ COMMANDS: DictApp = {
         'block': block.BlockCreateApp,
         'grid': grid.GridCreateApp,
         'interp': interp.InterpCreateApp,
+        'par': par.ParCreateApp,
         'xdmf': xdmf.XdmfCreateApp,
         }
 

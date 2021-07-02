@@ -6,7 +6,8 @@ from __future__ import annotations
 # internal libraries
 from ...api.create import block
 from ...core.configure import get_defaults
-from ...core.custom import patched_error, patched_exceptions, return_options
+from ...core.custom import patched_error, patched_exceptions
+from ...core.options import return_options
 from ...core.parse import DictStr, DictDictAny
 
 # external libraries
