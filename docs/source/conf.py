@@ -16,7 +16,7 @@ import datetime
 sys.path.insert(0, os.path.abspath('../..'))
 
 # automatic metadata access
-from flashkit import __meta__
+from src.flashkit import __meta__
 
 
 # -- Project information -----------------------------------------------------
