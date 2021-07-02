@@ -29,10 +29,11 @@ jobs:
         python -m pip install --upgrade .
     - name: Clone FlashSupport
       run: |
+        cd ..
         git clone https://github.com/GWU-CFD/FlashSupport.git
         cd FlashSupport
         git checkout example
-        cd ..
+        cd ../FlashKit
     - name: Test with pytest
       run: |
         pytest -v
