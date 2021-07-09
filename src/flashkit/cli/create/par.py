@@ -13,6 +13,7 @@ from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
 from ...core.options import return_available, return_options
 from ...core.parse import DictAny, ListStr
+from ...resources import CONFIG
 
 # external libraries
 from cmdkit.app import Application
@@ -21,6 +22,8 @@ from cmdkit.cli import Interface
 logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.par
+
+SKIP = CONFIG['create']['par']['nosource']
 
 PROGRAM = f'flashkit create par'
 
@@ -96,7 +99,7 @@ class ParCreateApp(Application):
             return
 
         if self.shared.available:
-            return_available('parameter', ['sources'])
+            return_available('parameter', ['sources'], SKIP)
             return
 
         options = {'templates', 'params', 'sources', 'dest', 'auto',

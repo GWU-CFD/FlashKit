@@ -37,12 +37,13 @@ class ForceParallel(argparse.Action):
         setattr(namespace, self.dest, True)
         force_parallel()
 
-def return_available(category: str, tags: list[str]) -> None:
+def return_available(category: str, tags: list[str], skips: list[str] = []) -> None:
     """Force the logging of available template options for flashkit."""
     print(
             f'The following library template key/value pairs are provided:\n'
             f'with the tags of <{tags}> defined in each section')
     for section, layout in TEMPLATES[category].items():
+        if section in skips: continue
         print(f'\n Section: {section}\n')
         for tag, values in layout.items():
             if tag in tags:
