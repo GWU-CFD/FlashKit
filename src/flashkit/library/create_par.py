@@ -87,23 +87,27 @@ def author_section(section: str, layout: Sections, tree: Tree):
     
     params.extend((name, read_a_source(stem, tree)) for name, stem in sources.items())
 
-    pad = max((len(name) for name, _ in params), default=0) + PAD_NAME
+    pad_name = max((len(name) for name, _ in params), default=0) + PAD_NAME
+    pad_value = max((len(str(value)) for _, value in params), default=0) + PAD_NOTE
     lines = [f'# {header}', ]
-    lines.extend(
-            f'{name: <{pad}} = {fmt_value(value)}{fmt_note(comment.get(SENTINAL + name, None))}'
+    lines.extend(f'{fmt_name(name, pad_name)}= {fmt_value(value, pad_value)}{fmt_note(name, comment)}'
             for name, value in params)
     lines.append('' if not footer else f'# {footer}')
     lines.extend('' for _ in range(PAD_SECT))
 
     return lines
 
-def fmt_note(note: Any) -> str:
-    return '' if not note else f"{'#':>{PAD_NOTE}} {note}"
+def fmt_name(name: str, pad: int) -> str:
+    return f'{name: <{pad}}'
 
-def fmt_value(value: Any) -> Any:
-    return {bool: f'.{str(value).lower()}.',
-            str: f'"{value}"'
-            }.get(type(value), value)
+def fmt_note(name:str, comment: dict[str, Any]) -> str:
+    note = comment.get(SENTINAL + name, None)
+    return '' if note is None else f'# {note}'
+
+def fmt_value(value: Any, pad: int) -> str:
+    return {bool: f'''{f".{str(value).lower()}.": <{pad}}''',
+            str: f'''{f'"{value}"': <{pad}}''',
+            }.get(type(value), f'{value: <{pad}}')
 
 def order_sections(*args) -> str:
     (section, layout), *_ = args
