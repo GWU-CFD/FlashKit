@@ -15,6 +15,7 @@
   kprocs = 1
 
   [general.paths]
+  build   = '~/FLASH'
   working = ''
 
   [general.pipes]
@@ -29,6 +30,16 @@
   xrange = [0.0, 1.0]
   yrange = [0.0, 1.0]
   zrange = [0.0, 1.0]
+
+[build]
+
+  [build.simulation]
+  grid     = 'regular'
+  jobs     = 1
+  optimize = 'opt'
+  python   = 2
+  site     = 'manwe.ddns.net'
+  subpath  = 'INavierStokes/zoso'
 
 [create]
 

@@ -1,5 +1,12 @@
 # Library specified configuration literals for FlashKit.
 
+[build]
+
+  [build.simulation]
+  binary  = 'flash4'   # FLASH binary file name
+  success = 'SUCCESS'  # string in output indicating success
+  timeout = 600        # time allowed in seconds for build
+
 [create]
 
   [create.block]

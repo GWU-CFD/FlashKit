@@ -1,5 +1,14 @@
 # Library specified mappings for default literals in FlashKit.
 
+[build]
+
+  [build.simulation]
+  path   = ['general', 'paths', 'build']
+  ndim   = ['general', 'space', 'ndim']
+  nxb    = ['general', 'space', 'nxb']
+  nyb    = ['general', 'space', 'nyb']
+  nzb    = ['general', 'space', 'nzb']
+
 [create]
   
   [create.block]
