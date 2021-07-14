@@ -74,6 +74,12 @@
   logfile = 'flashkit.log' # name of the standard logging file
   excfile = 'traceback.log' # name of the traceback logging file
 
+  [core.options]
+  mindef = 12     # minimum width for option names (without pad)
+  minmap = 12     # minumum width for mapping names (without pad)
+  paddef = 4      # padding for option names
+  padmap = 4      # padding for mapping names
+
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi
   distribution = 'mpi4py' # python distribution supporting mpi

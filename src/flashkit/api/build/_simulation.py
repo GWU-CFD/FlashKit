@@ -25,6 +25,10 @@ __all__ = ['simulation', ]
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
+    
+    # ensure arguments provided
+    if any(arg not in args for arg in {'simulation', 'directory'}):
+        raise AutoError('Both simulation and directory arguments needed!')
 
     try:
         # resolve proper absolute directory paths
@@ -110,6 +114,7 @@ def simulation(**arguments: Any) -> None:
         ignore (bool):      Ignore configuration file provided arguments, options, and flags.
     """
     args = process_arguments(**arguments)
+    
     force_build = args.pop('build', False)
     force_make = args.pop('force', False)
     comp = args.pop('compile', False)
@@ -118,6 +123,5 @@ def simulation(**arguments: Any) -> None:
     sim = args.pop('simulation')
     cmdline = args.pop('cmdline', False)
     
-    with args.pop('context')() as progress:
-        build(simulation=sim, force=force_build, setup=setup, **args)
-        if comp: make(force=force_make, jobs=jobs, **args)
+    build(simulation=sim, force=force_build, setup=setup, **args)
+    if comp: make(force=force_make, jobs=jobs, **args)

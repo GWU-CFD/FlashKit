@@ -18,7 +18,7 @@ from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Union
+    from typing import Any, Callable, Optional, Union
     Bar = Callable[..., AbstractContextManager]
 
 # deal w/ runtime import

@@ -20,6 +20,7 @@ from cmdkit.cli import Interface
 from . import create, build, job
 
 COMMANDS: DictApp = {
+        'build': build.BuildApp,
         'create': create.CreateApp,
         }
 

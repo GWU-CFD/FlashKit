@@ -2,7 +2,6 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Type
 
 # internal libraries
 from ...core.custom import DictApp

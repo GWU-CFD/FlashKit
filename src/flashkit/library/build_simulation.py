@@ -13,6 +13,7 @@ from pathlib import Path
 # internal libraries
 from ..core.error import LibraryError
 from ..core.parallel import squash
+from ..core.progress import Bar
 from ..core.tools import change_directory
 from ..resources import CONFIG
 
@@ -27,21 +28,22 @@ SUCCESS = CONFIG['build']['simulation']['success']
 TIMEOUT = CONFIG['build']['simulation']['timeout']
 
 @squash
-def build(*, directory: str, simulation: str, force: bool, path: Path, setup: list[str]) -> None:
+def build(*, directory: str, simulation: str, force: bool, path: Path, setup: list[str], context: Bar) -> None:
     """Executes the FLASH build process with the intended options."""
     build = path.joinpath(directory)
     if build.exists() and not force:
         logger.warning(f'The simulation directory {directory} exists!')
         return
     print(f'\n'
-          f'-------------------------------------------------------------\n'
-          f'--  Create FLASH Compilation Directory -- {simulation}\n'
-          f'-------------------------------------------------------------\n\n'
+          f'------------------------------------------------------------------\n'
+          f'Create FLASH Compilation Directory -- {simulation}\n'
+          f'------------------------------------------------------------------\n\n'
           f'Using the following FLASH setup command:\n'
           f'----------------------------------------\n'
           f'{" ".join(setup)}\n\n')
     try:
-        output = subprocess.run(setup, cwd=path, timeout=TIMEOUT, capture_output=True)
+        with context() as progress:
+            output = subprocess.run(setup, cwd=path, timeout=TIMEOUT, capture_output=True)
     except subprocess.TimeoutExpired:
         raise LibraryError('Failed to build within alloted time!')
     except subprocess.CalledProcessError as error:
@@ -54,7 +56,7 @@ def build(*, directory: str, simulation: str, force: bool, path: Path, setup: li
         logger.info('Successfully built simulation directory')
 
 @squash
-def make(*, directory: str, force: bool, jobs: int, path: Path) -> None:
+def make(*, directory: str, force: bool, jobs: int, path: Path, context: Bar) -> None:
     """Compile the FLASH build directory."""
     build = path.joinpath(directory)
     binary = build.joinpath(BINARY)
@@ -72,7 +74,8 @@ def make(*, directory: str, force: bool, jobs: int, path: Path) -> None:
           f'Compiling FLASH code ...\n' \
           f'\n')
     try:
-        output = subprocess.run(setup, cwd=build, timeout=TIMEOUT, capture_output=True)
+        with context() as progress:
+            output = subprocess.run(setup, cwd=build, timeout=TIMEOUT, capture_output=True)
     except subprocess.TimeoutExpired:
         raise LibraryError('Failed to compile within alloted time!')
     except subprocess.CalledProcessError as error:
