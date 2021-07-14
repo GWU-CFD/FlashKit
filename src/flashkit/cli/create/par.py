@@ -5,7 +5,6 @@ from __future__ import annotations
 
 # standard libraries
 import logging
-from pprint import pformat 
 
 # internal libraries
 from ...api.create import par
@@ -105,5 +104,5 @@ class ParCreateApp(Application):
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returning:\n{pformat(local)}')
+        logger.debug(f'cli -- Returned: {local}')
         par(**local, cmdline=True)

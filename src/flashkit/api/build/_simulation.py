@@ -13,7 +13,7 @@ from pathlib import Path
 # internal libraries
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash 
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.build_simulation import build, make
 from ...resources import CONFIG
@@ -31,6 +31,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         args['path'] = Path(args['path']).expanduser().resolve(strict=True)
     except FileNotFoundError:
         raise AutoError('Cannot resolve path to FLASH source repository!')
+    logger.debug(f'api -- Fully resolved the FLASH source repository.')
 
     try:
         # format options and validation of user input
@@ -48,7 +49,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         variables = ' '.join([f'-{name}={value}' for name, value in args.get('variables', {}).items()])
         site = args['site']
     except:
-        raise AutoError('Failed to understand and validat input!')
+        raise AutoError('Failed to understand and validate input!')
+    logger.debug(f'api -- Validated user input and formated options.')
 
     # create setup command
     args['setup'] = f'{python} {sub}/{sim}/ +{grid} +hdf5{parallelIO}{shortcuts}' \
@@ -56,14 +58,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
                     f' -{ndim}d -nxb={nxb} -nyb={nyb}{f" -nzb={nzb}" if ndim == 3 else ""}' \
                     f'{variables}'.split()
     args['directory'] = objdir
+    logger.debug(f'api -- Constructed setup command.')
 
-    return args
-
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
     return args
 
 # default constants for handling the argument stream

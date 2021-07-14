@@ -14,7 +14,7 @@ from functools import partial
 from ...core.configure import get_arguments, get_defaults, get_templates
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import attach_context 
 from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
 from ...library.create_par import author_par, filter_tags, sort_templates, write_par
@@ -98,13 +98,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     return args
 
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
-    return args
-
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     templates = args['templates']
@@ -128,7 +121,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
 PACKAGES = {'templates', 'params', 'sources', 'dest', 'auto', 'nosources', 'duplicates', 'result', 'nofile'}
 ROUTE = ('create', 'par')
 PRIORITY = {'ignore', 'cmdline'}
-CRATES = (adapt_arguments, log_messages, attach_context)
+CRATES = (adapt_arguments, attach_context, log_messages)
 DROPS = {'ignore', 'auto', 'nosources', 'templates', 'params', 'sources', 'duplicates'}
 MAPPING = {'construct': 'template', 'tree': 'sources'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
