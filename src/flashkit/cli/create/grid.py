@@ -94,7 +94,7 @@ class GridCreateApp(Application):
         """Buisness logic for creating grid from command line."""
         
         if self.shared.options: 
-            return_options('create', 'grid')
+            return_options(['create', 'grid'])
             return
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'xrange', 'yrange', 'zrange', 'bndbox', 

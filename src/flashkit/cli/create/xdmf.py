@@ -85,7 +85,7 @@ class XdmfCreateApp(Application):
         """Buisness logic for creating xdmf from command line."""
         
         if self.shared.options: 
-            return_options('create', 'xdmf')
+            return_options(['create', 'xdmf'])
             return
 
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 

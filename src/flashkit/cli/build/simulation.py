@@ -98,7 +98,7 @@ class SimulationBuildApp(Application):
         """Buisness logic for building simulation directories from command line."""
         
         if self.shared.options: 
-            return_options('build', 'simulation')
+            return_options(['build', 'simulation'])
             return
 
         options = {'simulation', 'directory', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python',

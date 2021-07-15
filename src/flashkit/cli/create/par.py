@@ -94,7 +94,7 @@ class ParCreateApp(Application):
         """Buisness logic for creating par from command line."""
         
         if self.shared.options: 
-            return_options('create', 'par')
+            return_options(['create', 'par'])
             return
 
         if self.shared.available:

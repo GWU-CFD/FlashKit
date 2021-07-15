@@ -17,11 +17,13 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # command groups
-from . import create, build, job
+from . import analyze, build, create, job
 
 COMMANDS: DictApp = {
+        'analyze': analyze.AnalyzeApp,
         'build': build.BuildApp,
         'create': create.CreateApp,
+        #'job': job.JobApp,
         }
 
 PROGRAM = f'flashkit'
@@ -40,6 +42,7 @@ HELP = f"""\
 {USAGE}
     
 commands:
+analyze      {analyze.__doc__}
 build        {build.__doc__}
 create       {create.__doc__}
 job          {job.__doc__}

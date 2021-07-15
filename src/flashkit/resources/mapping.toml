@@ -1,15 +1,38 @@
 # Library specified mappings for default literals in FlashKit.
 
+[analyze]
+
+  [analyze.where]
+
 [build]
+
+  [build.jobs]
+
+    [build.jobs.collection]
+    
+    [build.jobs.job]
+
+    [build.jobs.simulation]
+
+    [build.jobs.working]
+    name = ['general', 'paths', 'jobs']
+
+  [build.port]
+
+  [build.scaling]
 
   [build.simulation]
   path   = ['general', 'paths', 'build']
+  site   = ['general', 'paths', 'site']
   ndim   = ['general', 'space', 'ndim']
   nxb    = ['general', 'space', 'nxb']
   nyb    = ['general', 'space', 'nyb']
   nzb    = ['general', 'space', 'nzb']
 
 [create]
+  
+  [create.batch]
+  site   = ['general', 'paths', 'site']
   
   [create.block]
   iprocs = ['general', 'mesh', 'iprocs']
@@ -60,6 +83,8 @@
   dest   = ['general', 'paths', 'working']
   nofile = ['general', 'pipes', 'nofile']
   result = ['general', 'pipes', 'result']
+
+  [create.tecplot]
 
   [create.xdmf]
   grid  = ['general', 'files', 'grid']

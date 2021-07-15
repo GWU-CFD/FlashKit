@@ -15,7 +15,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # define library (public) interface
-__all__ = ['change_directory, first_true', 'is_ipython', 'read_a_leaf', ]
+__all__ = ['change_directory, first_true', 'is_ipython', 'read_a_branch', 'read_a_leaf', ]
 
 @contextmanager
 def change_directory(path: Union[Path, str]) -> Iterator[None]:
@@ -41,8 +41,15 @@ def is_ipython() -> bool:
         return False
 
 def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
-    """Read the leaf at the end of the stem on the treee."""
+    """Read the leaf at the end of the stem on the tree."""
     try:
         return reduce(lambda branch, leaf: branch[leaf], stem, tree)
     except KeyError:
         return None
+
+def read_a_branch(stem: list[str], tree: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    """Read the branch at the end of the stem on the tree."""
+    try:
+        return dict(reduce(lambda branch, leaf: branch[leaf], stem, tree))
+    except KeyError:
+        return dict()

@@ -85,7 +85,7 @@ class BlockCreateApp(Application):
         """Buisness logic for creating block from command line."""
         
         if self.shared.options: 
-            return_options('create', 'block')
+            return_options(['create', 'block'])
             return
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fmethod', 'fparam', 

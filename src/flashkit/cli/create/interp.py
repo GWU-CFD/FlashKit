@@ -101,7 +101,7 @@ class InterpCreateApp(Application):
         """Buisness logic for creating block using interpolatione, from command line."""
         
         if self.shared.options: 
-            return_options('create', 'interp')
+            return_options(['create', 'interp'])
             return
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'step', 

@@ -10,6 +10,7 @@ import argparse
 from ..core.configure import force_delayed, get_defaults
 from ..core.logging import force_debug
 from ..core.parallel import force_parallel
+from ..core.tools import read_a_branch
 from ..resources import CONFIG, MAPPING, TEMPLATES
 
 # external libraries
@@ -58,24 +59,27 @@ def return_available(category: str, tags: list[str], skips: list[str] = []) -> N
                     f'---------\t{"-"*len(tag)}')
                 print('\n'.join(f'{tmp}\t\t{value}' for tmp, value in values.items()))
 
-def return_options(category: str, operation: str) -> None:
+def return_options(stem: list[str]) -> None:
     """Force the logging of defaults and mappings for flashkit <category> <operation>."""
+    options = read_a_branch(stem, get_defaults())
+    mapping = read_a_branch(stem, MAPPING)
+    command = " ".join(stem)
     flatten = lambda value: (value if value != '' else '--') if not isinstance(value, Namespace) else dict(value)
-    coldef = max([len(opt) for opt in get_defaults()[category][operation]] + [MIN_DEF, ]) + PAD_DEF
-    colmap = max([len(opt) for opt in MAPPING[category][operation]] + [MIN_MAP, ]) + PAD_MAP
+    coldef = max([len(opt) for opt in options] + [MIN_DEF, ]) + PAD_DEF
+    colmap = max([len(opt) for opt in mapping] + [MIN_MAP, ]) + PAD_MAP
     defaults = '\n'.join(f'{opt: <{coldef}} {flatten(value)}'
-            for opt, value in get_defaults()[category][operation].items())
+            for opt, value in options.items())
     mappings = '\n\n'.join(f"{opt: <{colmap}} [{'.'.join(path)}]\n{' '*colmap} {gen} = ..."
-            for opt, (*path, gen) in MAPPING[category][operation].items())
+            for opt, (*path, gen) in mapping.items())
     message = (
-        f'The following library defaults are provided for flashkit {category} {operation}:\n'
+        f'The following library defaults are provided for flashkit {command}:\n'
         f'\n'
         f'{"Options": <{coldef}} Default Values\n'
         f'{"-------": <{coldef}} --------------\n'
         f'{defaults}\n'
         f'\n\n'
         f'The following outlines the general section options, which can be mapped\n'
-        f'in the configuration file, that are provided for flashkit {category} {operation}:\n'
+        f'in the configuration file, that are provided for flashkit {command}:\n'
         f'\n'
         f'{"Options": <{colmap}} flash.toml Sections and Options\n'
         f'{"-------": <{colmap}} -------------------------------\n'

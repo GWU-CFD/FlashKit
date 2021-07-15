@@ -16,6 +16,8 @@
 
   [general.paths]
   build   = '~/FLASH'
+  jobs    = '~/jobs'
+  site     = 'manwe.ddns.net'
   working = ''
 
   [general.pipes]
@@ -31,17 +33,36 @@
   yrange = [0.0, 1.0]
   zrange = [0.0, 1.0]
 
+[analyze]
+
+  [analyze.where]
+
 [build]
+
+  [build.jobs]
+
+    [build.jobs.collection]
+    
+    [build.jobs.job]
+
+    [build.jobs.simulation]
+
+    [build.jobs.working]
+
+  [build.port]
+
+  [build.scaling]
 
   [build.simulation]
   grid     = 'regular'
   jobs     = 1
   optimize = 'opt'
   python   = 2
-  site     = 'manwe.ddns.net'
   subpath  = 'INavierStokes/zoso'
 
 [create]
+
+  [create.batch]
 
   [create.block]
   fields = {velx='facex', vely='facey', velz='facez', temp='center'}
@@ -56,6 +77,8 @@
  
   [create.par]
   sources = ['space', 'mesh']
+
+  [create.tecplot]
 
   [create.xdmf]
   high = 0
