@@ -49,7 +49,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         flag = args['optimize'].strip('-+')
         parallelIO = '' if 'parallelIO' not in args else ' +parallelIO'
         shortcuts = '' if 'shortcuts' not in args else ' +' + ' +'.join(args['shortcuts'])
-        options = '' if 'options' not in args else ' -' + ' -'.join(args['options'])
+        options = '' if 'flags' not in args else ' -' + ' -'.join(args['flags'])
         variables = ' '.join([f'-{name}={value}' for name, value in args.get('variables', {}).items()])
         site = args['site']
     except:
@@ -68,12 +68,12 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 # default constants for handling the argument stream
 PACKAGES = {'simulation', 'directory', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python', 'site', 'optimize', 'parallelIO', 
-            'shortcuts', 'options', 'variables', 'subpath', 'path', 'compile', 'jobs', 'build', 'force'}
+            'shortcuts', 'flags', 'variables', 'subpath', 'path', 'compile', 'jobs', 'build', 'force'}
 ROUTE = ('build', 'simulation')
 PRIORITY = {'ignore', 'cmdline'}
 CRATES = (adapt_arguments, attach_context)
 DROPS = {'ignore', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python', 'site', 'optimize', 'parallelIO', 'shortcuts', 
-         'options', 'variables', 'subpath'}
+         'flags', 'variables', 'subpath'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS)
 
 @single
@@ -103,7 +103,7 @@ def simulation(**arguments: Any) -> None:
         optimize (str):     Flag (e.g., 'debug') for compilation and linking; using either optimized, debugging, or other. 
         parallelIO (bool):  Use the parallel HDF5 Input/Output library.
         shortcuts (list):   Additional setup shortcuts (example: +rg) which begin with a plus symbol.  
-        options (list):     Additional setup options (example: -auto) which begin with a dash.
+        flags (list):       Additional setup options (example: -auto) which begin with a dash.
         variables (dict):   Additional setup variable pairs (example: -nxb=12) which begin with a dash.
         subpath (str):      Specify a Simulation directory sub-path to SIMULATION within source/Simulation/SimulationMain.
         path (str):         Path to the local FLASH source repository.

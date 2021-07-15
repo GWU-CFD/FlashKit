@@ -30,11 +30,10 @@ usage: {PROGRAM} [<opt>...] [<flg>...]
 HELP = f"""\
 {USAGE}
 
-options:
--?, --???  TYPE  Explaination
-
 flags:
--?, --???  Explaination
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
+-h, --help           Show this message and exit.
 
 note: This operation is not currently implemented in this version of FlashKit
 """
@@ -49,14 +48,15 @@ class ScalingBuildApp(Application):
     setattr(interface, 'error', patched_error(STR_FAILED))
     exceptions = patched_exceptions(STR_FAILED)
     
-    ALLOW_NOARGS: bool = False
+    ALLOW_NOARGS: bool = True
     
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
     
     def run(self) -> None:
         """Buisness logic for building scaling directories from command line."""
         
-        if self.shared.options: 
+        if getattr(self, 'options'): 
             return_options(['build', 'scaling'])
             return
 

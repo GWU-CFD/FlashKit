@@ -45,7 +45,7 @@ options:
 -c, --site       STRING  Hostname of the machine on which setup is being run; Makefile should be in sites/SITE; defaults to {DEF.site}.
 -o, --optimize   STRING  Flag for compilation and linking; using either optimized, debugging, or other; defaults to {DEF.optimize}. 
 -q, --shortcuts  LIST    Additional setup shortcuts (example: +rg) which begin with a plus symbol.  
--r, --options    LIST    Additional setup options (example: -auto) which begin with a dash.
+-f, --flags      LIST    Additional setup options (example: -auto) which begin with a dash.
 -s, --variables  DICT    Additional setup variable pairs (example: -nxb=12) which begin with a dash.
 -u, --subpath    STRING  Path to SIMULATION within source/Simulation/SimulationMain; defaults to {DEF.subpath}.
 -p, --path       STRING  Path to the local FLASH source repository; defaults to {DEF.path}.
@@ -84,7 +84,7 @@ class SimulationBuildApp(Application):
     interface.add_argument('-c', '--site')
     interface.add_argument('-o', '--optimize')
     interface.add_argument('-q', '--shortcuts', type=ListStr)
-    interface.add_argument('-r', '--options', type=ListStr)
+    interface.add_argument('-f', '--flags', type=ListStr)
     interface.add_argument('-s', '--variables', type=DictAny)
     interface.add_argument('-p', '--path')
     interface.add_argument('-j', '--jobs', type=int)
@@ -93,16 +93,17 @@ class SimulationBuildApp(Application):
     interface.add_argument('-B', '--build', action='store_true')
     interface.add_argument('-F', '--force', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for building simulation directories from command line."""
         
-        if self.shared.options: 
+        if getattr(self, 'options'): 
             return_options(['build', 'simulation'])
             return
 
         options = {'simulation', 'directory', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python',
-                   'site', 'optimize', 'shortcuts', 'options', 'variables', 'path', 'jobs',
+                   'site', 'optimize', 'shortcuts', 'flags', 'variables', 'path', 'jobs',
                    'parallelIO', 'compile', 'build', 'force', 'ignore'}
         local = {key: getattr(self, key) for key in options}
         logger.debug(f'cli -- Returned: {local}')

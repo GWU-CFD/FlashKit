@@ -80,11 +80,12 @@ class XdmfCreateApp(Application):
     interface.add_argument('-A', '--auto', action='store_true')
     interface.add_argument('-B', '--find', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating xdmf from command line."""
         
-        if self.shared.options: 
+        if getattr(self, 'options'): 
             return_options(['create', 'xdmf'])
             return
 

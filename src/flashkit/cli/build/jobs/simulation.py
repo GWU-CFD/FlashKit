@@ -34,11 +34,10 @@ arguments:
 SIMULATION  STRING  Specify a simulation directory contained in the FLASH source/Simulation/SimulationMain.
 DIRECTORY   STRING  Specify a directory name; will be determined if not provided.
 
-options:
--?, --???  TYPE  Explaination
-
 flags:
--?, --???  Explaination
+-I, --ignore         Ignore configuration file provided arguments, options, and flags.
+-O, --options        Show the available options (i.e., defaults and config file format) and exit.
+-h, --help           Show this message and exit.
 
 note: This operation is not currently implemented in this version of FlashKit
 """
@@ -58,11 +57,12 @@ class SimulationJobsApp(Application):
     interface.add_argument('simulation', nargs='?')
     interface.add_argument('directory', nargs='?')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
     
     def run(self) -> None:
         """Buisness logic for building jobs simulation directories from command line."""
         
-        if self.shared.options: 
+        if getattr(self, 'options'): 
             return_options(['build', 'jobs', 'simulation'])
             return
         
