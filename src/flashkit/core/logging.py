@@ -36,13 +36,13 @@ console.setFormatter(logging.Formatter(CONSOLE))
 # Configure a stderr handler
 error = logging.StreamHandler(sys.stderr)
 error.setLevel(logging.WARNING)
-error.addFilter(lambda record: logging.CRITICAL > record.levelno >= logging.WARNING)
+error.addFilter(lambda record: logging.CRITICAL >= record.levelno >= logging.WARNING)
 error.setFormatter(logging.Formatter(ERROR))
 
 # Configure a record handler
 record = logging.handlers.RotatingFileHandler(os.path.join(HOME, LOGFILE), maxBytes=5*1024*1024, backupCount=2, delay=True)
 record.setLevel(logging.DEBUG)
-record.addFilter(lambda record: record.levelno < logging.CRITICAL)
+record.addFilter(lambda record: record.levelno <= logging.CRITICAL)
 record.setFormatter(logging.Formatter(RECORD, '%Y-%m-%d %H:%M:%S'))
 
 # Configure a traceback handler
