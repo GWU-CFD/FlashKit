@@ -24,7 +24,7 @@ DEF = get_defaults().build.simulation
 PROGRAM = f'flashkit build simulation'
 
 USAGE = f"""\
-usage: {PROGRAM} SIMULATION DIRECTORY [<opt>...] [<flg>...]
+usage: {PROGRAM} PATH NAME [<opt>...] [<flg>...]
 {__doc__}\
 """
 
@@ -32,8 +32,8 @@ HELP = f"""\
 {USAGE}
 
 arguments:  
-SIMULATION  STRING  Specify a simulation directory contained in the FLASH source/Simulation/SimulationMain.
-DIRECTORY   STRING  Specify a build directory basename; will be determined if not provided. 
+PATH        STRING  Specify a simulation directory contained in the FLASH source/Simulation/SimulationMain.
+NAME        STRING  Specify a build directory basename; will be determined if not provided. 
 
 options:
 -D, --ndim       INT     Number of simulation dimensions (i.e., 2 or 3); defaults to {DEF.ndim}.
@@ -41,14 +41,14 @@ options:
 -Y, --nyb        INT     Number of grid points per block in the j direction; defaults to {DEF.nyb}.
 -Z, --nzb        INT     Number of grid points per block in the k direction; defaults to {DEF.nzb}.
 -g, --grid       STRING  Type of FLASH simulation grid used by the Grid Package; defaults to {DEF.grid}.
--m, --python     INT     Python version for the setup script; specifically use either 2 (legacy) or 3 (modern); defaults to {DEF.python}.
--c, --site       STRING  Hostname of the machine on which setup is being run; Makefile should be in sites/SITE; defaults to {DEF.site}.
+-p, --python     INT     Python version for the setup script; specifically use either 2 (legacy) or 3 (modern); defaults to {DEF.python}.
+-s, --site       STRING  Hostname of the machine on which setup is being run; Makefile should be in sites/SITE; defaults to {DEF.site}.
 -o, --optimize   STRING  Flag for compilation and linking; using either optimized, debugging, or other; defaults to {DEF.optimize}. 
--q, --shortcuts  LIST    Additional setup shortcuts (example: +rg) which begin with a plus symbol.  
--f, --flags      LIST    Additional setup options (example: -auto) which begin with a dash.
--s, --variables  DICT    Additional setup variable pairs (example: -nxb=12) which begin with a dash.
--u, --subpath    STRING  Path to SIMULATION within source/Simulation/SimulationMain; defaults to {DEF.subpath}.
--p, --path       STRING  Path to the local FLASH source repository; defaults to {DEF.path}.
+-l, --shortcuts  LIST    Additional setup shortcuts (example: +rg) which begin with a plus symbol.  
+-m, --flags      LIST    Additional setup options (example: -auto) which begin with a dash.
+-n, --variables  DICT    Additional setup variable pairs (example: -nxb=12) which begin with a dash.
+-u, --subspath   STRING  Path to SIMULATION within source/Simulation/SimulationMain; defaults to {DEF.subpath}.
+-b, --source     STRING  Path to the local FLASH source repository; defaults to {DEF.source}.
 -j, --jobs       INT     Number of parallel processes to use when executing the make command; defaults to {DEF.jobs}.
 
 flags:
@@ -73,20 +73,21 @@ class SimulationBuildApp(Application):
 
     ALLOW_NOARGS: bool = True
 
-    interface.add_argument('simulation', nargs='?')
-    interface.add_argument('directory', nargs='?')
+    interface.add_argument('path', nargs='?')
+    interface.add_argument('name', nargs='?')
     interface.add_argument('-D', '--ndim', type=int) 
     interface.add_argument('-X', '--nxb', type=int) 
     interface.add_argument('-Y', '--nyb', type=int) 
     interface.add_argument('-Z', '--nzb', type=int)
     interface.add_argument('-g', '--grid')
-    interface.add_argument('-m', '--python', type=int)
-    interface.add_argument('-c', '--site')
+    interface.add_argument('-p', '--python', type=int)
+    interface.add_argument('-s', '--site')
     interface.add_argument('-o', '--optimize')
-    interface.add_argument('-q', '--shortcuts', type=ListStr)
-    interface.add_argument('-f', '--flags', type=ListStr)
-    interface.add_argument('-s', '--variables', type=DictAny)
-    interface.add_argument('-p', '--path')
+    interface.add_argument('-l', '--shortcuts', type=ListStr)
+    interface.add_argument('-m', '--flags', type=ListStr)
+    interface.add_argument('-n', '--variables', type=DictAny)
+    interface.add_argument('-u', '--subpath')
+    interface.add_argument('-b', '--source')
     interface.add_argument('-j', '--jobs', type=int)
     interface.add_argument('-H', '--parallelIO', action='store_true')
     interface.add_argument('-C', '--compile', action='store_true')
@@ -102,8 +103,8 @@ class SimulationBuildApp(Application):
             return_options(['build', 'simulation'])
             return
 
-        options = {'simulation', 'directory', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python',
-                   'site', 'optimize', 'shortcuts', 'flags', 'variables', 'path', 'jobs',
+        options = {'path', 'name', 'ndim', 'nxb', 'nyb', 'nzb', 'grid', 'python', 'site',
+                   'optimize', 'shortcuts', 'flags', 'variables', 'subpath', 'source', 'jobs',
                    'parallelIO', 'compile', 'build', 'force', 'ignore'}
         local = {key: getattr(self, key) for key in options}
         logger.debug(f'cli -- Returned: {local}')

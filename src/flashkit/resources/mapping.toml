@@ -22,7 +22,7 @@
   [build.scaling]
 
   [build.simulation]
-  path   = ['general', 'paths', 'build']
+  source = ['general', 'paths', 'source']
   site   = ['general', 'paths', 'site']
   ndim   = ['general', 'space', 'ndim']
   nxb    = ['general', 'space', 'nxb']

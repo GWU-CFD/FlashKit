@@ -15,9 +15,9 @@
   kprocs = 1
 
   [general.paths]
-  build   = '~/FLASH'
   jobs    = '~/jobs'
   site     = 'manwe.ddns.net'
+  source  = '~/FLASH'
   working = ''
 
   [general.pipes]

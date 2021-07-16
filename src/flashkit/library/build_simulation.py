@@ -28,22 +28,22 @@ SUCCESS = CONFIG['build']['simulation']['success']
 TIMEOUT = CONFIG['build']['simulation']['timeout']
 
 @squash
-def build(*, directory: str, simulation: str, force: bool, path: Path, setup: list[str], context: Bar) -> None:
+def build(*, name: str, path: str, force: bool, source: Path, setup: list[str], context: Bar) -> None:
     """Executes the FLASH build process with the intended options."""
-    build = path.joinpath(directory)
+    build = source.joinpath(name)
     if build.exists() and not force:
-        logger.warning(f'The simulation directory {directory} exists!')
+        logger.warning(f'The simulation build directory {name} exists!')
         return
     print(f'\n'
           f'------------------------------------------------------------------\n'
-          f'Create FLASH Compilation Directory -- {simulation}\n'
+          f'Create FLASH Compilation Directory -- {path}\n'
           f'------------------------------------------------------------------\n\n'
           f'Using the following FLASH setup command:\n'
           f'----------------------------------------\n'
           f'{" ".join(setup)}\n\n')
     try:
         with context() as progress:
-            output = subprocess.run(setup, cwd=path, timeout=TIMEOUT, capture_output=True)
+            output = subprocess.run(setup, cwd=source, timeout=TIMEOUT, capture_output=True)
     except subprocess.TimeoutExpired:
         raise LibraryError('Failed to build within alloted time!')
     except subprocess.CalledProcessError as error:
@@ -56,13 +56,13 @@ def build(*, directory: str, simulation: str, force: bool, path: Path, setup: li
         logger.info('Successfully built simulation directory')
 
 @squash
-def make(*, directory: str, force: bool, jobs: int, path: Path, context: Bar) -> None:
+def make(*, name: str, force: bool, jobs: int, source: Path, context: Bar) -> None:
     """Compile the FLASH build directory."""
-    build = path.joinpath(directory)
+    build = source.joinpath(name)
     binary = build.joinpath(BINARY)
     setup = ['make', '-j', str(jobs)]
     if not build.exists():
-        logger.info(f'The simulation directory {directory} does not exist!')
+        logger.info(f'The simulation build directory {name} does not exist!')
         return
     if binary.exists() and not force:
         logger.info(f'The simulation binary already exists!')
