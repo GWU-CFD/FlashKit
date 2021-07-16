@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # standard libraries
-import time
-import threading
+import logging
 import pkg_resources
+import threading
+import time
+import sys
 from contextlib import AbstractContextManager, nullcontext
 
 # internal libraries
@@ -16,15 +18,17 @@ from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Union
+    from typing import Any, Callable, Optional, Union
     Bar = Callable[..., AbstractContextManager]
 
 # deal w/ runtime import
 else:
     Bar = None
 
+logger = logging.getLogger(__name__)
+
 # define public interface
-__all__ = ['SimpleBar', 'get_bar', 'null_bar', ]
+__all__ = ['SimpleBar', 'get_bar', 'null_bar', 'attach_context', ]
 
 # define default constants
 BLANKING = CONFIG['core']['progress']['blanking']
@@ -126,3 +130,11 @@ def get_bar(*, null: bool = False) -> Bar:
         return alive_bar
     except pkg_resources.DistributionNotFound:
         return SimpleBar
+
+def attach_context(**args: Any) -> dict[str, Any]:
+    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
+    noattach = not sys.stdout.isatty()
+    args['context'] = get_bar(null=noattach)
+    if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
+    return args
+

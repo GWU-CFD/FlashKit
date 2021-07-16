@@ -5,7 +5,6 @@ from __future__ import annotations
 
 # standard libraries
 import logging
-from pprint import pformat 
 
 # internal libraries
 from ...api.create import par
@@ -90,20 +89,22 @@ class ParCreateApp(Application):
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
+    interface.add_argument('-S', '--available', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating par from command line."""
         
-        if self.shared.options: 
-            return_options('create', 'par')
+        if getattr(self, 'options'): 
+            return_options(['create', 'par'])
             return
 
-        if self.shared.available:
+        if getattr(self, 'available'):
             return_available('parameter', ['sources'], SKIP)
             return
 
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returning:\n{pformat(local)}')
+        logger.debug(f'cli -- Returned: {local}')
         par(**local, cmdline=True)

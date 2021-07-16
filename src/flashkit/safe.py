@@ -4,6 +4,8 @@
 from .core.error import error
 from . import api as flash
 
+flash.build.simulation = error('Unable to build simulation!')(flash.build.simulation)
+
 flash.create.block = error('Unable to create block file!')(flash.create.block)
 flash.create.grid = error('Unable to create grid file!')(flash.create.grid)
 flash.create.interp = error('Unable to block par file!')(flash.create.interp)

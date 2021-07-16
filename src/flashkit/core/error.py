@@ -36,7 +36,7 @@ def handle_exception(exception: Exception, patch: str = '') -> None:
     tb = ''.join(traceback.format_exc())
     message, *_ = exception.args
     logger.error('\n'.join((patch, f'{type(exception).__name__}( {message} )')))
-    logger.critical(f'An unhandled exception occured: {message}\n\n{tb}')
+    logger.log(logging.CRITICAL + 1, f'An unhandled exception occured: {message}\n\n{tb}')
 
 def error(patch: str = '') -> Any:
     """Factory for api functions with exeption handlers."""
