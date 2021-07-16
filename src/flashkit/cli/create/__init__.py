@@ -2,7 +2,6 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Type
 
 # internal libraries
 from ...core.custom import DictApp
@@ -12,13 +11,15 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # commands
-from . import block, grid, interp, par, run, xdmf 
+from . import batch, block, grid, interp, par, tecplot, xdmf
 
 COMMANDS: DictApp = {
+        'batch': batch.BatchCreateApp,
         'block': block.BlockCreateApp,
         'grid': grid.GridCreateApp,
         'interp': interp.InterpCreateApp,
         'par': par.ParCreateApp,
+        'tecplot': tecplot.TecplotCreateApp,
         'xdmf': xdmf.XdmfCreateApp,
         }
 
@@ -33,11 +34,12 @@ HELP = f"""\
 {USAGE}
 
 commands:   
+batch       {batch.__doc__}
 block       {block.__doc__}
 grid        {grid.__doc__}
 interp      {interp.__doc__}
 par         {par.__doc__}
-run         {run.__doc__}
+tecplot     {tecplot.__doc__}
 xdmf        {xdmf.__doc__}
 
 options:

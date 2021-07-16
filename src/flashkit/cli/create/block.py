@@ -80,12 +80,13 @@ class BlockCreateApp(Application):
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
+    interface.add_argument('-O', '--options', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating block from command line."""
         
-        if self.shared.options: 
-            return_options('create', 'block')
+        if getattr(self, 'options'): 
+            return_options(['create', 'block'])
             return
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fmethod', 'fparam', 

@@ -34,7 +34,7 @@ setup(
     package_dir          = {'': 'src'},
     include_package_data = True,
     long_description     = long_description,
-    classifiers          = ['Development Status :: 2 - Pre-Alpha',
+    classifiers          = ['Development Status :: 3 - Alpha',
                             'Topic :: Utilities',
                             'Programming Language :: Python :: 3',
                             'Programming Language :: Python :: 3.7',

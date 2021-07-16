@@ -10,9 +10,9 @@ bug fixes.
 
 .. toctree::
 
-    create/index
-    build/index
-    job/index
     analyze/index
+    build/index
+    create/index
+    job/index
 
 --------------------

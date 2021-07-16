@@ -37,8 +37,8 @@ These are accessed in a very natural way by specifying the catagory and operatio
 is an inteded task such as a pre- or post-processing action and catagories are collections of related operations. In 
 this way the command line interface can provide a very 'natural language' interface to the user.
 
-A this time, the inteded scope of the *FlashKit* library looks like the following, 
-where the clouds indicate functions that are under development but are not yet complete.
+A this time, the inteded scope of the *FlashKit* library looks like the following, where the clouds indicate functions
+that are under development but are not yet complete and comment bubbles are under consideration.
 
 .. image:: /_static/Commands.png
     :alt: FlashKit Commands
@@ -123,31 +123,49 @@ Development Status
     :target: https://github.com/GWU-CFD/FlashKit/labels/enhancement
     :alt: Enhancement
 
-.. image:: https://img.shields.io/github/issues/GWU-CFD/FlashKit/cleanup?style=flat-square
-    :target: https://github.com/GWU-CFD/FlashKit/labels/cleanup
-    :alt: Cleanup
-
+|
 | Progress
 
-.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/1?style=flat-square
-    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Framework+Complete%22
-    :alt: Framework Complete
+.. image:: https://img.shields.io/github/issues-pr/GWU-CFD/FlashKit?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/pulls
+    :alt: Pull Requests
+
+.. image:: https://img.shields.io/github/commit-activity/m/GWU-CFD/FlashKit?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/graphs/contributors
+    :alt: Commit Activity
+
+|
+| Milestones
 
 .. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/2?style=flat-square
     :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Create+Tools%22
     :alt: Create Tools
 
-.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/5?style=flat-square
-    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Documentation+Complete%22
-    :alt: Documentation Complete
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/4?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Build+Tools%22
+    :alt: Build Tools
+
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/7?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Analyze+Tools%22
+    :alt: Analyze Tools
+
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/3?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Job+Tools%22
+    :alt: Job Tools
+
+|
+
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/1?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Framework+Complete%22
+    :alt: Framework Complete
 
 .. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/6?style=flat-square
     :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Testing+Complete%22   
     :alt: Testing Complete
 
-.. image:: https://img.shields.io/github/milestones/open/GWU-CFD/FlashKit?style=flat-square
-    :target: https://github.com/GWU-CFD/FlashKit/milestones
-    :alt: Milestones
+.. image:: https://img.shields.io/github/milestones/progress/GWU-CFD/FlashKit/5?style=flat-square
+    :target: https://github.com/GWU-CFD/FlashKit/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Documentation+Complete%22
+    :alt: Documentation Complete
 
 |
 

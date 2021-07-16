@@ -10,7 +10,8 @@ import argparse
 from ..core.configure import force_delayed, get_defaults
 from ..core.logging import force_debug
 from ..core.parallel import force_parallel
-from ..resources import MAPPING, TEMPLATES
+from ..core.tools import read_a_branch
+from ..resources import CONFIG, MAPPING, TEMPLATES
 
 # external libraries
 from cmdkit.config import Namespace
@@ -18,6 +19,12 @@ from cmdkit.config import Namespace
 # define library (public) interface
 __all__ = ['return_available', 'return_options',
            'DebugLogging', 'ForceDelayed', 'ForceParallel']
+
+# define configuration constants (internal)
+MIN_DEF = CONFIG['core']['options']['mindef']
+MIN_MAP = CONFIG['core']['options']['minmap']
+PAD_DEF = CONFIG['core']['options']['paddef']
+PAD_MAP = CONFIG['core']['options']['padmap']
 
 class DebugLogging(argparse.Action):
     """Create custom action for setting debug logging."""
@@ -37,12 +44,13 @@ class ForceParallel(argparse.Action):
         setattr(namespace, self.dest, True)
         force_parallel()
 
-def return_available(category: str, tags: list[str]) -> None:
+def return_available(category: str, tags: list[str], skips: list[str] = []) -> None:
     """Force the logging of available template options for flashkit."""
     print(
             f'The following library template key/value pairs are provided:\n'
             f'with the tags of <{tags}> defined in each section')
     for section, layout in TEMPLATES[category].items():
+        if section in skips: continue
         print(f'\n Section: {section}\n')
         for tag, values in layout.items():
             if tag in tags:
@@ -51,25 +59,30 @@ def return_available(category: str, tags: list[str]) -> None:
                     f'---------\t{"-"*len(tag)}')
                 print('\n'.join(f'{tmp}\t\t{value}' for tmp, value in values.items()))
 
-def return_options(category: str, operation: str) -> None:
+def return_options(stem: list[str]) -> None:
     """Force the logging of defaults and mappings for flashkit <category> <operation>."""
+    options = read_a_branch(stem, get_defaults())
+    mapping = read_a_branch(stem, MAPPING)
+    command = " ".join(stem)
     flatten = lambda value: (value if value != '' else '--') if not isinstance(value, Namespace) else dict(value)
-    defaults = '\n'.join(f'{opt}\t\t{flatten(value)}'
-            for opt, value in get_defaults()[category][operation].items())
-    mappings = '\n\n'.join(f"{opt}\t\t[{'.'.join(path)}]\n\t\t{gen} = ..."
-            for opt, (*path, gen) in MAPPING[category][operation].items())
+    coldef = max([len(opt) for opt in options] + [MIN_DEF, ]) + PAD_DEF
+    colmap = max([len(opt) for opt in mapping] + [MIN_MAP, ]) + PAD_MAP
+    defaults = '\n'.join(f'{opt: <{coldef}} {flatten(value)}'
+            for opt, value in options.items())
+    mappings = '\n\n'.join(f"{opt: <{colmap}} [{'.'.join(path)}]\n{' '*colmap} {gen} = ..."
+            for opt, (*path, gen) in mapping.items())
     message = (
-        f'The following library defaults are provided for flashkit {category} {operation}:\n'
+        f'The following library defaults are provided for flashkit {command}:\n'
         f'\n'
-        f'Options\t\tDefault Values\n'
-        f'-------\t\t--------------\n'
+        f'{"Options": <{coldef}} Default Values\n'
+        f'{"-------": <{coldef}} --------------\n'
         f'{defaults}\n'
         f'\n\n'
         f'The following outlines the general section options, which can be mapped\n'
-        f'in the configuration file, that are provided for flashkit {category} {operation}:\n'
+        f'in the configuration file, that are provided for flashkit {command}:\n'
         f'\n'
-        f'Options\t\tflash.toml Sections and Options\n'
-        f'-------\t\t-------------------------------\n'
+        f'{"Options": <{colmap}} flash.toml Sections and Options\n'
+        f'{"-------": <{colmap}} -------------------------------\n'
         f'{mappings}\n'
         )
     print(message)

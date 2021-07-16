@@ -1,5 +1,12 @@
 # Library specified configuration literals for FlashKit.
 
+[build]
+
+  [build.simulation]
+  binary  = 'flash4'   # FLASH binary file name
+  success = 'SUCCESS'  # string in output indicating success
+  timeout = 600        # time allowed in seconds for build
+
 [create]
 
   [create.block]
@@ -33,8 +40,8 @@
   filename = 'flash.par'  # name of file holding runtime parameters
   template = 'templates'  # variable in flash.toml for templates
   filemax  = 10           # maximum templates; files per level
-  padname  = 4            # padding for parameter names           
-  padnote  = 5            # padding for parameter comments
+  padname  = 2            # padding for parameter names           
+  padnote  = 4            # padding for parameter comments
   padsect  = 0            # padding for section footer
   sentinal = '_'          # leading char for indexed lookup
   tagging  = 'comment'    # section key for tagging variables
@@ -66,6 +73,12 @@
   trace = '%(asctime)s - %(message)s' # traceback logging handler format
   logfile = 'flashkit.log' # name of the standard logging file
   excfile = 'traceback.log' # name of the traceback logging file
+
+  [core.options]
+  mindef = 12     # minimum width for option names (without pad)
+  minmap = 12     # minumum width for mapping names (without pad)
+  paddef = 4      # padding for option names
+  padmap = 4      # padding for mapping names
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi

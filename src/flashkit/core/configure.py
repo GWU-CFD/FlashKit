@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Iterator, NamedTuple, Optional
+from typing import Any, Dict, Iterator, NamedTuple, Optional, cast
 from collections.abc import MutableMapping
 
 # standard libraries
@@ -127,10 +127,14 @@ def walk_the_tree(tree: MutableMapping[str, Any], stem: list[str] = []) -> list[
             leaves.append(leaf)
     return leaves
 
-# initalize configuration on import
-TREES = prepare(gather(), MAPPING)
-
 # initialize argument factory for commandline routines
+TREES = cast(Dict[str, Namespace], None)
+
+def import_trees() -> None:
+    """import once the enviorment is setup; responsibility of the api/cli."""
+    logger.debug('core -- initalize configuration on import')
+    THIS.TREES = prepare(gather(), MAPPING) # type: ignore 
+
 def get_defaults(*, local: Namespace = Namespace()) -> Configuration:
     """Constructs arguments from local and system defaults.""" 
     logger.debug(f'core -- Prepairing to build arguments.')
@@ -140,13 +144,13 @@ def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
     """Constructs arguments from local, user files, and system defaults;
     also provides support for delayed configuration of file sourced arguments
     until the method call occurs, otherwise this happens on module import."""
+    if THIS.TREES is None: import_trees() # type: ignore 
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
     logger.debug(f'core -- Prepairing to build arguments (Delayed was {_DELAYED}).')
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
 
 def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> BuilderConfiguration:
-    """Initialize template factory for commandline routines."""
-    
+    """Initialize template factory for commandline routines.""" 
     trees: dict[str, Namespace] = dict()
     for template in templates:
         trees.update(**prepare(gather(filename=template, stamp=False)))

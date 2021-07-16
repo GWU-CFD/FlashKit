@@ -24,3 +24,19 @@
     iProcs = ['general', 'mesh', 'iprocs']
     jProcs = ['general', 'mesh', 'jprocs']
     kProcs = ['general', 'mesh', 'kprocs']
+
+  [parameter.2d]
+
+    [parameter.2d.sinks]
+    zmin = ''
+    zmax = ''
+
+[porting]
+
+  [porting.hdf5]
+
+    [porting.hdf5.steps]
+
+    [porting.openmpi.steps]
+      
+    [porting.superlu.steps]
