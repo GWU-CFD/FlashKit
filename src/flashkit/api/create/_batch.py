@@ -17,7 +17,7 @@ from ...core.parallel import safe, single, squash
 from ...core.progress import attach_context 
 from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
-from ...library.create_par import author_par, write_par
+from ...library.create_batch import author_batch, write_batch
 from ...resources import CONFIG, TEMPLATES
 from ...support.template import filter_tags, sort_templates
 from ...support.types import Template, Tree
@@ -34,8 +34,8 @@ __all__ = ['par', ]
 FILENAME = CONFIG['create']['par']['filename']
 NOSOURCE = CONFIG['create']['par']['nosource']
 TEMPLATE = CONFIG['create']['par']['template']
-LOCAL = CONFIG['support']['template']['local']
-TAGGING = CONFIG['support']['template']['tagging']
+LOCAL = CONFIG['support']['temp']['local']
+TAGGING = CONFIG['support']['temp']['tagging']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
@@ -150,29 +150,21 @@ def par(**arguments: Any) -> Optional[Any]:
     intent is to preserve human readability of the produced FLASH parameter file.
 
     Keyword Arguments:
-        templates (list):   Specify a list of template files (e.g., rayleigh) to search for, without the
-                            '.toml' extension. These will be combined and used to create the flash.par file.
-        params (dict):      Specific parameters; which are collected in a section at the end of the parameter file.
+        templates (list):   Specify a list of template files (e.g., batch) to search for, without the
+                            '.toml' extension. These will be combined and used to create the batch file.
         sources (list):     Which library defined sources to use for filling sections from configuration files.
-        dest (str):         Path to parameter file.
+        dest (str):         Path to batch file.
         auto (bool):        Force use all templates specified in all configuration files and library sources.
         nosources (bool):   Do not use any library specified template sources; AUTO takes precedences.
-        duplicates (bool):  Allow the writing of duplicate parameters if there are multiple matches.
-        nofile (bool):      Do not write the assembled parameters to file. 
-        result (bool):      Return the formated and assembled parameters. 
+        nofile (bool):      Do not write the assembled batch commands to file. 
+        result (bool):      Return the formated and assembled batch commands. 
         ignore (bool):      Ignore configuration file provided arguments, options, and flags.
 
-    Notes:  
-        If duplicates are not allowed, only the most significant instance of a parameter will be written to
-        the parameter file, which means the parameter will be based on the depth-first-merge of all relavent 
-        templates (and not SOURCES from configuration file variables, which is also the case with --ignore).
-
-        The order of precedence for parameters with potential duplicate entries in ascending order is.
+        The order of precedence for command entries in ascending order is.
           0) specificed sources retrieved from library defaults
           1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
           2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
-          3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
-          4) parameters provided at the command line.
+          3) depth-first-merge of explicitly specified commands in templates; templates are merged at each level.
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')
@@ -181,8 +173,8 @@ def par(**arguments: Any) -> Optional[Any]:
     cmdline = args.pop('cmdline', False)
     
     with args.pop('context')() as progress:
-        lines = author_par(**args)
-        if not nofile: write_par(lines=lines, path=path)
+        lines = author_batch(**args)
+        if not nofile: write_batch(lines=lines, path=path)
     
     if not result: return None
     if cmdline: screen_out(lines=lines)

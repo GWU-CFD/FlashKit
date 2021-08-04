@@ -48,8 +48,8 @@ flags:
 -A, --auto           Force use of all templates specified in all configuration files and library sources.
 -N, --nosources      Do not use any library specified template sources; AUTO takes precedences.
 -D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
--F, --nofile         Do not write the calculated coordinates to file. 
--R, --result         Return the calculated coordinates. 
+-F, --nofile         Do not write the assembled parameters to file. 
+-R, --result         Return the formated and assembled parameters. 
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -S, --available      List the available library defined sources and exit.

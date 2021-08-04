@@ -2,6 +2,9 @@
 
 [general]
 
+  [general.arch]
+  procs_per_node = 4 
+
   [general.files]
   checkpoint = '_hdf5_chk_'
   forced     = 'forced'
@@ -63,6 +66,7 @@
 [create]
 
   [create.batch]
+  launcher = 'mpirun' 
 
   [create.block]
   fields = {velx='facex', vely='facey', velz='facez', temp='center'}

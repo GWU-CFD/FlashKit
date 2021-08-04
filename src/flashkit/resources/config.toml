@@ -8,6 +8,11 @@
   timeout = 600        # time allowed in seconds for build
 
 [create]
+  
+  [create.batch]
+  filename = 'run'      # name of job execution script
+  template = 'batches'  # variable in flash.toml for templates
+  padsect  = 0          # padding for section footer
 
   [create.block]
   grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
@@ -39,17 +44,9 @@
   [create.par]
   filename = 'flash.par'  # name of file holding runtime parameters
   template = 'templates'  # variable in flash.toml for templates
-  filemax  = 10           # maximum templates; files per level
   padname  = 2            # padding for parameter names           
   padnote  = 4            # padding for parameter comments
   padsect  = 0            # padding for section footer
-  sentinal = '_'          # leading char for indexed lookup
-  tagging  = 'comment'    # section key for tagging variables
-  sourcing = 'sources'    # section key for sourcing data
-  sinking  = 'sinks'      # section key for sinking data
-  title    = 'title'      # section key for the title
-  local    = 'local'      # section key for the title
-  supports = ['header', 'footer', 'number'] # supported tags
   nosource = ['2d']       # library templates (parameter) keys ignored
 
   [create.xdmf]
@@ -117,3 +114,21 @@
   function  = ['x', 'y', 'z'] # default python function names in source
   methods   = ['ascii', 'python', 'uniform', 'tanh_mid']  # supported methods
   source    = 'grid'          # default source file
+
+  [support.template]
+  filemax  = 10           # maximum templates; files per level
+  sentinal = '_'          # leading char for indexed lookup and comments
+  tagging  = 'comment'    # section key for tagging variables
+  sourcing = 'sources'    # section key for sourcing data
+  sinking  = 'sinks'      # section key for sinking data
+  title    = 'title'      # section key for the title
+  local    = 'local'      # section key for local parameters
+  supports = [            # supported tags in the tagging sub-section
+    'header',    # tag for section header string
+    'keep',      # tag for keeping an empty section
+    'footer',    # tag for section footer string
+    'noheader',  # tag for eliminating header
+    'number',    # tag for section ordering 
+    'sorted',    # tag for sorting section parameters
+    ]
+

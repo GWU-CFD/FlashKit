@@ -1,5 +1,40 @@
 # Library specified sources for templating files using FlashKit.
 
+[batch]
+
+  batch.bash.comment = {header = '!/bin/bash', number = -9999}
+  
+  [batch.slurm]
+  job = {value='#SBATCH -J', source=['create', 'batch', 'job'], number=100, _='Job name'}
+  nodes = {value='#SBATCH -N', source=['create', 'batch', 'nnodes'], number=200, _='Total # of nodes'}
+  tasks = {value='#SBATCH -n', source=['create', 'batch', 'nprocs'], number=300, _='Total # of mpi tasks'}
+  
+    [batch.slurm.comment]
+    header = 'Flashkit Generated SLURM job script'
+    number = -5000
+
+  [batch.info]
+  module = {value='module list', number=100}
+  pwd = {value='pwd', number=200}
+  date = {value='date', number=300}
+
+    [batch.info.comment]
+    header = 'Information about Job enviornment'
+    number = 1000
+
+  [batch.run]
+  run = {source=['create', 'batch', 'run'], number=100}
+
+    [batch.run.comment]
+    header = 'MPI Job execution Command'
+    number = 3000
+
+  [batch.time]
+  date = {value='date', number=300}
+
+    [batch.time.comment]
+    number = 5000
+
 [parameter]
 
   [parameter.space]
@@ -31,12 +66,12 @@
     zmin = ''
     zmax = ''
 
-[porting]
+[port]
 
-  [porting.hdf5]
+  [port.hdf5]
 
-    [porting.hdf5.steps]
+    [port.hdf5.steps]
 
-    [porting.openmpi.steps]
+    [port.openmpi.steps]
       
-    [porting.superlu.steps]
+    [port.superlu.steps]
