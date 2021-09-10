@@ -27,7 +27,7 @@ SKIP = CONFIG['create']['par']['nosource']
 PROGRAM = f'flashkit create par'
 
 USAGE = f"""\
-usage: {PROGRAM} TEMPLATES [<flg>...]
+usage: {PROGRAM} TEMPLATES [<option> VALUE, ...] [<switch>, ...] [<flag>, ...]
 {__doc__}\
 """
 
@@ -44,13 +44,15 @@ options:
                      defaults to {DEF.sources} --> will fill domain and processor grid parameters).
 -d, --dest     PATH  Path to parameter file; defaults to cwd.
 
-flags:
--A, --auto           Force use of all templates specified in all configuration files and library sources.
--N, --nosources      Do not use any library specified template sources; AUTO takes precedences.
+switches:
+-A, --auto           Force use of all templates specified in all configuration files.
+-N, --nosources      Do not use any library specified template sources.
 -D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
--F, --nofile         Do not write the assembled parameters to file. 
--R, --result         Return the formated and assembled parameters. 
+-F, --nofile         Do not write the assembled parameters to file.
+-R, --result         Return the formated and assembled parameters.
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
+
+flags:
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -S, --available      List the available library defined sources and exit.
 -h, --help           Show this message and exit.
@@ -83,11 +85,11 @@ class ParCreateApp(Application):
     interface.add_argument('-p', '--params', type=DictAny)
     interface.add_argument('-s', '--sources', type=ListStr)
     interface.add_argument('-d', '--dest')
-    interface.add_argument('-A', '--auto', action='store_true')
-    interface.add_argument('-N', '--nosources', action='store_true')
-    interface.add_argument('-D', '--duplicates', action='store_true')
-    interface.add_argument('-F', '--nofile', action='store_true')
-    interface.add_argument('-R', '--result', action='store_true')
+    interface.add_argument('-A', '--auto', action='store_const', const=True)
+    interface.add_argument('-N', '--nosources', action='store_const', const=True)
+    interface.add_argument('-D', '--duplicates', action='store_const', const=True)
+    interface.add_argument('-F', '--nofile', action='store_const', const=True)
+    interface.add_argument('-R', '--result', action='store_const', const=True)
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
     interface.add_argument('-S', '--available', action='store_true')

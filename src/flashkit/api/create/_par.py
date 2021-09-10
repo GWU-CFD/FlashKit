@@ -43,18 +43,19 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # determine arguments passed
     if args.get('auto', False):
         templates_given = False
-        sources_given = False
-        logger.debug(f'api -- Forced auto behavior for templates and sources.')
+        logger.debug(f'api -- Forced auto behavior for templates.')
     else:    
         templates_given = 'templates' in args.keys()
-        if args.get('nosources', False):
-            sources_given = True
-            args['sources'] = list()
-        else:
-            sources_given = 'sources' in args.keys()
-        if not all((templates_given, sources_given)):
-            raise AutoError('Templates and sources must be given; or use --auto.')
-        logger.debug(f'api -- Using provided or defaults for templates and sources.')
+        if not templates_given:
+            raise AutoError('Templates must be given, or use --auto.')  
+    if args.get('nosources', False):
+        sources_given = True
+        args['sources'] = list()
+        logger.debug(f'api -- Forced ignore behavior for sources.')
+    else:
+        sources_given = 'sources' in args.keys()
+        if not sources_given:
+            raise AutoError('Sources must be given, or use --nosources.')
 
     # resolve proper absolute directory paths
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
@@ -155,8 +156,8 @@ def par(**arguments: Any) -> Optional[Any]:
         params (dict):      Specific parameters; which are collected in a section at the end of the parameter file.
         sources (list):     Which library defined sources to use for filling sections from configuration files.
         dest (str):         Path to parameter file.
-        auto (bool):        Force use all templates specified in all configuration files and library sources.
-        nosources (bool):   Do not use any library specified template sources; AUTO takes precedences.
+        auto (bool):        Force use all templates specified in all configuration files.
+        nosources (bool):   Do not use any library specified template sources.
         duplicates (bool):  Allow the writing of duplicate parameters if there are multiple matches.
         nofile (bool):      Do not write the assembled parameters to file. 
         result (bool):      Return the formated and assembled parameters. 

@@ -24,7 +24,7 @@ DEF = get_defaults().build.simulation
 PROGRAM = f'flashkit build simulation'
 
 USAGE = f"""\
-usage: {PROGRAM} PATH NAME [<opt>...] [<flg>...]
+usage: {PROGRAM} PATH NAME [<option> VALUE, ...] [<switch>, ...] [<flag>, ...]
 {__doc__}\
 """
 
@@ -51,11 +51,13 @@ options:
 -b, --source     STRING  Path to the local FLASH source repository; defaults to {DEF.source}.
 -j, --jobs       INT     Number of parallel processes to use when executing the make command; defaults to {DEF.jobs}.
 
-flags:
+switches:
 -H, --parallelIO  Use the parallel HDF5 Input/Output library.
 -C, --compile     Compile the FLASH simulation build directory after it is constructed.
 -B, --build       Force the building of the simulation directory, even if the directory exists. 
 -F, --force       Force the compilation of the build directory, even if the binary is present. 
+
+flags:
 -I, --ignore      Ignore configuration file provided arguments, options, and flags.
 -O, --options     Show the available options (i.e., defaults and config file format) and exit.
 -h, --help        Show this message and exit.
@@ -89,10 +91,10 @@ class SimulationBuildApp(Application):
     interface.add_argument('-u', '--subpath')
     interface.add_argument('-b', '--source')
     interface.add_argument('-j', '--jobs', type=int)
-    interface.add_argument('-H', '--parallelIO', action='store_true')
-    interface.add_argument('-C', '--compile', action='store_true')
-    interface.add_argument('-B', '--build', action='store_true')
-    interface.add_argument('-F', '--force', action='store_true')
+    interface.add_argument('-H', '--parallelIO', action='store_const', const=True)
+    interface.add_argument('-C', '--compile', action='store_const', const=True)
+    interface.add_argument('-B', '--build', action='store_const', const=True)
+    interface.add_argument('-F', '--force', action='store_const', const=True)
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
 

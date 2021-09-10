@@ -36,6 +36,12 @@
     number = 5000
 
 [parameter]
+  
+  [parameter.2d]
+
+    [parameter.2d.sinks]
+    zmin = ''
+    zmax = ''
 
   [parameter.space]
     
@@ -59,12 +65,6 @@
     iProcs = ['general', 'mesh', 'iprocs']
     jProcs = ['general', 'mesh', 'jprocs']
     kProcs = ['general', 'mesh', 'kprocs']
-
-  [parameter.2d]
-
-    [parameter.2d.sinks]
-    zmin = ''
-    zmax = ''
 
 [port]
 
