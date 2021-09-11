@@ -122,7 +122,6 @@
   sourcing = 'sources'    # section key for sourcing data
   sinking  = 'sinks'      # section key for sinking data
   title    = 'title'      # section key for the title
-  local    = 'local'      # section key for local parameters
   supports = [            # supported tags in the tagging sub-section
     'header',    # tag for section header string
     'keep',      # tag for keeping an empty section

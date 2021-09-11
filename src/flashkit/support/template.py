@@ -22,7 +22,6 @@ __all__ = ['author_template', 'filter_tags', 'sort_templates', 'order_sections',
 
 # define configuration constants (internal)
 MAX_LVLS = CONFIG['core']['configure']['max']
-LOCAL = CONFIG['support']['template']['local']
 MAX_TEMP = CONFIG['support']['template']['filemax']
 SENTINAL = CONFIG['support']['template']['sentinal']
 SINKING = CONFIG['support']['template']['sinking']
@@ -74,7 +73,7 @@ def order_sections(*args) -> str:
     """Order the template sections according to the proper tag."""
     (section, layout), *_ = args
     try:
-        number = {TITLE: -30, LOCAL: -50}.get(section, None)
+        number = {TITLE: -30, 'local': -50}.get(section, None)
         if number is None: number = layout[TAGGING]['number']
         key = f'{int(number):03}'
     except KeyError:

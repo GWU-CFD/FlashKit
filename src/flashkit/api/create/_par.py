@@ -34,7 +34,6 @@ __all__ = ['par', ]
 FILENAME = CONFIG['create']['par']['filename']
 NOSOURCE = CONFIG['create']['par']['nosource']
 TEMPLATE = CONFIG['create']['par']['template']
-LOCAL = CONFIG['support']['template']['local']
 TAGGING = CONFIG['support']['template']['tagging']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
@@ -83,8 +82,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # read and combine the templates
     files = [file + '.toml' for file in args['templates']]
     if 'params' in args:
-        local = Namespace({LOCAL: args['params']})
-        local[LOCAL][TAGGING] = {'header': 'Command Line Provided Parameters'}
+        local = Namespace({'local': args['params']})
+        local['local'][TAGGING] = {'header': 'Command Line Provided Parameters'}
         logger.debug(f'api -- Appended local parameters provided.')
     else:
         local = Namespace()

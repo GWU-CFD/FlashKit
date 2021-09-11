@@ -15,8 +15,8 @@ __all__ = ['author_batch', 'write_batch', ]
 # define configuration constants (internal)
 FILENAME = CONFIG['create']['batch']['filename']
 PAD_SECT = CONFIG['create']['batch']['padsect']
-TAGGING = CONFIG['support']['temp']['tagging']
-TITLE = CONFIG['support']['temp']['title']
+TAGGING = CONFIG['support']['template']['tagging']
+TITLE = CONFIG['support']['template']['title']
 
 @single
 def author_batch(*, template: Template, sources: Tree) -> Lines:
