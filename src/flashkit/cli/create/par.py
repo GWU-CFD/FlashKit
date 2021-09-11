@@ -59,14 +59,16 @@ flags:
 
 notes:  If duplicates are not allowed, only the most significant instance of a parameter will be written to
         the parameter file, which means the parameter will be based on the depth-first-merge of all relavent 
-        templates (and not SOURCES from configuration file variables, which is also the case with --ignore).
+        templates and resolved sources from defaults, configuration files, and provided options.
 
-        The order of precedence for parameters with potential duplicate entries in ascending order is:
-        0) specificed sources retrieved from library defaults
-        1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
-        2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
-        3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
-        4) parameters provided at the command line.
+        The order of precedence for parameters with potential duplicate entries in ascending order is.
+        0) depth-first-merge of defaults, configuration files, and provided options; resolution of sourced parameters,
+        1) parameters retrieved from specified library default parameter templates,
+        2) duplicate parameters of the same type in the same template file are ignored,
+        3) duplicate parameters of different types in the same template file are ordered as sinked < sourced < explicite 
+        4) duplicate parameters of any type in different template files within the same folder are orderd as the specified templates,
+        5) duplicate parameters of any type in any template files from a deeper folder in the folder tree,
+        6) explicite parameters provided at the command line.
 """
 
 # default constants

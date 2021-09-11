@@ -145,34 +145,36 @@ def par(**arguments: Any) -> Optional[Any]:
     """Python application interface for using templates to create a FLASH runtime parameter file.
 
     This method creates a FLASH parameter file (INI format) using options and specified templates
-    implemented in toml files to enable runtime context to the creation of parameter files. This 
-    supports improved consitancy, reproducability, and confidence in research. Additionally, the 
+    implemented in toml files to enable runtime context to the creation of parameter files. This
+    supports improved consitancy, reproducability, and confidence in research. Additionally, the
     intent is to preserve human readability of the produced FLASH parameter file.
 
     Keyword Arguments:
         templates (list):   Specify a list of template files (e.g., rayleigh) to search for, without the
                             '.toml' extension. These will be combined and used to create the flash.par file.
         params (dict):      Specific parameters; which are collected in a section at the end of the parameter file.
-        sources (list):     Which library defined sources to use for filling sections from configuration files.
+        sources (list):     Which library defined sourced parameter templates to use (use --available to see options).
         dest (str):         Path to parameter file.
-        auto (bool):        Force use all templates specified in all configuration files.
-        nosources (bool):   Do not use any library specified template sources.
+        auto (bool):        Force use of all templates specified in all configuration files.
+        nosources (bool):   Do not use any library specified sourced parameter templates.
         duplicates (bool):  Allow the writing of duplicate parameters if there are multiple matches.
-        nofile (bool):      Do not write the assembled parameters to file. 
+        nofile (bool):      Do not write the assembled parameters to file.
         result (bool):      Return the formated and assembled parameters. 
         ignore (bool):      Ignore configuration file provided arguments, options, and flags.
 
     Notes:  
         If duplicates are not allowed, only the most significant instance of a parameter will be written to
         the parameter file, which means the parameter will be based on the depth-first-merge of all relavent 
-        templates (and not SOURCES from configuration file variables, which is also the case with --ignore).
+        templates and resolved sources from defaults, configuration files, and provided options.
 
         The order of precedence for parameters with potential duplicate entries in ascending order is.
-          0) specificed sources retrieved from library defaults
-          1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
-          2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
-          3) depth-first-merge of explicitly specified parameters in templates; templates are merged at each level,
-          4) parameters provided at the command line.
+          0) depth-first-merge of defaults, configuration files, and provided options; resolution of sourced parameters,
+          1) parameters retrieved from specified library default parameter templates,
+          2) duplicate parameters of the same type in the same template file are ignored,
+          3) duplicate parameters of different types in the same template file are ordered as sinked < sourced < explicite 
+          4) duplicate parameters of any type in different template files within the same folder are orderd as the specified templates,
+          5) duplicate parameters of any type in any template files from a deeper folder in the folder tree,
+          6) explicite parameters provided at the command line.
     """
     args = process_arguments(**arguments)
     path = args.pop('dest')

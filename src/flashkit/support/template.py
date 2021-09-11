@@ -48,13 +48,15 @@ def filter_tags(key: str) -> bool:
 def sort_templates(templates: list[str], *args) -> int:
     """Define the sorting algorythm to implement template precedence."""
     (arg, *path), *_ = args
-    src = 1 if SOURCING in args else 0
+    src = int(SOURCING in path) + int(SINKING in path) + 1
     try:
-        return src + {'local': -1, 'system': int(MAX_TEMP * MAX_LVLS * 10)}[arg] 
-    except KeyError: 
-        usr, lvl = arg.split('_')
-        return src + MAX_LVLS - int(lvl) + {k: MAX_LVLS * 10 * n 
-                for n, k in enumerate(templates)}[usr]
+        return src + {'local': 0, 'system': int(10 * MAX_TEMP * MAX_LVLS)}[arg]
+    except KeyError:
+        try:
+            tmp, lvl = arg.split('_')
+            return src + 10 * templates.index(tmp) + 10 * MAX_TEMP * (MAX_LVLS - (int(lvl) + 1))
+        except ValueError:
+            raise LibraryError(f'Unknown template name, {tmp}, during sorting!')
 
 def order_commands(*args) -> str:
     """Order the template commands according to the proper tag."""
