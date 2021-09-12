@@ -39,14 +39,14 @@ TEMPLATES      LIST  Specify a list of template files (e.g., rayleigh) to search
                      '.toml' extension. These will be combined and used to create the flash.par file.
 
 options:
--p, --params   DICT  Specific parameters; which are collected in a section at the end of the parameter file.
--s, --sources  LIST  Which library defined sources to use for filling sections from configuration files;
-                     defaults to {DEF.sources} --> will fill domain and processor grid parameters).
+-p, --params   DICT  Specific parameters; which are collected into a single section of the parameter file.
+-s, --sources  LIST  Which library default parameter templates to use (use --available to see options);
+                     defaults to the {DEF.sources} set of templates.
 -d, --dest     PATH  Path to parameter file; defaults to cwd.
 
 switches:
--A, --auto           Force use of all templates specified in all configuration files.
--N, --nosources      Do not use any library specified template sources.
+-A, --auto           Use all templates specified in all configuration files.
+-N, --nosources      Do not use any library default parameter templates.
 -D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
 -F, --nofile         Do not write the assembled parameters to file.
 -R, --result         Return the formated and assembled parameters.
@@ -54,7 +54,8 @@ switches:
 
 flags:
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
--S, --available      List the available library defined sources and exit.
+-S, --available      List the available library default parameter templates and exit.
+    --advanced       Include all defined templates when showing library default templates.
 -h, --help           Show this message and exit.
 
 notes:  If duplicates are not allowed, only the most significant instance of a parameter will be written to
@@ -65,7 +66,7 @@ notes:  If duplicates are not allowed, only the most significant instance of a p
         0) depth-first-merge of defaults, configuration files, and provided options; resolution of sourced parameters,
         1) parameters retrieved from specified library default parameter templates,
         2) duplicate parameters of the same type in the same template file are ignored,
-        3) duplicate parameters of different types in the same template file are ordered as sinked < sourced < explicite 
+        3) duplicate parameters of different types in the same template file are ordered as sources < sinks < explicite 
         4) duplicate parameters of any type in different template files within the same folder are orderd as the specified templates,
         5) duplicate parameters of any type in any template files from a deeper folder in the folder tree,
         6) explicite parameters provided at the command line.
@@ -95,6 +96,7 @@ class ParCreateApp(Application):
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
     interface.add_argument('-S', '--available', action='store_true')
+    interface.add_argument('--advanced', action='store_true')
 
     def run(self) -> None:
         """Buisness logic for creating par from command line."""
@@ -104,7 +106,10 @@ class ParCreateApp(Application):
             return
 
         if getattr(self, 'available'):
-            return_available('parameter', ['sources'], SKIP)
+            if getattr(self, 'advanced'):
+                return_available(category='parameter', tags=['sources', 'sinks'])
+            else:
+                return_available(category='parameter', tags=['sources'], skips=SKIP)
             return
 
         options = {'templates', 'params', 'sources', 'dest', 'auto',

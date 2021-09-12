@@ -38,14 +38,13 @@ def author(section: str, layout: Sections, tree: Tree) -> Lines:
     if not layout and not keep:
         return list()
    
-    print(layout)
     params = [(
         cmd.get('value', ''),
         read_a_source(cmd.get('source', []), tree),
+        cmd.get('post', ''),
         cmd.get('_', '')
         ) for name, cmd in sorted(layout.items(), key=order_commands)]
 
-    print(params)
     lines = [] if noheader else [f'# {header}', ]
     lines.extend(' '.join(str(par) for par in param if par) for param in params)
     lines.append('' if not footer else f'# {footer}')

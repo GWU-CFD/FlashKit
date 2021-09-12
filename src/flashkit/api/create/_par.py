@@ -48,13 +48,8 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         if not templates_given:
             raise AutoError('Templates must be given, or use --auto.')  
     if args.get('nosources', False):
-        sources_given = True
         args['sources'] = list()
         logger.debug(f'api -- Forced ignore behavior for sources.')
-    else:
-        sources_given = 'sources' in args.keys()
-        if not sources_given:
-            raise AutoError('Sources must be given, or use --nosources.')
 
     # resolve proper absolute directory paths
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
@@ -69,12 +64,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             for template in read_a_leaf([space, TEMPLATE], arguments.namespaces) # type: ignore
             ]))
         logger.debug(f'api -- Identified templates using all configuration files.')
-
-    # find the sources 
-    if not sources_given:
-        args['sources'] = [source for source in TEMPLATES['parameter'].keys()
-                if source not in NOSOURCE]
-        logger.debug(f'api -- Used the library default sources.')
 
     # find the lookup for sources
     args['tree'] = get_defaults() if args.get('ignore', False) else get_arguments()
@@ -152,11 +141,11 @@ def par(**arguments: Any) -> Optional[Any]:
     Keyword Arguments:
         templates (list):   Specify a list of template files (e.g., rayleigh) to search for, without the
                             '.toml' extension. These will be combined and used to create the flash.par file.
-        params (dict):      Specific parameters; which are collected in a section at the end of the parameter file.
-        sources (list):     Which library defined sourced parameter templates to use (use --available to see options).
+        params (dict):      Specific parameters; which are collected into a single section of the parameter file.
+        sources (list):     Which library default parameter templates to use.
         dest (str):         Path to parameter file.
-        auto (bool):        Force use of all templates specified in all configuration files.
-        nosources (bool):   Do not use any library specified sourced parameter templates.
+        auto (bool):        Use all templates specified in all configuration files.
+        nosources (bool):   Do not use any library default parameter templates.
         duplicates (bool):  Allow the writing of duplicate parameters if there are multiple matches.
         nofile (bool):      Do not write the assembled parameters to file.
         result (bool):      Return the formated and assembled parameters. 
@@ -171,7 +160,7 @@ def par(**arguments: Any) -> Optional[Any]:
           0) depth-first-merge of defaults, configuration files, and provided options; resolution of sourced parameters,
           1) parameters retrieved from specified library default parameter templates,
           2) duplicate parameters of the same type in the same template file are ignored,
-          3) duplicate parameters of different types in the same template file are ordered as sinked < sourced < explicite 
+          3) duplicate parameters of different types in the same template file are ordered as sources < sinks < explicite 
           4) duplicate parameters of any type in different template files within the same folder are orderd as the specified templates,
           5) duplicate parameters of any type in any template files from a deeper folder in the folder tree,
           6) explicite parameters provided at the command line.

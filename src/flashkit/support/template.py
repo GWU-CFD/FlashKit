@@ -48,7 +48,7 @@ def filter_tags(key: str) -> bool:
 def sort_templates(templates: list[str], *args) -> int:
     """Define the sorting algorythm to implement template precedence."""
     (arg, *path), *_ = args
-    src = int(SOURCING in path) + int(SINKING in path) + 1
+    src = 2 * int(SOURCING in path) + int(SINKING in path) + 1
     try:
         return src + {'local': 0, 'system': int(10 * MAX_TEMP * MAX_LVLS)}[arg]
     except KeyError:

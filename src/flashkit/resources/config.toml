@@ -13,6 +13,8 @@
   filename = 'run'      # name of job execution script
   template = 'batches'  # variable in flash.toml for templates
   padsect  = 0          # padding for section footer
+  nosource = [          # library templates (batch) keys ignored
+    'bash', 'comment']
 
   [create.block]
   grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
@@ -55,7 +57,7 @@
 [core]
 
   [core.configure]
-  base  = ['jobs', 'FLASH'] # default root of the tree
+  base  = ['jobs']     # default roots of the tree
   file  = 'flash.toml' # name of file holding user options
   label = 'base'       # label for path var written to tree options
   max   = 100          # maximum levels to walk building tree

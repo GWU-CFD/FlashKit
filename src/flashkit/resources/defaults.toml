@@ -3,7 +3,7 @@
 [general]
 
   [general.arch]
-  procs_per_node = 4 
+  nprocs = 4 
 
   [general.files]
   checkpoint = '_hdf5_chk_'
@@ -28,6 +28,7 @@
   result  = false
 
   [general.space]
+  grid = 'regular'
   ndim = 2
   nxb  = 64
   nyb  = 64
@@ -57,7 +58,6 @@
   [build.scaling]
 
   [build.simulation]
-  grid     = 'regular'
   jobs     = 1
   optimize = 'opt'
   python   = 2
@@ -66,7 +66,8 @@
 [create]
 
   [create.batch]
-  launcher = 'mpirun' 
+  launch = 'mpirun'
+  sources = ['bash', 'run']
 
   [create.block]
   fields = {velx='facex', vely='facey', velz='facez', temp='center'}

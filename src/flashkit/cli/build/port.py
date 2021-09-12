@@ -67,7 +67,7 @@ class PortBuildApp(Application):
             return
         
         if getattr(self, 'available'):
-            return_available('porting', ['steps'])
+            return_available(category='porting', tags=['steps'])
             return
 
         options = {'site', 'ignore'}

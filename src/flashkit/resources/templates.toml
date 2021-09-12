@@ -2,21 +2,32 @@
 
 [batch]
 
-  batch.bash.comment = {header = '!/bin/bash', number = -9999}
+  [batch.bash]
+
+    [batch.bash.comment]
+    header = '!/bin/bash'
+    number = -1000
   
   [batch.slurm]
-  job = {value='#SBATCH -J', source=['create', 'batch', 'job'], number=100, _='Job name'}
+  job   = {value='#SBATCH -J', source=['create', 'batch', 'job'],    number=100, _='Job name'}
   nodes = {value='#SBATCH -N', source=['create', 'batch', 'nnodes'], number=200, _='Total # of nodes'}
-  tasks = {value='#SBATCH -n', source=['create', 'batch', 'nprocs'], number=300, _='Total # of mpi tasks'}
   
     [batch.slurm.comment]
     header = 'Flashkit Generated SLURM job script'
-    number = -5000
+    number = -3000
 
+  [batch.slurm-tasks]
+  tasks = {value='#SBATCH -n', source=['create', 'batch', 'nprocs'], number=100, _='Total # of mpi tasks'}
+  comment = {noheader = true, number = -3100}
+
+  [batch.slurm-ntasks]
+  ntasks = {value='#SBATCH --ntasks-per-node', source=['create', 'batch', 'ntasks'], number=100, _='# of mpi tasks/node'}
+  comment = {noheader = true, number = -3110}
+  
   [batch.info]
   module = {value='module list', number=100}
-  pwd = {value='pwd', number=200}
-  date = {value='date', number=300}
+  pwd    = {value='pwd',         number=200}
+  date   = {value='date',        number=300}
 
     [batch.info.comment]
     header = 'Information about Job enviornment'
@@ -29,20 +40,14 @@
     header = 'MPI Job execution Command'
     number = 3000
 
-  [batch.time]
+  [batch.date]
   date = {value='date', number=300}
 
-    [batch.time.comment]
+    [batch.date.comment]
     number = 5000
 
 [parameter]
   
-  [parameter.2d]
-
-    [parameter.2d.sinks]
-    zmin = ''
-    zmax = ''
-
   [parameter.space]
     
     [parameter.space.comment]
@@ -65,6 +70,12 @@
     iProcs = ['general', 'mesh', 'iprocs']
     jProcs = ['general', 'mesh', 'jprocs']
     kProcs = ['general', 'mesh', 'kprocs']
+  
+  [parameter.2d]
+
+    [parameter.2d.sinks]
+    zmin = '--'
+    zmax = '--'
 
 [port]
 

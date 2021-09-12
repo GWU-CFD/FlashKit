@@ -33,7 +33,7 @@ HELP = f"""\
 
 arguments:  
 PATH        STRING  Specify a simulation directory contained in the FLASH source/Simulation/SimulationMain.
-NAME        STRING  Specify a build directory basename; will be determined if not provided. 
+NAME        STRING  Specify a build directory basename; will not be determined if not provided. 
 
 options:
 -D, --ndim       INT     Number of simulation dimensions (i.e., 2 or 3); defaults to {DEF.ndim}.
