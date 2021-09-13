@@ -32,7 +32,6 @@ __all__ = ['par', ]
 
 # define configuration constants (internal)
 FILENAME = CONFIG['create']['par']['filename']
-NOSOURCE = CONFIG['create']['par']['nosource']
 TEMPLATE = CONFIG['create']['par']['template']
 TAGGING = CONFIG['support']['template']['tagging']
 

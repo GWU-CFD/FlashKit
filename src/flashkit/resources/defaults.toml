@@ -3,12 +3,13 @@
 [general]
 
   [general.arch]
-  nprocs = 4 
+  ntasks = 4 
 
   [general.files]
   checkpoint = '_hdf5_chk_'
   forced     = 'forced'
   grid       = '_hdf5_grd_'
+  hosts      = 'hosts'
   output     = ''
   plot       = '_hdf5_plt_cnt_'
 

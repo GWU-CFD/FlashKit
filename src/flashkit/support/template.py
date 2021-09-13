@@ -95,7 +95,7 @@ def read_a_source(stem, tree):
 
 def write_a_source(stem, tree, value):
     try:
-        path, key = stem if stem[-1][0] != SENTINAL else (*stem[:-1], int(stem[-1][1:]))
+        *path, key = stem if stem[-1][0] != SENTINAL else (*stem[:-1], int(stem[-1][1:]))
         reduce(lambda branch, leaf: branch[leaf], path, tree)[key] = value
     except (KeyError, IndexError):
         raise LibraryError(f'No source found at path {stem}')

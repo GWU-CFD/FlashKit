@@ -2,6 +2,10 @@
 
 # type annotations
 from __future__ import annotations
+from typing import Any 
+
+# standard libraries
+from functools import partial
 
 # internal libraries
 from ..core.parallel import single, squash
@@ -13,8 +17,8 @@ from ..support.types import Lines, Sections, Template, Tree
 __all__ = ['author_batch', 'write_batch', ]
 
 # define configuration constants (internal)
-FILENAME = CONFIG['create']['batch']['filename']
 PAD_SECT = CONFIG['create']['batch']['padsect']
+SENTINAL = CONFIG['support']['template']['sentinal']
 TAGGING = CONFIG['support']['template']['tagging']
 TITLE = CONFIG['support']['template']['title']
 
@@ -24,9 +28,9 @@ def author_batch(*, template: Template, sources: Tree) -> Lines:
     return author_template(template=template, sources=sources, author=author)
 
 @squash
-def write_batch(*, lines: Lines, path: str) -> None:
+def write_batch(*, lines: Lines, path: str, name: str) -> None:
     """Write the flash job script to destination."""
-    write_template(lines=lines, path=path, filename=FILENAME)
+    write_template(lines=lines, path=path, filename=name)
 
 def author(section: str, layout: Sections, tree: Tree) -> Lines:
     comment = layout.pop(TAGGING, {})
@@ -34,21 +38,38 @@ def author(section: str, layout: Sections, tree: Tree) -> Lines:
     keep = comment.get('keep', section in {TITLE, })
     footer = comment.get('footer', None)
     noheader = comment.get('noheader', False)
+    nofooter = comment.get('nofooter', False)
 
-    if not layout and not keep:
-        return list()
+    if not layout and not keep: return list()
    
-    params = [(
-        cmd.get('value', ''),
-        read_a_source(cmd.get('source', []), tree),
-        cmd.get('post', ''),
-        cmd.get('_', '')
-        ) for name, cmd in sorted(layout.items(), key=order_commands)]
+    commands = [cmd for _, cmd in sorted(layout.items(), key=order_commands)]
+    parts = [' '.join(filter(None,
+        (fmt_value(cmd), fmt_source(tree, cmd), fmt_post(cmd))
+        )) for cmd in commands]
+    notes = [fmt_note(cmd) for cmd in commands]
+    pad_line = 0 if not parts else len(max(parts, key=len))
+    commands = [f'{part: <{pad_line}}  {note}' for part, note in zip(parts, notes)]
 
     lines = [] if noheader else [f'# {header}', ]
-    lines.extend(' '.join(str(par) for par in param if par) for param in params)
-    lines.append('' if not footer else f'# {footer}')
-    lines.extend('' for _ in range(PAD_SECT))
+    lines.extend(command for command in commands)
+    if not nofooter: 
+        lines.append('' if not footer else f'# {footer}')
+        lines.extend('' for _ in range(PAD_SECT))
 
     return lines
 
+def fmt_note(command: dict[str, Any]) -> str:
+    note = command.get(SENTINAL, None)
+    return '' if note is None else f'# {note}'
+
+def fmt_post(command: dict[str, Any]) -> str:
+    post = command.get('post', None)
+    return '' if post is None else f'{post}'
+
+def fmt_value(command: dict[str, Any]) -> str:
+    value = command.get('value', None)
+    return '' if value is None else f'{value}'
+
+def fmt_source(tree: Tree, command: dict[str, Any]) -> str:
+    source = read_a_source(command.get('source', []), tree)
+    return '' if source is None else f'{source}'

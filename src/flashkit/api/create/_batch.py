@@ -7,6 +7,7 @@ from typing import Any, Optional
 # standard libraries
 import logging
 import os
+import re
 import sys
 from functools import partial
 
@@ -14,12 +15,13 @@ from functools import partial
 from ...core.configure import get_arguments, get_defaults, get_templates
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
+from ...core.parse import ListStr
 from ...core.progress import attach_context 
 from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
 from ...library.create_batch import author_batch, write_batch
 from ...resources import CONFIG, TEMPLATES
-from ...support.template import filter_tags, sort_templates
+from ...support.template import write_a_source
 from ...support.types import Template, Tree
 
 # external libraries
@@ -28,39 +30,68 @@ from cmdkit.config import Namespace
 logger = logging.getLogger(__name__)
 
 # define public interface
-__all__ = ['par', ]
+__all__ = ['batch', ]
 
 # define configuration constants (internal)
-FILENAME = CONFIG['create']['par']['filename']
-NOSOURCE = CONFIG['create']['par']['nosource']
-TEMPLATE = CONFIG['create']['par']['template']
-LOCAL = CONFIG['support']['temp']['local']
-TAGGING = CONFIG['support']['temp']['tagging']
+BINARY = CONFIG['build']['simulation']['binary']
+TEMPLATE = CONFIG['create']['batch']['template']
+PARAFILE = CONFIG['create']['par']['filename']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
-
+   
+    # ensure arguments provided
+    if any(arg not in args for arg in {'job', 'build'}):
+        raise AutoError('Both job and build arguments are required!')
+    
     # determine arguments passed
     if args.get('auto', False):
-        templates_given = False
-        sources_given = False
-        logger.debug(f'api -- Forced auto behavior for templates and sources.')
+        bname_given = False
+        logger.debug(f'api -- Forced auto behavior for basename.')
     else:    
-        templates_given = 'templates' in args.keys()
-        if args.get('nosources', False):
-            sources_given = True
-            args['sources'] = list()
-        else:
-            sources_given = 'sources' in args.keys()
-        if not all((templates_given, sources_given)):
-            raise AutoError('Templates and sources must be given; or use --auto.')
-        logger.debug(f'api -- Using provided or defaults for templates and sources.')
+        bname_given = 'basename' in args.keys()
+        if not bname_given: raise AutoError('Basename must be given, or use --auto.')  
+    if args.get('find', False):
+        templates_given = False
+        logger.debug(f'api -- Forced find behavior for templates.')
+    else:
+        if 'templates' in args.keys():
+            templates_given = True
+        elif args.get('auto', False) and 'basename' in args.keys():
+            templates_given = True
+            args['templates'] = ListStr(args.pop('basename'))
+        else: 
+            raise AutoError('Templates must be given, or use --find.')  
+    if args.get('nosources', False):
+        args['sources'] = list()
+        logger.debug(f'api -- Forced ignore behavior for sources.')
 
     # resolve proper absolute directory paths
+    args['path'] = os.path.realpath(os.path.expanduser(args['path']))
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
-    logger.debug(f'api -- Fully resolved the destination path.')
+    args['source'] = os.path.realpath(os.path.expanduser(args['source']))
+    logger.debug(f'api -- Fully resolved the source and destination paths.')
+    
+    # prepare conditions in order to arrange a list of files to process
+    str_include = re.compile(args['plot'])
+    str_exclude = re.compile(args['force'])
+    if not bname_given:
+        listdir = os.listdir(args['path'])
+        condition = lambda file: re.search(str_include, file) and not re.search(str_exclude, file)
 
-    # find the templates 
+    # create the basename; if guessing, try multiple methods
+    if not bname_given:
+        try:
+            args['basename'], *_ = next(filter(condition, (file for file in listdir))).split(str_include.pattern)
+        except StopIteration:
+            try:
+                file = open(PARAFILE).read()
+                found = re.search('basenm *=.*\n', file)
+                if found: args['basename'] = found.group().split('\"')[1].rstrip('_')
+            except (AttributeError, FileNotFoundError, IndexError):
+                raise AutoError(f'Cannot automatically parse basename for simulation files on path {args["path"]}')
+
+    # find the templates, if searching 
     if not templates_given:
         arguments = get_arguments()
         args['templates'] = list(dict.fromkeys([template 
@@ -70,60 +101,74 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             ]))
         logger.debug(f'api -- Identified templates using all configuration files.')
 
-    # find the sources 
-    if not sources_given:
-        args['sources'] = [source for source in TEMPLATES['parameter'].keys()
-                if source not in NOSOURCE]
-        logger.debug(f'api -- Used the library default sources.')
-
-    # find the lookup for sources
-    args['tree'] = get_defaults() if args.get('ignore', False) else get_arguments()
+    # identify the build directory from user input
+    ndim = max(min(3, args['ndim']), 2)
+    nxb, nyb, nzb = (args[b] for b in ('nxb', 'nyb', 'nzb'))
+    grid = {'paramesh': 'pm4dev', 'uniform': 'ug', 'regular': 'rg'}.get(args['grid'], args['grid'].strip('-+'))
+    build = f"{grid}{args['build']}_{ndim}D{nxb}_{nyb}" + '' if ndim == 2 else f'_{nzb}'
+    
+    # specify the shell script and redirected output filenames
+    args['filename'] = f'{args["basename"]}{args["batch"]}.run'
+    redirect = f'{args["basename"]}{args["out"]}.out'
+    
+    # construct the computed arguments
+    iprocs, jprocs, kprocs = (args[b] for b in ('iprocs', 'jprocs', 'kprocs'))
+    nprocs = int(iprocs * jprocs * kprocs)
+    ntasks = int(args['ntasks'])
+    nnodes = max(1, int(nprocs / ntasks))
+    
+    # construct the run argument
+    run = args['launch']
+    if not args.get('notasks', False): run = f'{run} -n {nprocs}'
+    if args.get('hostfile', False): run = f'{run} --hostfile {args["hosts"]}'
+    run = f'{run} {os.path.join(args["source"], build, BINARY)}'
+    if args.get('redirect', False): run = f'{run} > {redirect}'
+    if args.get('screen', False): run = f"screen -d -m -S {args['job']} bash -c \'{run}\'"
+        
+    # find the lookup for sources and append with computed arguments
+    tree = get_defaults() if args.get('ignore', False) else get_arguments()
+    write_a_source(['create', 'batch', 'job'], tree, args['job'])
+    write_a_source(['create', 'batch', 'run'], tree, run)
+    write_a_source(['create', 'batch', 'nnodes'], tree, nnodes)
+    write_a_source(['create', 'batch', 'nprocs'], tree, nprocs)
+    write_a_source(['create', 'batch', 'ntasks'], tree, ntasks)
+    args['tree'] = tree
 
     # read and combine the templates
     files = [file + '.toml' for file in args['templates']]
-    if 'params' in args:
-        local = Namespace({LOCAL: args['params']})
-        local[LOCAL][TAGGING] = {'header': 'Command Line Provided Parameters'}
-        logger.debug(f'api -- Appended local parameters provided.')
-    else:
-        local = Namespace()
-    sources = ['parameter', ] + args['sources']
-    construct = get_templates(local=local, sources=sources, templates=files)
+    sources = ['batch', ] + args['sources']
+    args['construct'] = get_templates(local=Namespace(), sources=sources, templates=files)
     logger.debug(f'api -- Constructed combined templated info.')
-
-    # filter the templates
-    if not args.get('duplicates', False):
-        construct = construct.trim(filter_tags, key=partial(sort_templates, args['templates']))
-        logger.debug(f'api -- Combined template was trimmed.')
-    args['construct'] = construct
-
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     templates = args['templates']
     sources = args['sources']
-    params = list(args.get('params', {}).keys())
     dest = os.path.relpath(args['dest'])
+    output = os.path.join(dest, args['filename'])
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
         f'Creating FLASH parameter file by processing the following:',
         f'  templates     = {templates}',
         f'  sources       = {sources}',
-        f'  parameters    = {params}',
-        f'  output        = {os.path.join(dest, FILENAME)}',
+        f'  batch_file    = {output}',
         f'',
-        f'Processing templates and authoring par{nofile} ...',
+        f'Processing templates and authoring batch{nofile} ...',
         ])
     logger.info(message)
     return args
 
 # default constants for handling the argument stream
-PACKAGES = {'templates', 'params', 'sources', 'dest', 'auto', 'nosources', 'duplicates', 'result', 'nofile'}
-ROUTE = ('create', 'par')
+PACKAGES = {'job', 'build', 'basename', 'templates', 'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'ntasks',
+            'grid', 'source', 'launch', 'sources', 'path', 'dest', 'hosts', 'plot', 'force', 'batch', 'out',
+            'auto', 'find', 'redirect', 'screen', 'hostfile', 'notasks', 'nosources', 'nofile', 'result'}
+ROUTE = ('create', 'batch')
 PRIORITY = {'ignore', 'cmdline'}
 CRATES = (adapt_arguments, attach_context, log_messages)
-DROPS = {'ignore', 'auto', 'nosources', 'templates', 'params', 'sources', 'duplicates'}
+DROPS = {'job', 'build', 'basename', 'templates', 'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'ntasks',
+         'grid', 'source', 'launch', 'sources', 'path', 'hosts', 'plot', 'force', 'batch', 'out', 'ignore', 
+         'auto', 'find', 'redirect', 'screen', 'hostfile', 'notasks', 'nosources'}
 MAPPING = {'construct': 'template', 'tree': 'sources'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
@@ -141,40 +186,17 @@ def screen_out(*, lines: list[str]) -> None:
         print(line)
 
 @safe
-def par(**arguments: Any) -> Optional[Any]:
-    """Python application interface for using templates to create a FLASH runtime parameter file.
-
-    This method creates a FLASH parameter file (INI format) using options and specified templates
-    implemented in toml files to enable runtime context to the creation of parameter files. This 
-    supports improved consitancy, reproducability, and confidence in research. Additionally, the 
-    intent is to preserve human readability of the produced FLASH parameter file.
-
-    Keyword Arguments:
-        templates (list):   Specify a list of template files (e.g., batch) to search for, without the
-                            '.toml' extension. These will be combined and used to create the batch file.
-        sources (list):     Which library defined sources to use for filling sections from configuration files.
-        dest (str):         Path to batch file.
-        auto (bool):        Force use all templates specified in all configuration files and library sources.
-        nosources (bool):   Do not use any library specified template sources; AUTO takes precedences.
-        nofile (bool):      Do not write the assembled batch commands to file. 
-        result (bool):      Return the formated and assembled batch commands. 
-        ignore (bool):      Ignore configuration file provided arguments, options, and flags.
-
-        The order of precedence for command entries in ascending order is.
-          0) specificed sources retrieved from library defaults
-          1) depth-first-merge of specified sources retrieved from a depth-first-merge of configuration files,
-          2) depth-first-merge of specified sources in templates (as per 1 above); templates are merged at each level,
-          3) depth-first-merge of explicitly specified commands in templates; templates are merged at each level.
-    """
+def batch(**arguments: Any) -> Optional[Any]:
     args = process_arguments(**arguments)
     path = args.pop('dest')
+    name = args.pop('filename')
     result = args.pop('result')
     nofile = args.pop('nofile')
     cmdline = args.pop('cmdline', False)
     
     with args.pop('context')() as progress:
         lines = author_batch(**args)
-        if not nofile: write_batch(lines=lines, path=path)
+        if not nofile: write_batch(lines=lines, path=path, name=name)
     
     if not result: return None
     if cmdline: screen_out(lines=lines)

@@ -10,7 +10,6 @@
 [create]
   
   [create.batch]
-  filename = 'run'      # name of job execution script
   template = 'batches'  # variable in flash.toml for templates
   padsect  = 0          # padding for section footer
   nosource = [          # library templates (batch) keys ignored
@@ -129,6 +128,7 @@
     'keep',      # tag for keeping an empty section
     'footer',    # tag for section footer string
     'noheader',  # tag for eliminating header
+    'nofooter',  # tag for eliminating footer
     'number',    # tag for section ordering 
     'sorted',    # tag for sorting section parameters
     ]

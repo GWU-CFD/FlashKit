@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 
 # internal libraries
-#from ...api.create import batch
+from ...api.create import batch
 from ...core.configure import get_defaults
 from ...core.custom import patched_error, patched_exceptions
 from ...core.options import return_commands, return_options
@@ -50,7 +50,7 @@ options:
 -i, --iprocs   INT     Number of blocks in the i direction; defaults to {DEF.iprocs}.
 -j, --jprocs   INT     Number of blocks in the j direction; defaults to {DEF.jprocs}.
 -k, --kprocs   INT     Number of blocks in the k direction; defaults to {DEF.kprocs}.
--n, --nprocs   INT     Number of processors per node (i.e., architecture); defaults to {DEF.nprocs}.
+-n, --ntasks   INT     Number of processors per node (i.e., architecture); defaults to {DEF.ntasks}.
 -g, --grid     STRING  Type of FLASH simulation grid used by the Grid Package; defaults to {DEF.grid}.
 -b, --source   STRING  Path to the local FLASH source repository; defaults to {DEF.source}.
 -l, --launch   STRING  MPI parallel execution command on the machine; defaults to {DEF.launch}.
@@ -58,6 +58,9 @@ options:
                        defaults to the {DEF.sources} set of templates.
 -p, --path     PATH    Path to simulation files if BASENAME is to be guessed; defaults to cwd.
 -d, --dest     PATH    Path to batch file; defaults to cwd.
+-f, --hosts  STRING    Hostfile (i.e., node addresses) name; defaults to '{DEF.hosts}'.
+-c, --plot   STRING    Plot/Checkpoint file(s) name follower; defaults to '{DEF.plot}'.
+-q, --force  STRING    Plot/Checkpoint file(s) substring to ignore; defaults to '{DEF.force}'.
 -r, --batch    FILE    Shell script file name follower; defaults to a footer '{DEF.out}'.
 -o, --out      FILE    Redirected output file name follower; defaults to a footer '{DEF.out}'.
 
@@ -66,6 +69,8 @@ switches:
 -B, --find       Use all templates specified in all configuration files.
 -C, --redirect   Redirect the console output of the FLASH simulation to a file.
 -T, --screen     Use the screen application to fork the FLASH execution from the session.
+-H, --hostfile   Use a hostfile in the MPI parallel execution command.
+-M, --notasks    Do not specify number of tasks in the MPI parallel execution command.
 -N, --nosources  Do not use any library default batch templates.
 -F, --nofile     Do not write the assembled shell commands to file.
 -R, --result     Return the formated and assembled shell commands.
@@ -100,19 +105,24 @@ class BatchCreateApp(Application):
     interface.add_argument('-i', '--iprocs', type=int) 
     interface.add_argument('-j', '--jprocs', type=int) 
     interface.add_argument('-k', '--kprocs', type=int) 
-    interface.add_argument('-n', '--nprocs', type=int) 
+    interface.add_argument('-n', '--ntasks', type=int) 
     interface.add_argument('-g', '--grid')
     interface.add_argument('-b', '--source')
     interface.add_argument('-l', '--launch')
     interface.add_argument('-s', '--sources', type=ListStr)
     interface.add_argument('-p', '--path')
     interface.add_argument('-d', '--dest')
+    interface.add_argument('-f', '--hosts')
+    interface.add_argument('-c', '--plot')
+    interface.add_argument('-q', '--force')
     interface.add_argument('-r', '--batch')
     interface.add_argument('-o', '--out')
     interface.add_argument('-A', '--auto', action='store_const', const=True)
     interface.add_argument('-B', '--find', action='store_const', const=True)
     interface.add_argument('-C', '--redirect', action='store_const', const=True)
     interface.add_argument('-T', '--screen', action='store_const', const=True)
+    interface.add_argument('-H', '--hostfile', action='store_const', const=True)
+    interface.add_argument('-M', '--notasks', action='store_const', const=True)
     interface.add_argument('-N', '--nosources', action='store_const', const=True)
     interface.add_argument('-F', '--nofile', action='store_const', const=True)
     interface.add_argument('-R', '--result', action='store_const', const=True)
@@ -132,9 +142,9 @@ class BatchCreateApp(Application):
             return
 
         options = {'job', 'build', 'basename', 'templates', 
-                   'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'nprocs',
-                   'grid', 'source', 'launch', 'sources', 'path', 'dest', 'batch', 'out',
-                   'auto', 'find', 'redirect', 'screen', 'nofile', 'result', 'ignore'}
+                   'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'ntasks', 'grid',
+                   'source', 'launch', 'sources', 'path', 'dest', 'hosts', 'plot', 'force', 'batch', 'out',
+                   'auto', 'find', 'redirect', 'screen', 'hostfile', 'notasks', 'nosources', 'nofile', 'result', 'ignore'}
         local = {key: getattr(self, key) for key in options}
         logger.debug(f'cli -- Returned: {local}')
-        #batch(**local, cmdline=True)
+        batch(**local, cmdline=True)

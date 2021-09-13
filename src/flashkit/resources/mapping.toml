@@ -33,9 +33,12 @@
 [create]
   
   [create.batch]
-  nprocs = ['general', 'arch', 'nprocs']
+  ntasks = ['general', 'arch', 'ntasks']
+  force  = ['general', 'files', 'forced']
+  hosts  = ['general', 'files', 'hosts']
   batch  = ['general', 'files', 'output']
   out    = ['general', 'files', 'output']
+  plot   = ['general', 'files', 'plot']
   iprocs = ['general', 'mesh', 'iprocs']
   jprocs = ['general', 'mesh', 'jprocs']
   kprocs = ['general', 'mesh', 'kprocs']
