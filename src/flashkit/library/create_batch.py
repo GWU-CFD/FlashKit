@@ -6,6 +6,8 @@ from typing import Any
 
 # standard libraries
 from functools import partial
+import os
+import stat
 
 # internal libraries
 from ..core.parallel import single, squash
@@ -31,6 +33,9 @@ def author_batch(*, template: Template, sources: Tree) -> Lines:
 def write_batch(*, lines: Lines, path: str, name: str) -> None:
     """Write the flash job script to destination."""
     write_template(lines=lines, path=path, filename=name)
+    filename = os.path.join(path, name)
+    st = os.stat(filename)
+    os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
 def author(section: str, layout: Sections, tree: Tree) -> Lines:
     comment = layout.pop(TAGGING, {})

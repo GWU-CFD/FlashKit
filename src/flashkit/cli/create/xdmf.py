@@ -19,7 +19,7 @@ DEF = get_defaults().create.xdmf
 PROGRAM = f'flashkit create xdmf'
 
 USAGE = f"""\
-usage: {PROGRAM} BASENAME [--low INT] [--high INT] [--skip INT] [<opt>...] [<flg>...]
+usage: {PROGRAM} BASENAME [<option> VALUE, ...] [<switch>, ...] [<flag>, ...]
 {__doc__}\
 """
 
@@ -42,9 +42,11 @@ options:
 -g, --grid   STRING  Grid file(s) name follower; defaults to '{DEF.grid}'.
 -q, --force  STRING  Plot/Checkpoint file(s) substring to ignore; defaults to '{DEF.force}'.
 
-flags:
+switches:
 -A, --auto           Force behavior to attempt guessing BASENAME and [--files LIST].
 -B, --find           Force behavior to attempt guessing [--files LIST].
+
+flags:
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -h, --help           Show this message and exit.
@@ -77,8 +79,8 @@ class XdmfCreateApp(Application):
     interface.add_argument('-c', '--plot')
     interface.add_argument('-g', '--grid')
     interface.add_argument('-q', '--force')
-    interface.add_argument('-A', '--auto', action='store_true')
-    interface.add_argument('-B', '--find', action='store_true')
+    interface.add_argument('-A', '--auto', action='store_const', const=True)
+    interface.add_argument('-B', '--find', action='store_const', const=True)
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
 

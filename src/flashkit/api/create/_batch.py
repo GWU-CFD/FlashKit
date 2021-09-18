@@ -105,7 +105,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     ndim = max(min(3, args['ndim']), 2)
     nxb, nyb, nzb = (args[b] for b in ('nxb', 'nyb', 'nzb'))
     grid = {'paramesh': 'pm4dev', 'uniform': 'ug', 'regular': 'rg'}.get(args['grid'], args['grid'].strip('-+'))
-    build = f"{grid}{args['build']}_{ndim}D{nxb}_{nyb}" + '' if ndim == 2 else f'_{nzb}'
+    build = f"{grid}{args['build']}_{ndim}D{nxb}_{nyb}" + ('' if ndim == 2 else f'_{nzb}')
     
     # specify the shell script and redirected output filenames
     args['filename'] = f'{args["basename"]}{args["batch"]}.run'

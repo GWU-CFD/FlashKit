@@ -103,7 +103,13 @@
   freq     = 1.0      # constant; (x*f)  scalar for domain scale
   shift    = 0.0      # constant; (x+s)  scalar for domain shift
   scale    = 1.0      # constant; m(x)   scalar for linear scale
-  methods  = ['constant', 'stratified', 'uniform']  # supported methods
+  width    = 1.0      # constant; (x)/w  scalar for linear norm
+  methods  = [        # supported methods
+    'constant',
+    'sinusoid',
+    'stratified',
+    'uniform'
+    ]
   function = 'fields' # default python function name in source
   source   = 'blocks' # default source file
   

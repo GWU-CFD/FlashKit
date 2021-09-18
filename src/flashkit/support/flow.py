@@ -38,6 +38,7 @@ CONST = CONFIG['support']['flow']['const']
 FREQ = CONFIG['support']['flow']['freq']
 SHIFT = CONFIG['support']['flow']['shift']
 SCALE = CONFIG['support']['flow']['scale']
+WIDTH = CONFIG['support']['flow']['width']
 FUNCTION = CONFIG['support']['flow']['function']
 SOURCE = CONFIG['support']['flow']['source']
 
@@ -45,6 +46,27 @@ def constant(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: dict[
     """Method implementing a constant value field initialization."""
     for field, location in fields.items():
         blocks[field] = numpy.ones(shapes[location], dtype=float) * const[field]
+
+def sinusoid(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, 
+             const: F, freq: F, scale: F, shift: F, width: F) -> None:
+    """Method implementing a sinusoidal based cold over hot intial condition."""
+    ndim = 2 if all(g[2] is None for g in grids.values()) else 3
+    for field, location in fields.items():
+        sx, sy = grids[location][:2]
+        mx, my = ([m[n] for m in mesh] for n in range(2))
+        x = numpy.array([sx[m,:] for m in mx])[:, None, None, :]
+        y = numpy.array([sy[m,:] for m in my])[:, None, :, None]
+        m, c, n, s, l = scale[field], const[field], freq[field], shift[field], width[field]
+        if ndim == 2:
+            h = m * numpy.exp(-numpy.abs(x - 2 / l)) * numpy.sin(n * numpy.pi * (x - s) / l) + c
+            blocks[field] = numpy.where(y < h, numpy.ones(shapes[location], dtype=float), 0.0)
+        else:
+            sz = grids[location][2]
+            mz = [m[2] for m in mesh]
+            z = numpy.array([sz[m,:] for m in mz])[:, :, None, None]
+            h = m * (numpy.exp(-numpy.abs(x - 2 / l)) * numpy.sin(n * numpy.pi * (x - s) / l) * 
+                     numpy.exp(-numpy.abs(y - 2 / l)) * numpy.sin(n * numpy.pi * (y - s) / l)) + c
+            blocks[field] = numpy.where(z < h, numpy.ones(shapes[location], dtype=float), 0.0)
 
 def stratified(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, scale: F, shift: F) -> None:
     """Method implementing a cold over hot intial condition."""
@@ -66,7 +88,8 @@ class Flowing:
     methods: dict[str, str]
     flow: dict[str, Callable[..., None]]
 
-    def __init__(self, methods: D, root: str, *, const: D = {}, freq: D = {}, shift: D = {}, scale: D = {},
+    def __init__(self, methods: D, root: str, *,
+                 const: D = {}, freq: D = {}, shift: D = {}, scale: D = {}, width: D = {},
                  function: D = {}, path: D = {}, source: D = {}, **kwargs):
     
         assert all(method in METHODS for method in methods.values()), 'Unknown Flow Initiation Method Specified!'
@@ -78,6 +101,7 @@ class Flowing:
         s_freq = {key: freq.get(key, FREQ) for key in keys}
         s_shift = {key: shift.get(key, SHIFT) for key in keys}
         s_scale = {key: scale.get(key, SCALE) for key in keys}
+        s_width = {key: width.get(key, WIDTH) for key in keys}
         s_function = {key: function.get(key, FUNCTION) for key in keys}
         s_path = {key: path.get(key, root) for key in keys}
         s_source = {key: source.get(key, SOURCE) for key in keys}
@@ -85,6 +109,7 @@ class Flowing:
         
         self.flow = {
             'constant': partial(constant, const=s_const), 
+            'sinusoid': partial(sinusoid, const=s_const, freq=s_freq, scale=s_scale, shift=s_shift, width=s_width), 
             'stratified': partial(stratified, const=s_const, scale=s_scale, shift=s_shift), 
             'uniform': uniform, 
                     }

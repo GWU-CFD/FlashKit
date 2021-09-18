@@ -44,7 +44,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         grid = {'paramesh': 'pm4dev', 'uniform': 'ug', 'regular': 'rg'}.get(args['grid'], args['grid'].strip('-+'))
         sub = args['subpath'].rstrip('/')
         sim = args['path'].rstrip('/')
-        objdir = f"{grid}{args['name']}_{ndim}D{nxb}_{nyb}" + '' if ndim == 2 else f'_{nzb}'
+        objdir = f"{grid}{args['name']}_{ndim}D{nxb}_{nyb}" + ('' if ndim == 2 else f'_{nzb}')
         python = './setup' if max(min(3, args['python']), 2) == 2 else './setup3'
         flag = args['optimize'].strip('-+')
         parallelIO = '' if not args.get('parallelIO', False) else ' +parallelIO'
