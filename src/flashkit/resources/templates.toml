@@ -3,11 +3,8 @@
 [batch]
 
   [batch.bash]
-
-    [batch.bash.comment]
-    header = '!/bin/bash'
-    keep = true
-    number = -1000
+  bang = {value='#!/bin/bash', number=100}
+  comment = {noheader = true, number = -1000}
   
   [batch.slurm]
   job   = {value='#SBATCH -J', source=['create', 'batch', 'job'],    number=100, _='Job name'}
@@ -50,6 +47,7 @@
   date = {value='date', number=300}
 
     [batch.date.comment]
+    header = 'Job Completion Stamp'
     number = 5000
 
 [parameter]
