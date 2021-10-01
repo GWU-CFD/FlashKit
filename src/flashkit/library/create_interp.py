@@ -121,7 +121,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                     xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]][:,xslice].flatten() # type: ignore
                     yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]][:,yslice].flatten() # type: ignore
                     zzz = lw_grids[lw_loc][2][lw_flt_uindex[2]][:,zslice].flatten() # type: ignore
-                    values = numpy.empty(lw_flt_fshape[0::-1], dtype=float)
+                    values = numpy.empty(lw_flt_fshape[::-1], dtype=float)
                     for (i, j, k), source in zip(lw_flt_bindex, lw_blocks):
                         il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
                         jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
