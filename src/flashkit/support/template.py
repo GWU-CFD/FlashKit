@@ -75,9 +75,9 @@ def order_sections(*args) -> str:
     """Order the template sections according to the proper tag."""
     (section, layout), *_ = args
     try:
-        number = {TITLE: -30, 'local': -50}.get(section, None)
+        number = {TITLE: -2000, 'local': -9000}.get(section, None)
         if number is None: number = layout[TAGGING]['number']
-        key = f'{int(number):03}'
+        key = f'{int(number):04}'
     except KeyError:
         key = section
     except ValueError:

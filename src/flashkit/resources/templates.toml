@@ -4,7 +4,7 @@
 
   [batch.bash]
   bang = {value='#!/bin/bash', number=100}
-  comment = {noheader = true, number = -1000}
+  comment = {noheader = true, number = -1200}
   
   [batch.slurm]
   job   = {value='#SBATCH -J', source=['create', 'batch', 'job'],    number=100, _='Job name'}
@@ -13,15 +13,15 @@
     [batch.slurm.comment]
     header = 'Flashkit Generated SLURM job script'
     nofooter = true
-    number = -3000
+    number = -3200
 
   [batch.slurm-tasks]
   tasks = {value='#SBATCH -n', source=['create', 'batch', 'nprocs'], number=100, _='Total # of mpi tasks'}
-  comment = {noheader = true, nofooter = true, number = -3100}
+  comment = {noheader = true, nofooter = true, number = -3400}
 
   [batch.slurm-ntasks]
   ntasks = {value='#SBATCH --ntasks-per-node', source=['create', 'batch', 'ntasks'], number=100, _='# of mpi tasks/node'}
-  comment = {noheader = true, nofooter = true, number = -3110}
+  comment = {noheader = true, nofooter = true, number = -3410}
   
   [batch.slurm-footer]
   comment = {noheader = true, keep = true, number = -3999}
@@ -34,21 +34,21 @@
 
     [batch.info.comment]
     header = 'Information about Job enviornment'
-    number = 1000
+    number = 2500
 
   [batch.run]
   run = {source=['create', 'batch', 'run'], number=100}
 
     [batch.run.comment]
     header = 'MPI Job execution Command'
-    number = 3000
+    number = 4500
 
   [batch.date]
   date = {value='date', number=300}
 
     [batch.date.comment]
     header = 'Job Completion Stamp'
-    number = 5000
+    number = 6500
 
 [parameter]
   
