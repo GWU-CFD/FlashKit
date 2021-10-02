@@ -112,7 +112,7 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                 xslice = slice(None, -1 if lw_loc == 'facex' else None)
                 yslice = slice(None, -1 if lw_loc == 'facey' else None)
                 zslice = slice(None, -1 if lw_loc == 'facez' else None)
-                lw_blk_fshape = lw_shapes[lw_loc][:0:-1]
+                lw_blk_fshape = lw_shapes[lw_loc][::-1]
                 lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_sizes)]
 
                 if lw_ndim == 3:
