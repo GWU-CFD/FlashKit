@@ -60,7 +60,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['setup'] = f'{python} {sub}/{sim}/ +{grid} +hdf5{parallelIO}{shortcuts}' \
                     f' -auto -{flag}{options} -objdir={objdir} -site={site}' \
                     f' -{ndim}d -nxb={nxb} -nyb={nyb}{f" -nzb={nzb}" if ndim == 3 else ""}' \
-                    f'{variables}'.split()
+                    f' {variables}'.split()
     args['name'] = objdir
     logger.debug(f'api -- Constructed setup command.')
 

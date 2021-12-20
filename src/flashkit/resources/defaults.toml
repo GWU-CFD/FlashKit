@@ -79,7 +79,7 @@
   zmethod = 'uniform'
 
   [create.interp]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center'}
+  fields = {velx='facex', vely='facey', velz='facez', temp='center', pres='center'}
  
   [create.par]
   sources = ['space', 'mesh']
