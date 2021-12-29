@@ -71,7 +71,7 @@
   sources = ['bash', 'run']
 
   [create.block]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center'}
+  fields = {velx='facex', vely='facey', velz='facez', temp='center', pres='center'}
 
   [create.grid]
   xmethod = 'uniform'
