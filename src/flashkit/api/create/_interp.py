@@ -71,7 +71,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # find the source file
     if not step_given:
         step = sorted([int(file[-4:]) for file in listdir if full_cond(file)])[-1]
-        if not step: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
+        if step == None: raise AutoError(f'Cannot automatically identify simulation file on path {path}')
         args['step'] = step
 
     # gather arguments into appropriate tuples
