@@ -36,3 +36,6 @@ coverage.xml
 
 # linting
 .pylintrc
+
+# visual studio
+.vscode

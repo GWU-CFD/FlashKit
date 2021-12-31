@@ -32,6 +32,7 @@ __all__ = ['Flowing', ]
 
 # define configuration constants (internal)
 METHODS = CONFIG['support']['flow']['methods']
+FACEX, FACEY, FACEZ = CONFIG['create']['block']['grids'][1:]
 
 # define default paramater configuration constants (internal)
 CONST = CONFIG['support']['flow']['const']
@@ -79,6 +80,27 @@ def stratified(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, 
         domain = numpy.heaviside(numpy.array([source[m,:] for m in meshed]) - shift[field], 0.5) * scale[field] + const[field]
         blocks[field] = numpy.ones(shapes[location], dtype=float) * domain[sliced]
 
+def taylor_green(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
+    """Method implementing a taylor-green vortex intial flow condition."""
+    ndim = 2 if all(g[2] is None for g in grids.values()) else 3
+    for field, location in fields.items():
+        sx, sy = grids[location][:2]
+        mx, my = ([m[n] for m in mesh] for n in range(2))
+        x = numpy.array([sx[m,:] for m in mx])[:, None, None, :]
+        y = numpy.array([sy[m,:] for m in my])[:, None, :, None]
+        if ndim == 2:
+            if location == FACEX: blocks[field] = numpy.cos(x) * numpy.sin(y)
+            elif location == FACEY: blocks[field] = numpy.sin(x) * numpy.cos(y)
+            else: blocks[field] = numpy.zeros(shapes[location], dtype=float)
+        else:
+            sz = grids[location][2]
+            mz = [m[2] for m in mesh]
+            z = numpy.array([sz[m,:] for m in mz])[:, :, None, None]
+            if location == FACEX: blocks[field] = numpy.cos(x) * numpy.sin(y) * numpy.sin(z)
+            elif location == FACEY: blocks[field] = numpy.sin(x) * numpy.cos(y) * numpy.sin(z)
+            elif location == FACEZ: blocks[field] = numpy.sin(x) * numpy.sin(y) * numpy.cos(z)
+            else: blocks[field] = numpy.zeros(shapes[location], dtype=float)
+
 def uniform(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
     """Method implementing a uniform (zero) field initialization."""
     for field, location in fields.items():
@@ -113,6 +135,7 @@ class Flowing:
             'constant': partial(constant, value=s_value), 
             'sinusoid': partial(sinusoid, const=s_const, freq=s_freq, scale=s_scale, shift=s_shift, value=s_value, width=s_width), 
             'stratified': partial(stratified, const=s_const, scale=s_scale, shift=s_shift),
+            'taylor': taylor_green,
             'uniform': uniform, 
                     }
 
