@@ -89,9 +89,12 @@ def taylor_green(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
         x = numpy.array([sx[m,:] for m in mx])[:, None, None, :]
         y = numpy.array([sy[m,:] for m in my])[:, None, :, None]
         if ndim == 2:
-            if location == FACEX: blocks[field] = numpy.cos(x) * numpy.sin(y)
-            elif location == FACEY: blocks[field] = numpy.sin(x) * numpy.cos(y)
-            else: blocks[field] = numpy.zeros(shapes[location], dtype=float)
+            if location == FACEX:
+                blocks[field] = -numpy.cos(x) * numpy.sin(y)
+            elif location == FACEY:
+                blocks[field] = numpy.sin(x) * numpy.cos(y)
+            else:
+                blocks[field] = numpy.cos(2 * x) * numpy.cos(2 * y)
         else:
             sz = grids[location][2]
             mz = [m[2] for m in mesh]
