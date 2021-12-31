@@ -94,15 +94,19 @@ def taylor_green(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
             elif location == FACEY:
                 blocks[field] = numpy.sin(x) * numpy.cos(y)
             else:
-                blocks[field] = numpy.cos(2 * x) * numpy.cos(2 * y)
+                blocks[field] = -0.25 * (numpy.cos(2 * x) + numpy.cos(2 * y))
         else:
             sz = grids[location][2]
             mz = [m[2] for m in mesh]
             z = numpy.array([sz[m,:] for m in mz])[:, :, None, None]
-            if location == FACEX: blocks[field] = numpy.cos(x) * numpy.sin(y) * numpy.sin(z)
-            elif location == FACEY: blocks[field] = numpy.sin(x) * numpy.cos(y) * numpy.sin(z)
-            elif location == FACEZ: blocks[field] = numpy.sin(x) * numpy.sin(y) * numpy.cos(z)
-            else: blocks[field] = numpy.zeros(shapes[location], dtype=float)
+            if location == FACEX:
+                blocks[field] = -numpy.cos(x) * numpy.sin(y) * numpy.sin(z)
+            elif location == FACEY:
+                blocks[field] = numpy.sin(x) * numpy.cos(y) * numpy.sin(z)
+            elif location == FACEZ:
+                blocks[field] = numpy.zeros(shapes[location], dtype=float)
+            else:
+                blocks[field] = -0.0625 * (numpy.cos(2 * x) + numpy.cos(2 * y)) * (numpy.cos(2 * z) + 2)
 
 def uniform(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
     """Method implementing a uniform (zero) field initialization."""
