@@ -107,20 +107,22 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
             # interpolate each field for the working block
             for field, (gr_loc, lw_fld, lw_loc) in flows.items():
 
-                # calculate flattened source data shape on low grid
-                lw_flt_fshape = [extent * size for extent, size in zip(lw_flt_extent, lw_shapes[lw_loc][:0:-1])]
+                # calculate flattened source data shape on low grid -- cannot use interpn w/ repeats
+                lw_blk_fshape = lw_shapes[lw_loc][::-1]
+                lw_flt_fshift = {'facex': (1, 0, 0), 'facey': (0, 1, 0), 'facez': (0, 0, 1)}.get(lw_loc, (0, 0, 0))
+                lw_flt_fshape = [extent * size + shift for extent, shift, size in zip(lw_flt_extent, lw_flt_fshift, lw_sizes)]
 
                 if lw_ndim == 3:
                 
                     # interpolate cell center fields
-                    xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten() # type: ignore
-                    yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten() # type: ignore
-                    zzz = lw_grids[lw_loc][2][lw_flt_uindex[2]].flatten() # type: ignore
-                    values = numpy.empty(lw_flt_fshape[0::-1], dtype=float)
+                    xxx = numpy.unique(lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten()) # type: ignore
+                    yyy = numpy.unique(lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten()) # type: ignore
+                    zzz = numpy.unique(lw_grids[lw_loc][2][lw_flt_uindex[2]].flatten()) # type: ignore
+                    values = numpy.empty(lw_flt_fshape[::-1], dtype=float)
                     for (i, j, k), source in zip(lw_flt_bindex, lw_blocks):
-                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
-                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
-                        kl, kh = k * lw_sizes[2], (k + 1) * lw_sizes[2]
+                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0] + lw_flt_fshift[0]
+                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1] + lw_flt_fshift[1]
+                        kl, kh = k * lw_sizes[2], (k + 1) * lw_sizes[2] + lw_flt_fshift[2]
                         values[kl:kh, jl:jh, il:ih] = inp_file.read(lw_fld)[source]
 
                     x = grids[gr_loc][0][mesh[0], None, None, :] # type: ignore
@@ -133,14 +135,14 @@ def interp_blocks(*, basename: str, bndboxes: N, centers: N, dest: str, filename
                     out_file.write_partial(field, output[field][step], block=block, index=gr_lIndex) 
 
                 elif lw_ndim == 2:
-            
+                    
                     # interpolate cell center fields
-                    xxx = lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten() # type: ignore
-                    yyy = lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten() # type: ignore
+                    xxx = numpy.unique(lw_grids[lw_loc][0][lw_flt_uindex[0]].flatten()) # type: ignore
+                    yyy = numpy.unique(lw_grids[lw_loc][1][lw_flt_uindex[1]].flatten()) # type: ignore
                     values = numpy.empty(lw_flt_fshape[1::-1], dtype=float)
                     for (i, j, _), source in zip(lw_flt_bindex, lw_blocks):
-                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0]
-                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1]
+                        il, ih = i * lw_sizes[0], (i + 1) * lw_sizes[0] + lw_flt_fshift[0]
+                        jl, jh = j * lw_sizes[1], (j + 1) * lw_sizes[1] + lw_flt_fshift[1]
                         values[jl:jh, il:ih] = inp_file.read(lw_fld)[source, 0]
 
                     x = grids[gr_loc][0][mesh[0], None, :] # type: ignore

@@ -23,7 +23,7 @@ DEF = get_defaults().create.tecplot
 PROGRAM = f'flashkit create tecplot'
 
 USAGE = f"""\
-usage: {PROGRAM} BASENAME [<opt>...] [<flg>...]
+usage: {PROGRAM} BASENAME [<flag>, ...]
 {__doc__}\
 """
 
@@ -55,6 +55,7 @@ class TecplotCreateApp(Application):
     ALLOW_NOARGS: bool = True
     
     interface.add_argument('basename', nargs='?')
+    
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
     

@@ -23,7 +23,7 @@ def axisUniqueIndex(iProcs: int, jProcs: int, kProcs: int) -> tuple[N, N, N]:
     """Create a grid of the unique (i.e., first) indicies and associated processes along each axis."""
     _, gr_axisMesh = axisMesh(iProcs, jProcs, kProcs)
     iInd = numpy.array([n for n in range(iProcs)])
-    jInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0])
+    jInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0 and k == 0])
     kInd = numpy.array([n for n, (i, j, k) in enumerate(gr_axisMesh) if i == 0 and j == 0])
     return iInd, jInd, kInd
 

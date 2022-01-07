@@ -62,8 +62,22 @@ files. FlashKit can also be used from python code with virtually the same interf
 
 A FlashKit command looks like the following:
 
-.. command-output:: flashkit create xdmf --auto
+.. static command input
+   command-output:: flashkit create xdmf --auto
     :cwd: ../../../../jobs/flashkit/driven/ug
+
+.. code-block::
+  
+  $ flaskit create xdmf --auto
+  Creating xdmf file from 26 simulation files
+  plotfiles = ./INS_LidDr_Cavity_hdf5_plt_cnt_xxxx
+  gridfiles = ./INS_LidDr_Cavity_hdf5_grd_xxxx
+  xdmf_file = ./INS_LidDr_Cavity.xmf
+       xxxx = [0,1,2,3,4, ...]
+
+  Writing xdmf data out to file ...
+  |████████████████████████████████████████| 26/26 [100%] in 0.6s (41.65/s)
+  |████████████████████████████████████████| 0 in 0.5s (0.00/s)
 
 You may see a different output if there are no FLASH simulation output files in your current working directory.
 
@@ -123,7 +137,33 @@ That is a lot of available options and flags for changing the behavior of the ``
 Let's test some of this out. For example, let's try creating a grid with 2x4 blocks with 8x12 points each in the x and y directions.
 Additionally let's stretch the grid using a centered tanh method in the y direction. This is accomplished with:
 
+.. static command input
+
 .. command-output:: flashkit create grid -X 8 -Y 12 -i 2 -j 4 -b tanh_mid -RF
+
+.. code-block:: 
+
+  $ flashkit create grid -X 8 -Y 12 -i 2 -j 4 -b tanh_mid -RF
+  Creating initial grid file from specification:
+  grid_pnts = (16, 48)
+  sim_range = (0.0, 0.0) -> (1.0, 1.0)
+  algorythm = ('uniform', 'tanh_mid')
+  grid_file = ./initGrid.h5
+  with_opts = 
+
+  Calculating grid data (no file out) ...
+  
+  Coordinates are as follows:
+  x:
+  [0.     0.0625 0.125  0.1875 0.25   0.3125 0.375  0.4375 0.5    0.5625 0.625  0.6875 0.75   0.8125 0.875  0.9375 1.    ]
+  
+  y:
+  [5.551115e-17 1.736147e-02 3.511072e-02 5.324168e-02 7.174719e-02 9.061900e-02 1.098478e-01 1.294229e-01 1.493330e-01
+   1.695651e-01 1.901056e-01 2.109395e-01 2.320508e-01 2.534226e-01 2.750370e-01 2.968751e-01 3.189171e-01 3.411426e-01
+   3.635303e-01 3.860582e-01 4.087039e-01 4.314444e-01 4.542564e-01 4.771162e-01 5.000000e-01 5.228838e-01 5.457436e-01
+   5.685556e-01 5.912961e-01 6.139418e-01 6.364697e-01 6.588574e-01 6.810829e-01 7.031249e-01 7.249630e-01 7.465774e-01
+   7.679492e-01 7.890605e-01 8.098944e-01 8.304349e-01 8.506670e-01 8.705771e-01 8.901522e-01 9.093810e-01 9.282528e-01
+   9.467583e-01 9.648893e-01 9.826385e-01 1.000000e+00]
 
 Notice that this time we used the short form of the options and the options and flags.
 

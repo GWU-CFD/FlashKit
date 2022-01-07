@@ -2,10 +2,14 @@
 
 [general]
 
+  [general.arch]
+  ntasks = 4 
+
   [general.files]
   checkpoint = '_hdf5_chk_'
   forced     = 'forced'
   grid       = '_hdf5_grd_'
+  hosts      = 'hosts'
   output     = ''
   plot       = '_hdf5_plt_cnt_'
 
@@ -25,6 +29,7 @@
   result  = false
 
   [general.space]
+  grid = 'regular'
   ndim = 2
   nxb  = 64
   nyb  = 64
@@ -54,7 +59,6 @@
   [build.scaling]
 
   [build.simulation]
-  grid     = 'regular'
   jobs     = 1
   optimize = 'opt'
   python   = 2
@@ -63,9 +67,11 @@
 [create]
 
   [create.batch]
+  launch = 'mpirun'
+  sources = ['bash', 'run']
 
   [create.block]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center'}
+  fields = {velx='facex', vely='facey', velz='facez', temp='center', pres='center'}
 
   [create.grid]
   xmethod = 'uniform'
@@ -73,7 +79,7 @@
   zmethod = 'uniform'
 
   [create.interp]
-  fields = {velx='facex', vely='facey', velz='facez', temp='center'}
+  fields = {velx='facex', vely='facey', velz='facez', temp='center', pres='center'}
  
   [create.par]
   sources = ['space', 'mesh']

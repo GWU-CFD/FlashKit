@@ -32,7 +32,7 @@ def build(*, name: str, path: str, force: bool, source: Path, setup: list[str], 
     """Executes the FLASH build process with the intended options."""
     build = source.joinpath(name)
     if build.exists() and not force:
-        logger.warning(f'The simulation build directory {name} exists!')
+        logger.info(f'The simulation build directory {name} exists!')
         return
     print(f'\n'
           f'------------------------------------------------------------------\n'
@@ -62,7 +62,7 @@ def make(*, name: str, force: bool, jobs: int, source: Path, context: Bar) -> No
     binary = build.joinpath(BINARY)
     setup = ['make', '-j', str(jobs)]
     if not build.exists():
-        logger.info(f'The simulation build directory {name} does not exist!')
+        logger.warning(f'The simulation build directory {name} does not exist!')
         return
     if binary.exists() and not force:
         logger.info(f'The simulation binary already exists!')

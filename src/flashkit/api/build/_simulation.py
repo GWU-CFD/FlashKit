@@ -44,7 +44,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         grid = {'paramesh': 'pm4dev', 'uniform': 'ug', 'regular': 'rg'}.get(args['grid'], args['grid'].strip('-+'))
         sub = args['subpath'].rstrip('/')
         sim = args['path'].rstrip('/')
-        objdir = f"{grid}{args['name']}_{nxb}_{nyb}" + '' if ndim == 2 else f'_{nzb}'
+        objdir = f"{grid}{args['name']}_{ndim}D{nxb}_{nyb}" + ('' if ndim == 2 else f'_{nzb}')
         python = './setup' if max(min(3, args['python']), 2) == 2 else './setup3'
         flag = args['optimize'].strip('-+')
         parallelIO = '' if not args.get('parallelIO', False) else ' +parallelIO'
@@ -60,7 +60,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['setup'] = f'{python} {sub}/{sim}/ +{grid} +hdf5{parallelIO}{shortcuts}' \
                     f' -auto -{flag}{options} -objdir={objdir} -site={site}' \
                     f' -{ndim}d -nxb={nxb} -nyb={nyb}{f" -nzb={nzb}" if ndim == 3 else ""}' \
-                    f'{variables}'.split()
+                    f' {variables}'.split()
     args['name'] = objdir
     logger.debug(f'api -- Constructed setup command.')
 
@@ -92,7 +92,7 @@ def simulation(**arguments: Any) -> None:
 
     Keyword Arguments:
         path (str):         Specify a simulation directory contained in the FLASH source/Simulation/SimulationMain.
-        name (str):         Specify a build directory basename; will be determined if not provided. 
+        name (str):         Specify a build directory basename; will not be determined if not provided. 
         ndim (int):         Number of simulation dimensions (i.e., 2 or 3).
         nxb (int):          Number of grid points per block in the i direction.
         nyb (int):          Number of grid points per block in the j direction.

@@ -57,7 +57,7 @@ def from_python(*, path: Iterable[str], source: Iterable[str], function: Iterabl
             if axis < ndim and axis in axes:
                 loader = importlib.machinery.SourceFileLoader(s, os.path.join(p, s + '.py'))
                 spec = importlib.util.spec_from_loader(loader.name, loader)
-                module = importlib.util.module_from_spec(spec)
+                module = importlib.util.module_from_spec(spec) # type: ignore
                 loader.exec_module(module)
                 kwargs = {kwarg: value[axis] for kwarg, value in options.items() if value[axis]}
                 coords[axis] = getattr(module, f)(size, low, high, **kwargs)

@@ -76,7 +76,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         else:
             files = sorted([int(file[-4:]) for file in listdir if full_cond(file)])
             args['message'] = f'[{",".join(str(f) for f in files[:(min(5, len(files)))])}{", ..." if len(files) > 5 else ""}]'
-            if not files:
+            if files is None:
                 raise AutoError(f'Cannot automatically identify simulation files on path {source}')
         args['files'] = files
     else:

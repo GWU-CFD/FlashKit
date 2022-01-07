@@ -32,19 +32,43 @@ __all__ = ['Flowing', ]
 
 # define configuration constants (internal)
 METHODS = CONFIG['support']['flow']['methods']
+FACEX, FACEY, FACEZ = CONFIG['create']['block']['grids'][1:]
 
 # define default paramater configuration constants (internal)
 CONST = CONFIG['support']['flow']['const']
 FREQ = CONFIG['support']['flow']['freq']
 SHIFT = CONFIG['support']['flow']['shift']
 SCALE = CONFIG['support']['flow']['scale']
+VALUE = CONFIG['support']['flow']['value']
+WIDTH = CONFIG['support']['flow']['width']
 FUNCTION = CONFIG['support']['flow']['function']
 SOURCE = CONFIG['support']['flow']['source']
 
-def constant(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: dict[str, float]) -> None:
+def constant(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, value: F) -> None:
     """Method implementing a constant value field initialization."""
     for field, location in fields.items():
-        blocks[field] = numpy.ones(shapes[location], dtype=float) * const[field]
+        blocks[field] = numpy.ones(shapes[location], dtype=float) * value[field]
+
+def sinusoid(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, 
+        const: F, freq: F, scale: F, shift: F, value: F, width: F) -> None:
+    """Method implementing a sinusoidal based cold over hot intial condition."""
+    ndim = 2 if all(g[2] is None for g in grids.values()) else 3
+    for field, location in fields.items():
+        sx, sy = grids[location][:2]
+        mx, my = ([m[n] for m in mesh] for n in range(2))
+        x = numpy.array([sx[m,:] for m in mx])[:, None, None, :]
+        y = numpy.array([sy[m,:] for m in my])[:, None, :, None]
+        m, c, n, s, l, v = (src[field] for src in (scale, const, freq, shift, width, value))
+        if ndim == 2:
+            h = m * numpy.exp(-numpy.abs(x - 2 / l)) * numpy.sin(n * numpy.pi * (x - s) / l) + c
+            blocks[field] = numpy.where(y < h, numpy.full(shapes[location], v, dtype=float), 0.0)
+        else:
+            sz = grids[location][2]
+            mz = [m[2] for m in mesh]
+            z = numpy.array([sz[m,:] for m in mz])[:, :, None, None]
+            h = m * (numpy.exp(-numpy.abs(x - 2 / l)) * numpy.sin(n * numpy.pi * (x - s) / l) * 
+                     numpy.exp(-numpy.abs(y - 2 / l)) * numpy.sin(n * numpy.pi * (y - s) / l)) + c
+            blocks[field] = numpy.where(z < h, numpy.full(shapes[location], v, dtype=float), 0.0)
 
 def stratified(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, scale: F, shift: F) -> None:
     """Method implementing a cold over hot intial condition."""
@@ -56,6 +80,34 @@ def stratified(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S, const: F, 
         domain = numpy.heaviside(numpy.array([source[m,:] for m in meshed]) - shift[field], 0.5) * scale[field] + const[field]
         blocks[field] = numpy.ones(shapes[location], dtype=float) * domain[sliced]
 
+def taylor_green(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
+    """Method implementing a taylor-green vortex intial flow condition."""
+    ndim = 2 if all(g[2] is None for g in grids.values()) else 3
+    for field, location in fields.items():
+        sx, sy = grids[location][:2]
+        mx, my = ([m[n] for m in mesh] for n in range(2))
+        x = numpy.array([sx[m,:] for m in mx])[:, None, None, :]
+        y = numpy.array([sy[m,:] for m in my])[:, None, :, None]
+        if ndim == 2:
+            if location == FACEX:
+                blocks[field] = -numpy.cos(x) * numpy.sin(y)
+            elif location == FACEY:
+                blocks[field] = numpy.sin(x) * numpy.cos(y)
+            else:
+                blocks[field] = -0.25 * (numpy.cos(2 * x) + numpy.cos(2 * y))
+        else:
+            sz = grids[location][2]
+            mz = [m[2] for m in mesh]
+            z = numpy.array([sz[m,:] for m in mz])[:, :, None, None]
+            if location == FACEX:
+                blocks[field] = -numpy.cos(x) * numpy.sin(y) * numpy.sin(z)
+            elif location == FACEY:
+                blocks[field] = numpy.sin(x) * numpy.cos(y) * numpy.sin(z)
+            elif location == FACEZ:
+                blocks[field] = numpy.zeros(shapes[location], dtype=float)
+            else:
+                blocks[field] = -0.0625 * (numpy.cos(2 * x) + numpy.cos(2 * y)) * (numpy.cos(2 * z) + 2)
+
 def uniform(*, blocks: M, fields: D, grids: G, mesh: I, shapes: S) -> None:
     """Method implementing a uniform (zero) field initialization."""
     for field, location in fields.items():
@@ -66,7 +118,8 @@ class Flowing:
     methods: dict[str, str]
     flow: dict[str, Callable[..., None]]
 
-    def __init__(self, methods: D, root: str, *, const: D = {}, freq: D = {}, shift: D = {}, scale: D = {},
+    def __init__(self, methods: D, root: str, *,
+                 const: D = {}, freq: D = {}, shift: D = {}, scale: D = {}, value: D = {}, width: D = {},
                  function: D = {}, path: D = {}, source: D = {}, **kwargs):
     
         assert all(method in METHODS for method in methods.values()), 'Unknown Flow Initiation Method Specified!'
@@ -78,14 +131,18 @@ class Flowing:
         s_freq = {key: freq.get(key, FREQ) for key in keys}
         s_shift = {key: shift.get(key, SHIFT) for key in keys}
         s_scale = {key: scale.get(key, SCALE) for key in keys}
+        s_value = {key: value.get(key, VALUE) for key in keys}
+        s_width = {key: width.get(key, WIDTH) for key in keys}
         s_function = {key: function.get(key, FUNCTION) for key in keys}
         s_path = {key: path.get(key, root) for key in keys}
         s_source = {key: source.get(key, SOURCE) for key in keys}
         s_meta = {kwarg: {key: value.get(key, None) for key in keys} for kwarg, value in kwargs.items()}
         
         self.flow = {
-            'constant': partial(constant, const=s_const), 
-            'stratified': partial(stratified, const=s_const, scale=s_scale, shift=s_shift), 
+            'constant': partial(constant, value=s_value), 
+            'sinusoid': partial(sinusoid, const=s_const, freq=s_freq, scale=s_scale, shift=s_shift, value=s_value, width=s_width), 
+            'stratified': partial(stratified, const=s_const, scale=s_scale, shift=s_shift),
+            'taylor': taylor_green,
             'uniform': uniform, 
                     }
 

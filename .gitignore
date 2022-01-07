@@ -7,6 +7,10 @@ __pycache__/
 # Distribution / packaging
 *.egg-info/
 
+# Python Build
+/bin
+/build
+
 # Sphinx Build files
 doctrees/
 docs/build/
@@ -32,3 +36,6 @@ coverage.xml
 
 # linting
 .pylintrc
+
+# visual studio
+.vscode

@@ -73,3 +73,8 @@ def force_debug(state: bool = True) -> None:
     """Force the use of debugging logging level"""
     if state: logger.setLevel(logging.DEBUG)
     logger.debug('Force -- DEBUG Logging Level!')
+
+def force_debug_console(state: bool = True) -> None:
+    """Force the use of debugging logging level on console"""
+    if state: console.setLevel(logging.DEBUG)
+    logger.debug('Force -- DEBUG Logging Level @ Console!')
