@@ -77,6 +77,7 @@ class SimulationBuildApp(Application):
 
     interface.add_argument('path', nargs='?')
     interface.add_argument('name', nargs='?')
+    
     interface.add_argument('-D', '--ndim', type=int) 
     interface.add_argument('-X', '--nxb', type=int) 
     interface.add_argument('-Y', '--nyb', type=int) 
@@ -91,10 +92,23 @@ class SimulationBuildApp(Application):
     interface.add_argument('-u', '--subpath')
     interface.add_argument('-b', '--source')
     interface.add_argument('-j', '--jobs', type=int)
-    interface.add_argument('-H', '--parallelIO', action='store_const', const=True)
-    interface.add_argument('-C', '--compile', action='store_const', const=True)
-    interface.add_argument('-B', '--build', action='store_const', const=True)
-    interface.add_argument('-F', '--force', action='store_const', const=True)
+
+    parallelIO_interface = interface.add_mutually_exclusive_group()
+    parallelIO_interface.add_argument('-H', '--parallelIO', action='store_true')
+    parallelIO_interface.add_argument('--no-parallelIO', dest='parallelIO', action='store_false')
+
+    compile_interface = interface.add_mutually_exclusive_group()
+    compile_interface.add_argument('-C', '--compile', action='store_true')
+    compile_interface.add_argument('--no-compile', dest='compile', action='store_false')
+
+    build_interface = interface.add_mutually_exclusive_group()
+    build_interface.add_argument('-B', '--build', action='store_true')
+    build_interface.add_argument('--no-build', dest='build', action='store_false')
+
+    force_interface = interface.add_mutually_exclusive_group()
+    force_interface.add_argument('-F', '--force', action='store_true')
+    force_interface.add_argument('--no-force', dest='force', action='store_false')
+
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
 

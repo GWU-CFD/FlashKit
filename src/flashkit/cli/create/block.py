@@ -19,7 +19,7 @@ DEF = get_defaults().create.block
 PROGRAM = f'flashkit create block'
 
 USAGE = f"""\
-usage: {PROGRAM} [<opt>...] [<flg>...]
+usage: {PROGRAM} [<option> VALUE, ...] [<flag>, ...]
 {__doc__}\
 """
 

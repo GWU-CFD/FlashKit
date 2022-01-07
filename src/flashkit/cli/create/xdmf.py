@@ -69,6 +69,7 @@ class XdmfCreateApp(Application):
     ALLOW_NOARGS: bool = True
 
     interface.add_argument('basename', nargs='?')
+
     interface.add_argument('-b', '--low', type=int) 
     interface.add_argument('-e', '--high', type=int) 
     interface.add_argument('-s', '--skip', type=int) 
@@ -79,8 +80,15 @@ class XdmfCreateApp(Application):
     interface.add_argument('-c', '--plot')
     interface.add_argument('-g', '--grid')
     interface.add_argument('-q', '--force')
-    interface.add_argument('-A', '--auto', action='store_const', const=True)
-    interface.add_argument('-B', '--find', action='store_const', const=True)
+
+    auto_interface = interface.add_mutually_exclusive_group()
+    auto_interface.add_argument('-A', '--auto', action='store_true')
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+
+    find_interface = interface.add_mutually_exclusive_group()
+    find_interface.add_argument('-B', '--find', action='store_true')
+    find_interface.add_argument('--no-find', dest='find', action='store_false')
+
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
 

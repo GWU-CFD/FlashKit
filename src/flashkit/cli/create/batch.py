@@ -27,7 +27,7 @@ SKIP = CONFIG['create']['batch']['nosource']
 PROGRAM = f'flashkit create batch'
 
 USAGE = f"""\
-usage: {PROGRAM} JOB BUILD BASENAME TEMPLATES [<option> VALUE, ...] [<switch>, ...], [<flag>, ...]
+usage: {PROGRAM} JOB BUILD BASENAME TEMPLATES [<option> VALUE, ...] [<switch>, ...] [<flag>, ...]
 {__doc__}\
 """
 
@@ -72,10 +72,10 @@ switches:
 -H, --hostfile   Use a hostfile in the MPI parallel execution command.
 -M, --notasks    Do not specify number of tasks in the MPI parallel execution command.
 -N, --nosources  Do not use any library default batch templates.
--F, --nofile     Do not write the assembled shell commands to file.
--R, --result     Return the formated and assembled shell commands.
 
 flags:
+-F, --nofile     Do not write the assembled shell commands to file.
+-R, --result     Return the formated and assembled shell commands.
 -I, --ignore     Ignore configuration file provided arguments, options, and flags.
 -O, --options    Show the available options (i.e., defaults and config file format) and exit.
 -S, --available  List the available library default batch templates and exit.
@@ -98,6 +98,7 @@ class BatchCreateApp(Application):
     interface.add_argument('build', nargs='?')
     interface.add_argument('basename', nargs='?')
     interface.add_argument('templates', nargs='?', type=ListStr)
+
     interface.add_argument('-D', '--ndim', type=int) 
     interface.add_argument('-X', '--nxb', type=int) 
     interface.add_argument('-Y', '--nyb', type=int) 
@@ -117,15 +118,37 @@ class BatchCreateApp(Application):
     interface.add_argument('-q', '--force')
     interface.add_argument('-r', '--batch')
     interface.add_argument('-o', '--out')
-    interface.add_argument('-A', '--auto', action='store_const', const=True)
-    interface.add_argument('-B', '--find', action='store_const', const=True)
-    interface.add_argument('-C', '--redirect', action='store_const', const=True)
-    interface.add_argument('-T', '--screen', action='store_const', const=True)
-    interface.add_argument('-H', '--hostfile', action='store_const', const=True)
-    interface.add_argument('-M', '--notasks', action='store_const', const=True)
-    interface.add_argument('-N', '--nosources', action='store_const', const=True)
-    interface.add_argument('-F', '--nofile', action='store_const', const=True)
-    interface.add_argument('-R', '--result', action='store_const', const=True)
+
+    auto_interface = interface.add_mutually_exclusive_group()
+    auto_interface.add_argument('-A', '--auto', action='store_true')
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+
+    find_interface = interface.add_mutually_exclusive_group()
+    find_interface.add_argument('-B', '--find', action='store_true')
+    find_interface.add_argument('--no-find', dest='find', action='store_false')
+
+    redirect_interface = interface.add_mutually_exclusive_group()
+    redirect_interface.add_argument('-C', '--redirect', action='store_true')
+    redirect_interface.add_argument('--no-redirect', dest='redirect', action='store_false')
+
+    screen_interface = interface.add_mutually_exclusive_group()
+    screen_interface.add_argument('-T', '--screen', action='store_true')
+    screen_interface.add_argument('--no-screen', dest='screen', action='store_false')
+
+    hostfile_interface = interface.add_mutually_exclusive_group()
+    hostfile_interface.add_argument('-H', '--hostfile', action='store_true')
+    hostfile_interface.add_argument('--no-hostfile', dest='hostfile', action='store_false')
+
+    notasks_interface = interface.add_mutually_exclusive_group()
+    notasks_interface.add_argument('-M', '--notasks', action='store_true')
+    notasks_interface.add_argument('--no-notasks', dest='notasks', action='store_false')
+
+    nosources_interface = interface.add_mutually_exclusive_group()
+    nosources_interface.add_argument('-N', '--nosources', action='store_true')
+    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_false')
+
+    interface.add_argument('-F', '--nofile', action='store_true')
+    interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
     interface.add_argument('-S', '--available', action='store_true')

@@ -90,3 +90,15 @@ def check_xdmf_options(basename, low, high, skip, files,path, dest, out, plot, g
     with patch('sys.argv', ['flashkit', 'create', 'xdmf'] + provided):
         assert STATUS.success == main()
         xdmf.xdmf.assert_called_with(**expected)
+
+    # test negation of switch form arguments
+    _files = ','.join(str(f) for f in files)
+    _ignore = '--ignore ' if ignore else ''
+    _auto = '--no-auto ' if not auto else '--auto '
+    _find = '--no-find ' if not find else '--find '
+    provided = f'{basename} --low {low} --high {high} --skip {skip} --files {_files} ' \
+               f'--path {path} --dest {dest} --out {out} --plot {plot} --grid {grid} --force {force} ' \
+               f'{_ignore}{_auto}{_find}'.split()
+    with patch('sys.argv', ['flashkit', 'create', 'xdmf'] + provided):
+        assert STATUS.success == main()
+        xdmf.xdmf.assert_called_with(**expected)

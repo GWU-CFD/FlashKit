@@ -48,11 +48,11 @@ switches:
 -A, --auto           Use all templates specified in all configuration files.
 -N, --nosources      Do not use any library default parameter templates.
 -D, --duplicates     Allow the writing of duplicate parameters if there are multiple matches.
+
+flags:
 -F, --nofile         Do not write the assembled parameters to file.
 -R, --result         Return the formated and assembled parameters.
 -I, --ignore         Ignore configuration file provided arguments, options, and flags.
-
-flags:
 -O, --options        Show the available options (i.e., defaults and config file format) and exit.
 -S, --available      List the available library default parameter templates and exit.
     --advanced       Include all defined templates when showing library default templates.
@@ -85,14 +85,25 @@ class ParCreateApp(Application):
     ALLOW_NOARGS: bool = True
 
     interface.add_argument('templates', nargs='?', type=ListStr)
+
     interface.add_argument('-p', '--params', type=DictAny)
     interface.add_argument('-s', '--sources', type=ListStr)
     interface.add_argument('-d', '--dest')
-    interface.add_argument('-A', '--auto', action='store_const', const=True)
-    interface.add_argument('-N', '--nosources', action='store_const', const=True)
-    interface.add_argument('-D', '--duplicates', action='store_const', const=True)
-    interface.add_argument('-F', '--nofile', action='store_const', const=True)
-    interface.add_argument('-R', '--result', action='store_const', const=True)
+
+    auto_interface = interface.add_mutually_exclusive_group()
+    auto_interface.add_argument('-A', '--auto', action='store_true')
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+ 
+    nosources_interface = interface.add_mutually_exclusive_group()
+    nosources_interface.add_argument('-N', '--nosources', action='store_true')
+    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_false')
+
+    duplicates_interface = interface.add_mutually_exclusive_group()
+    duplicates_interface.add_argument('-D', '--duplicates', action='store_true')
+    duplicates_interface.add_argument('--no-duplicates', dest='duplicates', action='store_false')
+
+    interface.add_argument('-F', '--nofile', action='store_true')
+    interface.add_argument('-R', '--result', action='store_true')
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
     interface.add_argument('-S', '--available', action='store_true')

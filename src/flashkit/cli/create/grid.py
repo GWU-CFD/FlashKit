@@ -19,7 +19,7 @@ DEF = get_defaults().create.grid
 PROGRAM = f'flashkit create grid'
 
 USAGE = f"""\
-usage: {PROGRAM} [<opt>...] [<flg>...]
+usage: {PROGRAM} [<option> VALUE, ...] [<flag>, ...]
 {__doc__}\
 """
 
