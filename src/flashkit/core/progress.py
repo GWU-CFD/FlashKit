@@ -121,8 +121,8 @@ class SimpleBar(threading.Thread):
 
 def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""
-    if null: return null_bar #NULL_BAR 
-    if is_parallel(): return SimpleBar
+    if null: return null_bar #NULL_BAR
+    if is_parallel() or True: return SimpleBar
     try:
         pkg_resources.get_distribution('alive_progress')
         from alive_progress import alive_bar, config_handler # type: ignore

@@ -11,14 +11,14 @@ import re
 import sys
 
 # internal libraries
+from ...api.create._grid import grid ## FUTURE
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import get_bar, null_bar
 from ...core.stream import Instructions, mail
-from ...library.create_grid import read_coords
 from ...library.create_interp import SimulationData, interp_blocks
-from ...resources import CONFIG, DEFAULTS
-from ...support.grid import get_blocks, get_grids, get_shapes
+from ...resources import CONFIG
+from ...support.stationary import poisson2d, divergence2d, correct2d ## FUTURE
 from ...support.types import Blocks
 
 # external libraries
@@ -193,10 +193,50 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     result = args.pop('result')
     cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
+    normalize = arguments.pop('normalize', False) ## FUTURE
     
     destination = SimulationData.from_options(coords=coords, ndim=ndim, path=dest, procs=procs, sizes=sizes)
     plot_source = SimulationData.from_plot_files(basename=basename, grid=gridname, path=path, plot=plotname, step=plotstep)
     blocks = interp_blocks(destination=destination, source=plot_source, **args)
+
+    if normalize: ## FUTURE
+        print('\n#### FUTURE MODE (--normalize) ####\n')
+        
+        #####################################################################
+        ####                   Prepare Source Fields                     ####
+        #####################################################################
+
+        nxb, nyb, _ = tuple(s * p for s, p in zip(sizes, procs))
+        xrange, yrange, _ = destination.ranges
+        coords = grid(ndim=ndim, nxb=nxb, nyb=nyb, iprocs=1, jprocs=1, xrange=xrange, yrange=yrange, cmdline=False, nofile=True, result=True, ignore=True)
+        flat_source = SimulationData.from_options(ndim=ndim, path=dest, procs=(1, 1, 1), sizes=(nxb, nyb, 1), coords=coords, block='temp.h5')
+        flat_blocks = interp_blocks(destination=flat_source, source=destination, flows={'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}, nofile=False, context=null_bar)
+
+        #####################################################################
+        ####                  Make Source Divergence Free                ####
+        #####################################################################
+        print('\n\nSolving Poisson Equation ...')
+
+         # setup interpolated fields
+        us = flat_blocks['velx'][0,0,:,:]
+        vs = flat_blocks['vely'][0,0,:,:]
+
+        # calculate divergence of interpolated high resolution velocity field
+        dust = divergence2d(u=us, v=vs, xfaces=coords[0], yfaces=coords[1])
+
+        # solve poisson equation for pressure
+        delp, _ = poisson2d(source=dust, xfaces=coords[0], yfaces=coords[1], xtype='periodic', ytype='periodic', itermax=100)
+
+        # correct the interpolated high resolution velocity field
+        u, v = us.copy(), vs.copy()
+        correct2d(delp=delp, u=u, v=v, xfaces=coords[0], yfaces=coords[1], xtype='periodic', ytype='periodic')
+
+        #####################################################################
+        ####            Write Out Divergence Free Fields                 ####
+        #####################################################################
+
+        print('\nBlock-ifying Simulation Data ...')
+        interp_blocks(destination=destination, source=flat_source, flows={'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}, nofile=False, context=null_bar)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)

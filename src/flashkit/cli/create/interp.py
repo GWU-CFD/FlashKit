@@ -108,6 +108,8 @@ class InterpCreateApp(Application):
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
 
+    interface.add_argument('--normalize', action='store_true') ## FUTURE
+
     def run(self) -> None:
         """Buisness logic for creating block using interpolatione, from command line."""
         
@@ -117,5 +119,6 @@ class InterpCreateApp(Application):
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'step', 
                   'plot', 'grid', 'force', 'path', 'dest', 'auto', 'find', 'ignore', 'result', 'nofile'}
+        if self.shared.future: options.add('normalize') ## FUTURE
         local = {key: getattr(self, key) for key in options}
         interp(**local, cmdline=True)
