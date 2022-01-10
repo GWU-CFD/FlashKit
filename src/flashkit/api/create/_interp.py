@@ -16,7 +16,7 @@ from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar
 from ...core.stream import Instructions, mail
 from ...library.create_grid import read_coords
-from ...library.create_interp import interp_blocks
+from ...library.create_interp import SimulationData, interp_blocks
 from ...resources import CONFIG, DEFAULTS
 from ...support.grid import get_blocks, get_grids, get_shapes
 from ...support.types import Blocks
@@ -129,7 +129,7 @@ ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'auto', 'find', 'force', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
-MAPPING = {'grid': 'gridname', 'plot': 'filename'}
+MAPPING = {'grid': 'gridname', 'plot': 'plotname', 'step': 'plotstep'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single
@@ -181,19 +181,22 @@ def interp(**arguments: Any) -> Optional[Blocks]:
         you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
     """
     args = process_arguments(**arguments)
-    path = args.pop('dest')
+    path = args.pop('path')
+    dest = args.pop('dest')
     ndim = args.pop('ndim')
     procs = args.pop('procs')
     sizes = args.pop('sizes')
+    basename = args.pop('basename')
+    gridname = args.pop('gridname')
+    plotname = args.pop('plotname')
+    plotstep = args.pop('plotstep')
     result = args.pop('result')
     cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
     
-    if coords is None: coords = read_coords(path=path, ndim=ndim)
-    shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
-    grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    blocks = interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, ndim=ndim, procs=procs, shapes=shapes, **args)
+    destination = SimulationData.from_options(coords=coords, ndim=ndim, path=dest, procs=procs, sizes=sizes)
+    plot_source = SimulationData.from_plot_files(basename=basename, grid=gridname, path=path, plot=plotname, step=plotstep)
+    blocks = interp_blocks(destination=destination, source=plot_source, **args)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)
