@@ -35,22 +35,23 @@ class SimulationData:
     blkPath: str
     bndboxes: N
     centers: N
+    coords: Coords
     grids: Grids
     ndim: int
     numProcs: int
     shapes: Shapes
     sizes: tuple[int, int, int]
 
-    def __init__(self, *, axis: tuple[int, int, int], block: str, boxes: N, centers: N, grids: Grids, 
-                 ndim: int, procs: int, ranges: list[tuple[int, int]], shapes: Shapes, sizes: tuple[int, int, int]) -> None:
+    def __init__(self, *, axis: tuple[int, int, int], block: str, boxes: N, centers: N, coords: Coords, grids: Grids, 
+                 ndim: int, procs: int, shapes: Shapes, sizes: tuple[int, int, int]) -> None:
         self.axisNumProcs = axis
         self.blkPath = block
         self.bndboxes = boxes.copy()
         self.centers = centers.copy()
+        self.coords = coords
         self.grids = grids
         self.ndim = ndim
         self.numProcs = int(procs)
-        self.ranges = ranges
         self.shapes = shapes
         self.sizes = sizes
 
@@ -94,7 +95,6 @@ class SimulationData:
         with h5py.File(plotfile, 'r') as file:
             scalars = list(file['integer scalars'])
             runtime = list(file['integer runtime parameters'])
-            realpar = list(file['real runtime parameters'])
             numProcs = first_true(scalars, lambda l: 'globalnumblocks' in str(l[0]))[1]
             axisNumProcs = (
                     first_true(runtime, lambda l: 'iprocs' in str(l[0]))[1],
@@ -104,13 +104,6 @@ class SimulationData:
                     first_true(scalars, lambda l: 'nxb' in str(l[0]))[1],
                     first_true(scalars, lambda l: 'nyb' in str(l[0]))[1],
                     first_true(scalars, lambda l: 'nzb' in str(l[0]))[1])
-            ranges = [(
-                first_true(realpar, lambda l: 'xmin' in str(l[0]))[1],
-                first_true(realpar, lambda l: 'xmax' in str(l[0]))[1]),(
-                first_true(realpar, lambda l: 'ymin' in str(l[0]))[1],
-                first_true(realpar, lambda l: 'ymax' in str(l[0]))[1]),(
-                first_true(realpar, lambda l: 'zmin' in str(l[0]))[1],
-                first_true(realpar, lambda l: 'zmax' in str(l[0]))[1])]
             bndboxes = file['bounding box'][()]    
             centers = file['coordinates'][()]
             ndim = first_true(scalars, lambda l: 'dimensionality' in str(l[0]))[1]
@@ -123,7 +116,7 @@ class SimulationData:
             grids = get_grids(coords=coords, ndim=ndim, procs=axisNumProcs, sizes=sizes)
             shapes = get_shapes(ndim=ndim, procs=axisNumProcs, sizes=sizes)
 
-        return cls(axis=axisNumProcs, block=plotfile, boxes=bndboxes, centers=centers, grids=grids, ndim=ndim, procs=numProcs, ranges=ranges, shapes=shapes, sizes=sizes)
+        return cls(axis=axisNumProcs, block=plotfile, boxes=bndboxes, centers=centers, coords=coords, grids=grids, ndim=ndim, procs=numProcs, shapes=shapes, sizes=sizes)
 
     @classmethod
     def from_options(cls, *, block: Optional[str] = None, coords: Optional[Coords] = None, ndim: int, path: str, procs: tuple[int, int, int], sizes: tuple[int, int, int]):
@@ -132,12 +125,11 @@ class SimulationData:
         axisNumProcs, _ = axisMesh(*procs)
         numProcs = int(numpy.prod(axisNumProcs))
         if coords is None: coords = read_coords(path=path, ndim=ndim)
-        ranges = [(coords[0][0], coords[0][-1]), (coords[1][0], coords[1][-1]), (0, 1) if ndim == 2 else (coords[2][0], coords[2][-1])]
         shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
         grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
         centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
 
-        return cls(axis=axisNumProcs.tolist(), block=blockfile, boxes=boxes, centers=centers, grids=grids, ndim=ndim, procs=numProcs, ranges=ranges, shapes=shapes, sizes=sizes)
+        return cls(axis=axisNumProcs.tolist(), block=blockfile, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, procs=numProcs, shapes=shapes, sizes=sizes)
 
 @safe
 def interp_blocks(*, destination: SimulationData, source: SimulationData, flows: dict[str, tuple[str, str, str]], nofile: bool, context: Bar) -> dict[str, N]:

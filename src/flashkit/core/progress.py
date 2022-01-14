@@ -62,9 +62,9 @@ class SimpleBar(threading.Thread):
         return self.update
 
     def __exit__(self, *args, **kwargs) -> None:
-        self.calculate()
-        self.flush(self.final())
         self.stop_event.set()
+        self.join()
+        print('\n', flush=True)
 
     def __init__(self, total: Optional[int] = None, *, fps: float  = UPDATING):
         threading.Thread.__init__(self, name='Progress')
@@ -100,7 +100,7 @@ class SimpleBar(threading.Thread):
         return f'{self.entrance}|{done}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)\n'
 
     def flush(self, message: str) -> None:
-        print(message.ljust(self.terminal), end='\r')
+        print(message.ljust(self.terminal), end='\r', flush=True)
    
     def update(self) -> None:
         self.click += 1

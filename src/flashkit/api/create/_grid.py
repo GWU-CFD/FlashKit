@@ -72,7 +72,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    noattach = not (any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty())
     args['context'] = get_bar(null=noattach)
     return args
 
@@ -90,7 +90,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating initial grid file from specification:',
+        f'\nCreating initial grid file from specification:',
         f'  grid_pnts = {grids}',
         f'  sim_range = {lows} -> {highs}',
         f'  algorythm = {methods}',

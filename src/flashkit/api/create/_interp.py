@@ -10,19 +10,22 @@ import os
 import re
 import sys
 
+from flashkit.library.create_grid import calc_coords
+
 # internal libraries
-from ...api.create._grid import grid ## FUTURE
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
 from ...core.progress import get_bar, null_bar
 from ...core.stream import Instructions, mail
+from ...library.create_grid import calc_coords  ## FUTURE
 from ...library.create_interp import SimulationData, interp_blocks
 from ...resources import CONFIG
-from ...support.stationary import poisson2d, divergence2d, correct2d ## FUTURE
+from ...support.stationary import poisson2d, poisson3d, divergence2d, divergence3d, correct2d, correct3d ## FUTURE
 from ...support.types import Blocks
 
 # external libraries
 import numpy
+import h5py ## FUTURE
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
 def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
+    noattach = not (any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty())
     args['context'] = get_bar(null=noattach)
     return args
 
@@ -108,7 +111,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating block file by interpolationg simulation files:',
+        f'\nCreating block file by interpolationg simulation files:',
         f'                  {row(fields)}',
         f'  locations     = {row(locations)}',
         f'  sources       = {row(f_sources)}',
@@ -200,43 +203,70 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     blocks = interp_blocks(destination=destination, source=plot_source, **args)
 
     if normalize: ## FUTURE
-        print('\n#### FUTURE MODE (--normalize) ####\n')
+        logger.info('Implementing future support (normalize):')
         
         #####################################################################
         ####                   Prepare Source Fields                     ####
         #####################################################################
 
-        nxb, nyb, _ = tuple(s * p for s, p in zip(sizes, procs))
-        xrange, yrange, _ = destination.ranges
-        coords = grid(ndim=ndim, nxb=nxb, nyb=nyb, iprocs=1, jprocs=1, xrange=xrange, yrange=yrange, cmdline=False, nofile=True, result=True, ignore=True)
-        flat_source = SimulationData.from_options(ndim=ndim, path=dest, procs=(1, 1, 1), sizes=(nxb, nyb, 1), coords=coords, block='temp.h5')
-        flat_blocks = interp_blocks(destination=flat_source, source=destination, flows={'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}, nofile=False, context=null_bar)
+        nxb, nyb, nzb = tuple(s * p for s, p in zip(sizes, procs))
+        flows = {'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}
+        if ndim == 3: flows['velz'] = ('facez', 'velz', 'facez')
+        flat_source = SimulationData.from_options(ndim=ndim, path=dest, procs=(1, 1, 1), sizes=(nxb, nyb, nzb), coords=destination.coords, block='temp.h5')
+        logger.info("Flattening simulation data ...")
+        flat_blocks = interp_blocks(destination=flat_source, source=destination, flows=flows, nofile=False, context=null_bar)
 
         #####################################################################
         ####                  Make Source Divergence Free                ####
         #####################################################################
-        print('\n\nSolving Poisson Equation ...')
+        logger.info('Solving Poisson equation ...')
 
-         # setup interpolated fields
-        us = flat_blocks['velx'][0,0,:,:]
-        vs = flat_blocks['vely'][0,0,:,:]
+        if ndim == 2:
 
-        # calculate divergence of interpolated high resolution velocity field
-        dust = divergence2d(u=us, v=vs, xfaces=coords[0], yfaces=coords[1])
+            x = flat_source.coords[0]
+            y = flat_source.coords[1]
+            u = flat_blocks['velx'][0,0,:,:]
+            v = flat_blocks['vely'][0,0,:,:]
 
-        # solve poisson equation for pressure
-        delp, _ = poisson2d(source=dust, xfaces=coords[0], yfaces=coords[1], xtype='periodic', ytype='periodic', itermax=100)
+            dust = divergence2d(u=u, v=v, xfaces=x, yfaces=y)
+            delp, _ = poisson2d(source=dust, xfaces=x, yfaces=y, xtype='periodic', ytype='periodic', itermax=100)
+            correct2d(delp=delp, u=u, v=v, xfaces=x, yfaces=y, xtype='periodic', ytype='periodic')
+            
+            divu = divergence2d(u=u, v=v, xfaces=x, yfaces=y)
+            with  h5py.File(flat_source.blkPath, 'r+') as file:
+                file['velx'][0,0,:,:]
+                file['vely'][0,0,:,:]
 
-        # correct the interpolated high resolution velocity field
-        u, v = us.copy(), vs.copy()
-        correct2d(delp=delp, u=u, v=v, xfaces=coords[0], yfaces=coords[1], xtype='periodic', ytype='periodic')
+        elif ndim == 3:
+            
+            x = flat_source.coords[0]
+            y = flat_source.coords[1]
+            z = flat_source.coords[2]
+            u = flat_blocks['velx'][0,:,:,:]
+            v = flat_blocks['vely'][0,:,:,:]
+            w = flat_blocks['velz'][0,:,:,:]
+
+            dust = divergence3d(u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
+            delp, _ = poisson3d(source=dust, xfaces=x, yfaces=y, zfaces=z, xtype='periodic', ytype='periodic', ztype='periodic', itermax=100)
+            correct3d(delp=delp, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z, xtype='periodic', ytype='periodic', ztype='periodic')
+            
+            divu = divergence3d(u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
+            with  h5py.File(flat_source.blkPath, 'r+') as file:
+                file['velx'][0,:,:,:]
+                file['vely'][0,:,:,:]
+                file['velz'][0,:,:,:]
+
+        else:
+            pass
+
+        logger.info(f'Corrected with dust ({dust.min():.2e}, {dust.max():.2e}) --> divu ({divu.min():.2e}, {divu.max():.2e})')
 
         #####################################################################
         ####            Write Out Divergence Free Fields                 ####
         #####################################################################
 
-        print('\nBlock-ifying Simulation Data ...')
-        interp_blocks(destination=destination, source=flat_source, flows={'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}, nofile=False, context=null_bar)
+        logger.info('Block-ifying simulation data ...')
+        interp_blocks(destination=destination, source=flat_source, flows=flows, nofile=False, context=null_bar)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)
