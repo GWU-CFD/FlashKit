@@ -3,6 +3,9 @@
 # type annotations
 from __future__ import annotations
 
+# standard libraries
+import logging
+
 # internal libraries
 from ...api.create import block
 from ...core.configure import get_defaults
@@ -12,7 +15,9 @@ from ...core.parse import DictStr, DictDictAny
 
 # external libraries
 from cmdkit.app import Application
-from cmdkit.cli import Interface 
+from cmdkit.cli import Interface
+
+logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.block
 
@@ -92,4 +97,5 @@ class BlockCreateApp(Application):
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fmethod', 'fparam', 
                   'path', 'dest', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
+        logger.debug('Command -- Entry point for block command.')
         block(**local, cmdline=True)

@@ -22,12 +22,12 @@ def change_directory(path: Union[Path, str]) -> Iterator[None]:
     """Changes working directory and returns to previous on exit."""
     previous = Path.cwd()
     chdir(Path(path).expanduser().resolve(strict=True))
-    logger.debug(f'core -- Working dir changed to: {path}')
+    logger.debug(f'Core -- Working dir changed to: {path}.')
     try:
         yield
     finally:
         chdir(previous)
-        logger.debug(f'core -- Returned back to dir: {previous}')
+        logger.debug(f'Core -- Returned back to dir: {previous}.')
 
 def first_true(iterable, predictor):
     return next(filter(predictor, iterable))

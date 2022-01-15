@@ -34,11 +34,12 @@
   precision = 6          # precision if output to screen
 
   [create.interp]
-  method    = 'linear' # interpolation kernal 
-  linewidth = 120      # line width if ouput to screen
+  blkmsg    = 20       # width of verbose block list
   jitdist   = 'numba'  #  python distribuation supporting jit
-  tablespad = 10       # padding for table printing
+  linewidth = 120      # line width if ouput to screen
+  method    = 'linear' # interpolation kernal 
   precision = 6        # precision if output to screen
+  tablespad = 10       # padding for table printing
 
   [create.par]
   filename = 'flash.par'  # name of file holding runtime parameters
@@ -62,10 +63,11 @@
   user  = 'user'       # label prefix for trees in Configuration
 
   [core.logger]
-  console  = '%(message)s'  # console logging handler format
-  error = '%(levelname)s - %(message)s' # stderr logging handler format
-  record = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
-  trace = '%(asctime)s - %(message)s' # traceback logging handler format
+  console = '%(message)s'  # console logging handler format
+  error   = '%(levelname)s - %(message)s' # stderr logging handler format
+  record  = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
+  filter  = ['library', 'logging'] # verbose filter (inclusive) based on module path
+  trace   = '%(asctime)s - %(message)s' # traceback logging handler format
   logfile = 'flashkit.log' # name of the standard logging file
   excfile = 'traceback.log' # name of the traceback logging file
 

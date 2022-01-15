@@ -3,6 +3,9 @@
 # type annotations
 from __future__ import annotations
 
+# standard libraries
+import logging
+
 # internal libraries
 from ...api.create import xdmf
 from ...core.configure import get_defaults
@@ -13,6 +16,8 @@ from ...core.parse import ListInt
 # external libraries
 from cmdkit.app import Application
 from cmdkit.cli import Interface 
+
+logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.xdmf
 
@@ -102,4 +107,5 @@ class XdmfCreateApp(Application):
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
                    'out', 'plot', 'grid', 'force', 'auto', 'find', 'ignore'}
         local = {key: getattr(self, key) for key in options}
+        logger.debug('Command -- Entry point for xdmf command.')
         xdmf(**local)

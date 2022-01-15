@@ -8,8 +8,6 @@ from typing import Any, Optional
 import logging
 import os
 import re
-import sys
-from functools import partial
 
 # internal libraries
 from ...core.configure import get_arguments, get_defaults, get_templates
@@ -20,9 +18,8 @@ from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
 from ...library.create_batch import author_batch, write_batch
-from ...resources import CONFIG, TEMPLATES
+from ...resources import CONFIG
 from ...support.template import write_a_source
-from ...support.types import Template, Tree
 
 # external libraries
 from cmdkit.config import Namespace
@@ -47,13 +44,13 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # determine arguments passed
     if args.get('auto', False):
         bname_given = False
-        logger.debug(f'api -- Forced auto behavior for basename.')
+        logger.debug(f'Application -- Forced auto behavior for basename.')
     else:    
         bname_given = 'basename' in args.keys()
         if not bname_given: raise AutoError('Basename must be given, or use --auto.')  
     if args.get('find', False):
         templates_given = False
-        logger.debug(f'api -- Forced find behavior for templates.')
+        logger.debug(f'Application -- Forced find behavior for templates.')
     else:
         if 'templates' in args.keys():
             templates_given = True
@@ -64,13 +61,13 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             raise AutoError('Templates must be given, or use --find.')  
     if args.get('nosources', False):
         args['sources'] = list()
-        logger.debug(f'api -- Forced ignore behavior for sources.')
+        logger.debug(f'Application -- Forced ignore behavior for sources.')
 
     # resolve proper absolute directory paths
     args['path'] = os.path.realpath(os.path.expanduser(args['path']))
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
     args['source'] = os.path.realpath(os.path.expanduser(args['source']))
-    logger.debug(f'api -- Fully resolved the source and destination paths.')
+    logger.debug(f'Application -- Fully resolved the source and destination paths.')
     
     # prepare conditions in order to arrange a list of files to process
     str_include = re.compile(args['plot'])
@@ -99,7 +96,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             for path in paths 
             for template in read_a_leaf([space, TEMPLATE], arguments.namespaces) # type: ignore
             ]))
-        logger.debug(f'api -- Identified templates using all configuration files.')
+        logger.debug(f'Application -- Identified templates using all configuration files.')
 
     # identify the build directory from user input
     ndim = max(min(3, args['ndim']), 2)
@@ -138,7 +135,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     files = [file + '.toml' for file in args['templates']]
     sources = ['batch', ] + args['sources']
     args['construct'] = get_templates(local=Namespace(), sources=sources, templates=files)
-    logger.debug(f'api -- Constructed combined templated info.')
+    logger.debug(f'Application -- Constructed combined templated info.')
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:

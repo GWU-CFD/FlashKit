@@ -7,14 +7,13 @@ from typing import Any, Optional
 # standard libraries
 import logging
 import os
-import sys
 
 # internal libraries
 from ...core.parallel import safe, single, squash
 from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
-from ...resources import CONFIG, DEFAULTS
+from ...resources import CONFIG
 from ...support.types import Coords
 
 # external libraries
@@ -157,7 +156,7 @@ def grid(**arguments: Any) -> Optional[Coords]:
     nofile = args.pop('nofile')
     cmdline = args.pop('cmdline', False)
     
-    with args.pop('context')() as progress:
+    with args.pop('context')():
         coords = calc_coords(**args)
         if not nofile: write_coords(coords=coords, ndim=ndim, path=path)
     

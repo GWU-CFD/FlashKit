@@ -169,5 +169,5 @@ class BatchCreateApp(Application):
                    'source', 'launch', 'sources', 'path', 'dest', 'hosts', 'plot', 'force', 'batch', 'out',
                    'auto', 'find', 'redirect', 'screen', 'hostfile', 'notasks', 'nosources', 'nofile', 'result', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for batch command')
         batch(**local, cmdline=True)

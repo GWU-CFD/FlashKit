@@ -8,7 +8,7 @@ import argparse
 
 # internal libraries
 from ..core.configure import force_delayed, get_defaults
-from ..core.logging import force_debug, force_debug_console
+from ..core.logging import force_debug, force_verbose
 from ..core.parallel import force_parallel
 from ..core.tools import read_a_branch
 from ..resources import CONFIG, MAPPING, TEMPLATES
@@ -30,11 +30,10 @@ class DebugLogging(argparse.Action):
     """Create custom action for setting debug logging."""
     def __call__(self, parser, namespace, values, option_string=None):
         if getattr(namespace, self.dest):
-            force_debug_console()
+            force_debug()
         else:
             setattr(namespace, self.dest, True)
-            force_debug()
-
+            force_verbose()
 class ForceDelayed(argparse.Action):
     """Create custom action for setting delayed configuration enviornment."""
     def __call__(self, parser, namespace, values, option_string=None):

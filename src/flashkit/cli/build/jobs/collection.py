@@ -66,5 +66,5 @@ class CollectionJobsApp(Application):
         
         options = {'name', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for collection command.')
         #collection(**local, cmdline=True)

@@ -129,4 +129,5 @@ class InterpCreateApp(Application):
         elif self.correct:
             logger.warn('Attempting to use option --correct without invoking --future.')
         local = {key: getattr(self, key) for key in options}
+        logger.debug('Command -- Entry point for interp command.')
         interp(**local, cmdline=True)

@@ -123,5 +123,5 @@ class SimulationBuildApp(Application):
                    'optimize', 'shortcuts', 'flags', 'variables', 'subpath', 'source', 'jobs',
                    'parallelIO', 'compile', 'build', 'force', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for simulation command.')
         simulation(**local, cmdline=True)

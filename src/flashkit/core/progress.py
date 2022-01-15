@@ -10,7 +10,6 @@ import pkg_resources
 import threading
 import time
 import sys
-from contextlib import AbstractContextManager, nullcontext
 
 # internal libraries
 from .parallel import is_parallel
@@ -18,7 +17,8 @@ from ..resources import CONFIG
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union
+    from typing import Any, Callable, Optional
+    from contextlib import AbstractContextManager
     Bar = Callable[..., AbstractContextManager]
 
 # deal w/ runtime import
@@ -28,7 +28,7 @@ else:
 logger = logging.getLogger(__name__)
 
 # define public interface
-__all__ = ['SimpleBar', 'get_bar', 'null_bar', 'attach_context', ]
+__all__ = ['NullBar', 'SimpleBar', 'get_bar', 'attach_context', ]
 
 # define default constants
 BLANKING = CONFIG['core']['progress']['blanking']
@@ -40,13 +40,27 @@ FORCEBAR = CONFIG['core']['progress']['forcebar']
 TERMINAL = CONFIG['core']['progress']['terminal']
 UPDATING = CONFIG['core']['progress']['updating']
 
-def null_bar(*_) -> AbstractContextManager:
-    """Default context manager for progress bar."""
-    return nullcontext(lambda *_: None)
-
-def set_message(message: str) -> None:
+def set_message(message: str = '') -> None:
     """Provides a message capability to the progress bar."""
     SimpleBar.message = message
+
+class NullBar:
+    """Implements a null context manager with the same api as SimpleBar."""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self):
+        return self.update
+
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    def update(self):
+        pass
+
+    update.text = lambda *_: None
+
 class SimpleBar(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""
     progress: int = PROGRESS
@@ -64,6 +78,8 @@ class SimpleBar(threading.Thread):
     def __exit__(self, *args, **kwargs) -> None:
         self.stop_event.set()
         self.join()
+        set_message()
+        print(flush=True)
 
     def __init__(self, total: Optional[int] = None, *, fps: float  = UPDATING):
         threading.Thread.__init__(self, name='Progress')
@@ -92,11 +108,11 @@ class SimpleBar(threading.Thread):
         self.left = self.blanking * (self.progress - done)
 
     def final_known(self) -> str:
-        return f'{self.entrance}|{self.done}| {self.click}/{self.total} [{100.0:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s)\n'
+        return f'{self.entrance}|{self.done}| {self.click}/{self.total} [{100.0:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s)'
 
     def final_unknown(self) -> str:
         done = self.sentinal * self.progress
-        return f'{self.entrance}|{done}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)\n'
+        return f'{self.entrance}|{done}| {self.click} in {self.last:.1f}s ({self.rate:.2f}/s)'
 
     def flush(self, message: str) -> None:
         print(message.ljust(self.terminal), end='\r', flush=True)
@@ -121,8 +137,8 @@ class SimpleBar(threading.Thread):
 
 def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""
-    if null: return null_bar #NULL_BAR
-    if is_parallel() or FORCEBAR: return SimpleBar
+    if null: return NullBar
+    if FORCEBAR or is_parallel(): return SimpleBar
     try:
         pkg_resources.get_distribution('alive_progress')
         from alive_progress import alive_bar, config_handler # type: ignore
@@ -135,6 +151,6 @@ def attach_context(**args: Any) -> dict[str, Any]:
     """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
     noattach = not sys.stdout.isatty()
     args['context'] = get_bar(null=noattach)
-    if not noattach: logger.debug(f'api -- Attached a dynamic progress context')
+    if not noattach: logger.debug(f'Progress -- Attached a dynamic progress context.')
     return args
 

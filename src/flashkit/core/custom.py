@@ -46,12 +46,12 @@ def patched_error(patch: str) -> Callable[..., None]:
     """Factory to override simple raise w/ formatted message."""
     def wrapper(message: str) -> None:
         raise ArgumentError('\n'.join((patch, message)))
-    logger.debug(f'core -- Providing an ArgumentError w/ message wrapper.')
+    logger.debug(f'Custom -- Providing an ArgumentError w/ message wrapper.')
     return wrapper
 
 def patched_exceptions(patch: str, errors: Iterable[Type[Exception]] = [Exception, ]) -> dict[Type[Exception], Callable[[Exception], int]]:
     """Create dictionary based dispatcher for exception handeling."""
-    logger.debug(f'core -- Providing an dictionary of logger patched handlers.')
+    logger.debug(f'Custom -- Providing an dictionary of logger patched handlers.')
     return {error: patched_logging(patch) for error in errors}
 
 def patched_logging(patch: str) -> Callable[[Exception], int]:
@@ -59,5 +59,5 @@ def patched_logging(patch: str) -> Callable[[Exception], int]:
     def wrapper(exception: Exception, status: int = exit_status.runtime_error) -> int:
         handle_exception(exception, patch)
         return status
-    logger.debug(f'core -- Providing a wrapper for patched exception handler.')
+    logger.debug(f'Custom -- Providing a wrapper for patched exception handler.')
     return wrapper

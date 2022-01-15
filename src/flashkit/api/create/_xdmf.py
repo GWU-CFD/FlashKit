@@ -8,7 +8,6 @@ from typing import Any, Union
 import logging
 import os
 import re
-import sys
 
 # internal libraries
 from ...core.error import AutoError
@@ -16,7 +15,6 @@ from ...core.parallel import safe, single
 from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_xdmf import create_xdmf
-from ...resources import CONFIG, DEFAULTS
 
 # define public interface
 __all__ = ['xdmf', ]

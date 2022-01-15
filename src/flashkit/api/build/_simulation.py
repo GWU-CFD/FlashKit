@@ -6,17 +6,14 @@ from typing import Any
 
 # standard libraries
 import logging
-import os
-import sys
 from pathlib import Path
 
 # internal libraries
 from ...core.error import AutoError
-from ...core.parallel import safe, single, squash 
+from ...core.parallel import safe, single 
 from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.build_simulation import build, make
-from ...resources import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +32,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         args['source'] = Path(args['source']).expanduser().resolve(strict=True)
     except FileNotFoundError:
         raise AutoError('Cannot resolve path to FLASH source repository!')
-    logger.debug(f'api -- Fully resolved the FLASH source repository.')
+    logger.debug(f'Application -- Fully resolved the FLASH source repository.')
 
     try:
         # format options and validation of user input
@@ -54,7 +51,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
         site = args['site']
     except:
         raise AutoError('Failed to understand and validate input!')
-    logger.debug(f'api -- Validated user input and formated options.')
+    logger.debug(f'Application -- Validated user input and formated options.')
 
     # create setup command
     args['setup'] = f'{python} {sub}/{sim}/ +{grid} +hdf5{parallelIO}{shortcuts}' \
@@ -62,7 +59,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
                     f' -{ndim}d -nxb={nxb} -nyb={nyb}{f" -nzb={nzb}" if ndim == 3 else ""}' \
                     f' {variables}'.split()
     args['name'] = objdir
-    logger.debug(f'api -- Constructed setup command.')
+    logger.debug(f'Application -- Constructed setup command.')
 
     return args
 

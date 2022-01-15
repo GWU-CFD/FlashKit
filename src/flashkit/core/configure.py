@@ -132,12 +132,12 @@ TREES = cast(Dict[str, Namespace], None)
 
 def import_trees() -> None:
     """import once the enviorment is setup; responsibility of the api/cli."""
-    logger.debug('core -- initalize configuration on import')
+    logger.debug('Configure -- Initalize configuration on import.')
     THIS.TREES = prepare(gather(), MAPPING) # type: ignore 
 
 def get_defaults(*, local: Namespace = Namespace()) -> Configuration:
     """Constructs arguments from local and system defaults.""" 
-    logger.debug(f'core -- Prepairing to build arguments.')
+    logger.debug(f'Configure -- Prepairing to build arguments.')
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING))
 
 def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
@@ -146,7 +146,7 @@ def get_arguments(*, local: Namespace = Namespace()) -> Configuration:
     until the method call occurs, otherwise this happens on module import."""
     if THIS.TREES is None: import_trees() # type: ignore 
     trees = TREES if not _DELAYED else prepare(gather(), MAPPING)
-    logger.debug(f'core -- Prepairing to build arguments (Delayed was {_DELAYED}).')
+    logger.debug(f'Configure -- Prepairing to build arguments (Delayed was {_DELAYED}).')
     return harvest(local=local, **prepare({'system': DEFAULTS}, MAPPING), trees=trees)
 
 def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]] = None, templates: list[str] = []) -> BuilderConfiguration:
@@ -154,12 +154,12 @@ def get_templates(*, local: Namespace = Namespace(), sources: Optional[list[str]
     trees: dict[str, Namespace] = dict()
     for template in templates:
         trees.update(**prepare(gather(filename=template, stamp=False)))
-    logger.debug(f'core -- Built a collection of templates from files.')
+    logger.debug(f'Configure -- Built a collection of templates from files.')
     
     if sources is not None:
         source, *sections = sources
         system = prepare({'system': {key: value for key, value in TEMPLATES[source].items() if key in sections}})
-        logger.debug(f'core -- Appended templates with sections from library defaults.')
+        logger.debug(f'Configure -- Appended templates with sections from library defaults.')
         return BuilderConfiguration(**system, **trees, local=local)
 
     return BuilderConfiguration(**trees, local=local)

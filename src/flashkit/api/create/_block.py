@@ -7,7 +7,6 @@ from typing import Any, Optional
 # standard libraries
 import logging
 import os
-import sys
 
 # internal libraries
 from ...core.parallel import safe, single, squash
@@ -15,7 +14,7 @@ from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_block import calc_blocks, write_blocks
 from ...library.create_grid import read_coords
-from ...resources import CONFIG, DEFAULTS
+from ...resources import CONFIG
 from ...support.grid import get_grids, get_shapes
 from ...support.types import Blocks
 

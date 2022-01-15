@@ -126,5 +126,5 @@ class ParCreateApp(Application):
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for par command.')
         par(**local, cmdline=True)
