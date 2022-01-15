@@ -121,7 +121,7 @@ def simulation(**arguments: Any) -> None:
     jobs = args.pop('jobs')
     setup = args.pop('setup')
     path = args.pop('path')
-    cmdline = args.pop('cmdline', False)
+    _ = args.pop('cmdline', False)
     
     build(path=path, force=force_build, setup=setup, **args)
     if comp: make(force=force_make, jobs=jobs, **args)

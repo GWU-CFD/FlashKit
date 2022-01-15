@@ -11,7 +11,7 @@ import sys
 
 # internal libraries
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_block import calc_blocks, write_blocks
 from ...library.create_grid import read_coords
@@ -30,7 +30,6 @@ __all__ = ['block', ]
 # define configuration constants (internal)
 GRIDS = CONFIG['create']['block']['grids']
 METHOD = CONFIG['create']['block']['method']
-SWITCH = CONFIG['create']['block']['switch']
 NAME = CONFIG['create']['block']['name']
 LINEWIDTH = CONFIG['create']['block']['linewidth']
 OPTIONPAD = CONFIG['create']['block']['optionpad']
@@ -66,12 +65,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     return args
 
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    return args
-
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     dest = os.path.relpath(args['dest'])
@@ -84,7 +77,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating initial block file from specification:',
+        f'\nCreating initial block file from specification:',
         f'               {row(fields)}',
         f'  locations  = {row(locations)}',
         f'  algorythm  = {row(methods)}',

@@ -19,7 +19,7 @@ with open('src/flashkit/__meta__.py', mode='r') as source:
 DEPENDANCIES = [
         'cmdkit @ git+https://github.com/alentner/CmdKit.git@provider#egg=cmdkit-2.7.0', 
         'toml', 'psutil', 'h5py', 'numpy', 'scipy']
-OPTIONAL_PKG = {'mpi' : ['mpi4py', ], 'bar' : ['alive_progress', ], }
+OPTIONAL_PKG = {'mpi' : ['mpi4py', ], 'jit' : ['numba', ], 'bar' : ['alive_progress', ], }
 
 setup(
     name                 = metadata['__pkgname__'],

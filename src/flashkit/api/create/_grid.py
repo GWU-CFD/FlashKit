@@ -11,7 +11,7 @@ import sys
 
 # internal libraries
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
 from ...resources import CONFIG, DEFAULTS
@@ -28,7 +28,6 @@ __all__ = ['grid', ]
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
 COORDS = CONFIG['create']['grid']['coords']
-SWITCH = CONFIG['create']['grid']['switch']
 NAME = CONFIG['create']['grid']['name']
 LINEWIDTH = CONFIG['create']['grid']['linewidth']
 OPTIONPAD = CONFIG['create']['grid']['optionpad']
@@ -68,12 +67,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['path'] = os.path.realpath(os.path.expanduser(args['path']))
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
 
-    return args
-
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not (any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty())
-    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:

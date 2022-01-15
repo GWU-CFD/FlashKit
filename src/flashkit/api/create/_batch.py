@@ -149,7 +149,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     output = os.path.join(dest, args['filename'])
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating FLASH parameter file by processing the following:',
+        f'\nCreating FLASH parameter file by processing the following:',
         f'  templates     = {templates}',
         f'  sources       = {sources}',
         f'  batch_file    = {output}',

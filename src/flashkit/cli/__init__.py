@@ -8,9 +8,7 @@ import sys
 
 # internal libraries
 from ..__meta__ import __version__, __website__
-from ..core import logging
 from ..core.options import DebugLogging, ForceParallel
-from ..core import custom
 from ..core.custom import DictApp
 
 # external libraries

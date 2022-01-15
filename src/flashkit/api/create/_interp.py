@@ -8,24 +8,20 @@ from typing import Any, Optional
 import logging
 import os
 import re
-import sys
 
 from flashkit.library.create_grid import calc_coords
 
 # internal libraries
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar, null_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
-from ...library.create_grid import calc_coords  ## FUTURE
-from ...library.create_interp import SimulationData, interp_blocks
+from ...library.create_interp import SimulationData, correct_blocks, interp_blocks
 from ...resources import CONFIG
-from ...support.stationary import poisson2d, poisson3d, divergence2d, divergence3d, correct2d, correct3d ## FUTURE
 from ...support.types import Blocks
 
 # external libraries
 import numpy
-import h5py ## FUTURE
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +31,6 @@ __all__ = ['interp', ]
 # define configuration constants (internal)
 GRIDS = CONFIG['create']['block']['grids']
 NAME = CONFIG['create']['block']['name']
-SWITCH = CONFIG['create']['interp']['switch']
 LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
 PRECISION = CONFIG['create']['interp']['precision']
@@ -88,12 +83,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     args['flows'] = {field: (location, *args.get('fsource', {}).get(field, [field, location]))
             for field, location in args['fields'].items() if used(location)}
 
-    return args
-
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not (any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty())
-    args['context'] = get_bar(null=noattach)
     return args
 
 def log_messages(**args: Any) -> dict[str, Any]:
@@ -196,77 +185,15 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     result = args.pop('result')
     cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
-    normalize = arguments.pop('normalize', False) ## FUTURE
+    correct = arguments.pop('correct', False) ## FUTURE
     
     destination = SimulationData.from_options(coords=coords, ndim=ndim, path=dest, procs=procs, sizes=sizes)
     plot_source = SimulationData.from_plot_files(basename=basename, grid=gridname, path=path, plot=plotname, step=plotstep)
     blocks = interp_blocks(destination=destination, source=plot_source, **args)
 
-    if normalize: ## FUTURE
-        logger.info('Implementing future support (normalize):')
-        
-        #####################################################################
-        ####                   Prepare Source Fields                     ####
-        #####################################################################
-
-        nxb, nyb, nzb = tuple(s * p for s, p in zip(sizes, procs))
-        flows = {'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}
-        if ndim == 3: flows['velz'] = ('facez', 'velz', 'facez')
-        flat_source = SimulationData.from_options(ndim=ndim, path=dest, procs=(1, 1, 1), sizes=(nxb, nyb, nzb), coords=destination.coords, block='temp.h5')
-        logger.info("Flattening simulation data ...")
-        flat_blocks = interp_blocks(destination=flat_source, source=destination, flows=flows, nofile=False, context=null_bar)
-
-        #####################################################################
-        ####                  Make Source Divergence Free                ####
-        #####################################################################
-        logger.info('Solving Poisson equation ...')
-
-        if ndim == 2:
-
-            x = flat_source.coords[0]
-            y = flat_source.coords[1]
-            u = flat_blocks['velx'][0,0,:,:]
-            v = flat_blocks['vely'][0,0,:,:]
-
-            dust = divergence2d(u=u, v=v, xfaces=x, yfaces=y)
-            delp, _ = poisson2d(source=dust, xfaces=x, yfaces=y, xtype='periodic', ytype='periodic', itermax=100)
-            correct2d(delp=delp, u=u, v=v, xfaces=x, yfaces=y, xtype='periodic', ytype='periodic')
-            
-            divu = divergence2d(u=u, v=v, xfaces=x, yfaces=y)
-            with  h5py.File(flat_source.blkPath, 'r+') as file:
-                file['velx'][0,0,:,:]
-                file['vely'][0,0,:,:]
-
-        elif ndim == 3:
-            
-            x = flat_source.coords[0]
-            y = flat_source.coords[1]
-            z = flat_source.coords[2]
-            u = flat_blocks['velx'][0,:,:,:]
-            v = flat_blocks['vely'][0,:,:,:]
-            w = flat_blocks['velz'][0,:,:,:]
-
-            dust = divergence3d(u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
-            delp, _ = poisson3d(source=dust, xfaces=x, yfaces=y, zfaces=z, xtype='periodic', ytype='periodic', ztype='periodic', itermax=100)
-            correct3d(delp=delp, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z, xtype='periodic', ytype='periodic', ztype='periodic')
-            
-            divu = divergence3d(u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
-            with  h5py.File(flat_source.blkPath, 'r+') as file:
-                file['velx'][0,:,:,:]
-                file['vely'][0,:,:,:]
-                file['velz'][0,:,:,:]
-
-        else:
-            pass
-
-        logger.info(f'Corrected with dust ({dust.min():.2e}, {dust.max():.2e}) --> divu ({divu.min():.2e}, {divu.max():.2e})')
-
-        #####################################################################
-        ####            Write Out Divergence Free Fields                 ####
-        #####################################################################
-
-        logger.info('Block-ifying simulation data ...')
-        interp_blocks(destination=destination, source=flat_source, flows=flows, nofile=False, context=null_bar)
+    if correct:  ## FUTURE
+        logger.info("\nCorrecting block data ...")
+        with args['context'](): correct_blocks(destination)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)

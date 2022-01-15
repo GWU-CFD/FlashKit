@@ -5,12 +5,14 @@ from __future__ import annotations
 from typing import cast, Optional
 
 # standard libraries
+import logging
 import os
+import pkg_resources
 
 # internal libraries
 from ..core.error import LibraryError
-from ..core.parallel import Index, safe
-from ..core.progress import Bar
+from ..core.parallel import Index, safe, single
+from ..core.progress import Bar, null_bar
 from ..core.tools import first_true
 from ..library.create_grid import read_coords
 from ..resources import CONFIG
@@ -23,42 +25,47 @@ import numpy
 import h5py # type: ignore
 from scipy.interpolate import interpn # type: ignore
 
+logger = logging.getLogger(__name__)
+
 # define public interface
-__all__ = ['interp_blocks', 'SimulationData']
+__all__ = ['correct_blocks', 'interp_blocks', 'SimulationData']
 
 # define configuration constants (internal)
 BNAME = CONFIG['create']['block']['name']
 FACES = CONFIG['create']['block']['grids'][1:]
+JITDIST = CONFIG['create']['interp']['jitdist']
 METHOD = CONFIG['create']['interp']['method']
 class SimulationData:
-    axisNumProcs: tuple[int, int, int]
-    blkPath: str
-    bndboxes: N
+    axis_procs: tuple[int, int, int]
+    block_file: str
+    bound_boxes: N
     centers: N
     coords: Coords
     grids: Grids
     ndim: int
-    numProcs: int
+    num_blocks: int
+    path: str
     shapes: Shapes
     sizes: tuple[int, int, int]
 
     def __init__(self, *, axis: tuple[int, int, int], block: str, boxes: N, centers: N, coords: Coords, grids: Grids, 
-                 ndim: int, procs: int, shapes: Shapes, sizes: tuple[int, int, int]) -> None:
-        self.axisNumProcs = axis
-        self.blkPath = block
-        self.bndboxes = boxes.copy()
-        self.centers = centers.copy()
+                 ndim: int, path: str, procs: int, shapes: Shapes, sizes: tuple[int, int, int]) -> None:
+        self.axis_procs = axis
+        self.block_file = block
+        self.bound_boxes = boxes
+        self.centers = centers
         self.coords = coords
         self.grids = grids
         self.ndim = ndim
-        self.numProcs = int(procs)
+        self.num_blocks = int(procs)
+        self.path = path
         self.shapes = shapes
         self.sizes = sizes
 
     def blocks_from_bbox(self, box: N) -> list[int]:
         """Return all blocks that at are least partially overlaped by the bounding box."""
         overlaps = lambda ll, lh, hl, hh : not ((hh < ll) or (hl > lh))
-        return [blk for blk, bb in enumerate(self.bndboxes)
+        return [blk for blk, bb in enumerate(self.bound_boxes)
                 if all(overlaps(*low, *high) for low, high in zip(bb, box))]  
 
     def centers_unique(self, blocks: Optional[list[int]] = None) -> list[N]:
@@ -95,8 +102,8 @@ class SimulationData:
         with h5py.File(plotfile, 'r') as file:
             scalars = list(file['integer scalars'])
             runtime = list(file['integer runtime parameters'])
-            numProcs = first_true(scalars, lambda l: 'globalnumblocks' in str(l[0]))[1]
-            axisNumProcs = (
+            num_blocks = first_true(scalars, lambda l: 'globalnumblocks' in str(l[0]))[1]
+            axis_procs = (
                     first_true(runtime, lambda l: 'iprocs' in str(l[0]))[1],
                     first_true(runtime, lambda l: 'jprocs' in str(l[0]))[1],
                     first_true(runtime, lambda l: 'kprocs' in str(l[0]))[1])
@@ -104,48 +111,92 @@ class SimulationData:
                     first_true(scalars, lambda l: 'nxb' in str(l[0]))[1],
                     first_true(scalars, lambda l: 'nyb' in str(l[0]))[1],
                     first_true(scalars, lambda l: 'nzb' in str(l[0]))[1])
-            bndboxes = file['bounding box'][()]    
+            bound_boxes = file['bounding box'][()]    
             centers = file['coordinates'][()]
             ndim = first_true(scalars, lambda l: 'dimensionality' in str(l[0]))[1]
 
         gridfile = os.path.join(path, basename + grid + '0000')
         with h5py.File(gridfile, 'r') as file:
             faxes = (file[axis][()] for axis in ('xxxf', 'yyyf', 'zzzf'))
-            uinds = axisUniqueIndex(*axisNumProcs)
+            uinds = axisUniqueIndex(*axis_procs)
             coords = cast(Coords, tuple(numpy.append(a[i][:,:-1].flatten(), a[-1,-1]) if a is not None else None for a, i in zip(faxes, uinds)))
-            grids = get_grids(coords=coords, ndim=ndim, procs=axisNumProcs, sizes=sizes)
-            shapes = get_shapes(ndim=ndim, procs=axisNumProcs, sizes=sizes)
+            grids = get_grids(coords=coords, ndim=ndim, procs=axis_procs, sizes=sizes)
+            shapes = get_shapes(ndim=ndim, procs=axis_procs, sizes=sizes)
 
-        return cls(axis=axisNumProcs, block=plotfile, boxes=bndboxes, centers=centers, coords=coords, grids=grids, ndim=ndim, procs=numProcs, shapes=shapes, sizes=sizes)
+        return cls(axis=axis_procs, block=plotfile, boxes=bound_boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, path=path, procs=num_blocks, shapes=shapes, sizes=sizes)
 
     @classmethod
     def from_options(cls, *, block: Optional[str] = None, coords: Optional[Coords] = None, ndim: int, path: str, procs: tuple[int, int, int], sizes: tuple[int, int, int]):
 
         blockfile = os.path.join(path, BNAME if block is None else block)
-        axisNumProcs, _ = axisMesh(*procs)
-        numProcs = int(numpy.prod(axisNumProcs))
+        axis_procs, _ = axisMesh(*procs)
+        num_blocks = int(numpy.prod(axis_procs))
         if coords is None: coords = read_coords(path=path, ndim=ndim)
         shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
         grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
         centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
 
-        return cls(axis=axisNumProcs.tolist(), block=blockfile, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, procs=numProcs, shapes=shapes, sizes=sizes)
+        return cls(axis=axis_procs.tolist(), block=blockfile, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, path=path, procs=num_blocks, shapes=shapes, sizes=sizes)
+
+@single
+def correct_blocks(destination: SimulationData) -> None:
+    """Correct desired intial flow fields to be nearly divergence free using a simple stationary relaxation."""
+
+    # ensure that we can load the needed library
+    try:
+        pkg_resources.get_distribution(JITDIST)
+    except pkg_resources.DistributionNotFound as error:
+        raise LibraryError(f'Distribution, {JITDIST}, is not found!') from error
+    from ..support.stationary import boundary2d, divergence, poisson, correct
+
+    # setup flattened (single block) fields
+    logger.debug("Flattening simulation data ...")
+    ndim = destination.ndim
+    nxb, nyb, nzb = tuple(s * p for s, p in zip(destination.sizes, destination.axis_procs))
+    flows = {'velx': ('facex', 'velx', 'facex'), 'vely': ('facey', 'vely', 'facey')}
+    if ndim == 3: flows['velz'] = ('facez', 'velz', 'facez')
+    flat_source = SimulationData.from_options(ndim=ndim, path=destination.path, procs=(1, 1, 1), sizes=(nxb, nyb, nzb), coords=destination.coords, block='temp.h5')
+    flat_blocks = interp_blocks(destination=flat_source, source=destination, flows=flows, nofile=False, context=null_bar)
+
+    # correct field using poisson solve (low relax count)
+    logger.debug('Solving Poisson equation ...')
+    sliced = (0, 0, slice(None), slice(None)) if ndim == 2 else (0, slice(None), slice(None), slice(None))
+    xb, yb, zb = 'periodic', 'periodic', 'neumann'
+    x, y, z = flat_source.coords
+    u = flat_blocks['velx'][sliced]
+    v = flat_blocks['vely'][sliced]
+    w = None if ndim == 2 else flat_blocks['velz'][sliced]
+    dust = divergence(ndim=ndim, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
+    delp, _ = poisson(ndim=ndim, source=dust, xfaces=x, yfaces=y, xtype=xb, ytype=yb, ztype=zb, check=100, itermax=100)
+    correct(ndim=ndim, delp=delp, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z, xtype=xb, ytype=yb, ztype=zb)
+    
+    # write corrected fields back to flattened block file
+    divu = divergence(ndim=ndim, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
+    with  h5py.File(flat_source.block_file, 'r+') as file:
+        file['velx'][sliced]
+        file['vely'][sliced]
+        if ndim == 3: file['velz'][sliced]
+    logger.info(f'    dust ({dust.min():.2e}, {dust.max():.2e}) --> divu ({divu.min():.2e}, {divu.max():.2e})')
+
+    # redistribute corrected fields to intended block layout
+    logger.debug('Block-ifying simulation data ...')
+    interp_blocks(destination=destination, source=flat_source, flows=flows, nofile=False, context=null_bar)
 
 @safe
 def interp_blocks(*, destination: SimulationData, source: SimulationData, flows: dict[str, tuple[str, str, str]], nofile: bool, context: Bar) -> dict[str, N]:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # create grid init parameters for parallelizing blocks 
-    index = Index.from_simple(destination.numProcs)
-    mesh_width = index.mesh_width(destination.axisNumProcs)
+    index = Index.from_simple(destination.num_blocks)
+    mesh_width = index.mesh_width(destination.axis_procs)
 
     # check that source and destination are compatible
     if destination.ndim != source.ndim:
         raise LibraryError('Incompatible source and destination grids for interpolation!')
 
      # open input and output files for performing the interpolation (writing the data as we go is most memory efficient)
-    with H5Manager(source.blkPath, 'r', force=True) as input_file, \
-            H5Manager(destination.blkPath, 'w-', clean=True, nofile=nofile) as output_file, \
+    with H5Manager(source.block_file, 'r', force=True) as input_file, \
+            H5Manager(destination.block_file, 'w-', clean=True, nofile=nofile) as output_file, \
             context(index.size) as progress:
 
         # create datasets in output file
@@ -155,7 +206,7 @@ def interp_blocks(*, destination: SimulationData, source: SimulationData, flows:
             output[field] = numpy.empty((index.size, ) + destination.shapes[location][1:], numpy.double)
         
         # interpolate over assigned blocks
-        for step, (block, width, bbox) in enumerate(zip(index.range, mesh_width, destination.bndboxes[index.range])):
+        for step, (block, width, bbox) in enumerate(zip(index.range, mesh_width, destination.bound_boxes[index.range])):
 
             # get blocks in the low grid that overlay the high grid
             blocks = source.blocks_from_bbox(bbox)

@@ -36,6 +36,7 @@ CYCLINGS = CONFIG['core']['progress']['cyclings']
 ENTRANCE = CONFIG['core']['progress']['entrance']
 PROGRESS = CONFIG['core']['progress']['progress']
 SENTINAL = CONFIG['core']['progress']['sentinal']
+FORCEBAR = CONFIG['core']['progress']['forcebar']
 TERMINAL = CONFIG['core']['progress']['terminal']
 UPDATING = CONFIG['core']['progress']['updating']
 
@@ -46,7 +47,6 @@ def null_bar(*_) -> AbstractContextManager:
 def set_message(message: str) -> None:
     """Provides a message capability to the progress bar."""
     SimpleBar.message = message
-        
 class SimpleBar(threading.Thread):
     """Implements a simple, threaded, context manager for a progress bar."""
     progress: int = PROGRESS
@@ -64,7 +64,6 @@ class SimpleBar(threading.Thread):
     def __exit__(self, *args, **kwargs) -> None:
         self.stop_event.set()
         self.join()
-        print('\n', flush=True)
 
     def __init__(self, total: Optional[int] = None, *, fps: float  = UPDATING):
         threading.Thread.__init__(self, name='Progress')
@@ -112,6 +111,7 @@ class SimpleBar(threading.Thread):
             time.sleep(self.sleep)
             self.calculate()
             self.flush(self.write())
+        self.flush(self.final())
     
     def write_known(self) -> str:
         return f'{self.entrance}|{self.done}{self.left}| {self.click}/{self.total} [{self.frac:.0f}%] in {self.last:.1f}s ({self.rate:.2f}/s) {self.message}'
@@ -122,7 +122,7 @@ class SimpleBar(threading.Thread):
 def get_bar(*, null: bool = False) -> Bar:
     """Retrives the best supported progress bar at runtime."""
     if null: return null_bar #NULL_BAR
-    if is_parallel() or True: return SimpleBar
+    if is_parallel() or FORCEBAR: return SimpleBar
     try:
         pkg_resources.get_distribution('alive_progress')
         from alive_progress import alive_bar, config_handler # type: ignore
