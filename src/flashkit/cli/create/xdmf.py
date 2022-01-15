@@ -87,12 +87,12 @@ class XdmfCreateApp(Application):
     interface.add_argument('-q', '--force')
 
     auto_interface = interface.add_mutually_exclusive_group()
-    auto_interface.add_argument('-A', '--auto', action='store_true')
-    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+    auto_interface.add_argument('-A', '--auto', action='store_const', const=True)
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_const', const=False)
 
     find_interface = interface.add_mutually_exclusive_group()
-    find_interface.add_argument('-B', '--find', action='store_true')
-    find_interface.add_argument('--no-find', dest='find', action='store_false')
+    find_interface.add_argument('-B', '--find', action='store_const', const=True)
+    find_interface.add_argument('--no-find', dest='find', action='store_const', const=False)
 
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
