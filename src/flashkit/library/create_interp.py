@@ -2,6 +2,7 @@
 
 # type annotations
 from __future__ import annotations
+from doctest import OutputChecker
 from typing import cast, Optional
 
 # standard libraries
@@ -40,6 +41,7 @@ class SimulationData:
     blocks: int
     boxes: N
     centers: N
+    clean: bool
     coords: Coords
     file: str
     grids: Grids
@@ -49,11 +51,12 @@ class SimulationData:
     shapes: Shapes
     sizes: tuple[int, int, int]
 
-    def __init__(self, *, procs: tuple[int, int, int], block: str, boxes: N, centers: N, coords: Coords, grids: Grids, 
-                 ndim: int, path: str, blocks: int, shapes: Shapes, sizes: tuple[int, int, int]) -> None:
+    def __init__(self, *, procs: tuple[int, int, int], block: str, blocks: int, boxes: N, centers: N, clean: bool,
+                 coords: Coords, grids: Grids, ndim: int, path: str, shapes: Shapes, sizes: tuple[int, int, int]) -> None:
         self.blocks = int(blocks)
         self.boxes = boxes
         self.centers = centers
+        self.clean = clean
         self.coords = coords
         self.file = block
         self.grids = grids
@@ -124,10 +127,10 @@ class SimulationData:
             grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
             shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
 
-        return cls(block=plotfile, blocks=blocks, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, path=path, procs=procs, shapes=shapes, sizes=sizes)
+        return cls(block=plotfile, blocks=blocks, boxes=boxes, centers=centers, clean=False, coords=coords, grids=grids, ndim=ndim, path=path, procs=procs, shapes=shapes, sizes=sizes)
 
     @classmethod
-    def from_options(cls, *, block: Optional[str] = None, coords: Optional[Coords] = None, ndim: int, path: str, procs: tuple[int, int, int], sizes: tuple[int, int, int]):
+    def from_options(cls, *, block: Optional[str] = None, clean: bool = True, coords: Optional[Coords] = None, ndim: int, path: str, procs: tuple[int, int, int], sizes: tuple[int, int, int]):
 
         blockfile = os.path.join(path, BNAME if block is None else block)
         procs, _ = axisMesh(*procs)
@@ -137,7 +140,7 @@ class SimulationData:
         grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
         centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
 
-        return cls(block=blockfile, blocks=blocks, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, path=path, procs=procs.tolist(), shapes=shapes, sizes=sizes)
+        return cls(block=blockfile, blocks=blocks, boxes=boxes, centers=centers, clean=clean, coords=coords, grids=grids, ndim=ndim, path=path, procs=procs.tolist(), shapes=shapes, sizes=sizes)
 
 @single
 def correct_blocks(*, destination: SimulationData, relax: int, progress) -> None:
@@ -190,6 +193,7 @@ def correct_blocks(*, destination: SimulationData, relax: int, progress) -> None
 
     # redistribute corrected fields to intended block layout
     logger.debug('Block-ifying simulation data ...')
+    destination.clean = False
     interp_blocks(destination=destination, source=flat_source, flows=flows, nofile=False, context=get_bar(null=True))
     logger.info(f'    dust ({dust[noedge].min():.2e}, {dust[noedge].max():.2e}) --> divu ({divu[noedge].min():.2e}, {divu[noedge].max():.2e})')
 
@@ -208,7 +212,7 @@ def interp_blocks(*, destination: SimulationData, source: SimulationData, flows:
     # open input and output files for performing the interpolation (writing the data as we go is most memory efficient)
     verbose = logging.getLogger('flashkit').level == logging.DEBUG
     with H5Manager(source.file, 'r', force=True) as input_file, \
-            H5Manager(destination.file, 'w-', clean=True, nofile=nofile) as output_file, \
+            H5Manager(destination.file, 'a', clean=destination.clean, nofile=nofile) as output_file, \
             context(index.size) as progress:
 
         # create datasets in output file
