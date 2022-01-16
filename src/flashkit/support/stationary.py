@@ -321,24 +321,25 @@ def metrics3d(xfac, xcnt, yfac, ycnt, zfac, zcnt):
 
     return ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb
 
-def poisson(*, ndim = 2, source, xfaces, yfaces, zfaces = None, xtype, ytype, ztype = None, tolerance = 1E-5, check = 20, itermax = 1E6):
+def poisson(*, ndim = 2, source, xfaces, yfaces, zfaces = None, xtype, ytype, ztype = None, tolerance = 1E-6, check = 20, itermax = 1E6, text = None):
     """Solve the poisson equation using cell centered finite differences and a simple stational method."""
+    if text is None: text = lambda _: None
     if ndim == 2:
-        return poisson2d(source, xfaces, yfaces, xtype, ytype, tolerance, check, itermax)
+        return poisson2d(source, xfaces, yfaces, xtype, ytype, tolerance, check, itermax, text)
     elif ndim == 3:
-        return poisson3d(source, xfaces, yfaces, zfaces, xtype, ytype, ztype, tolerance, check, itermax)
+        return poisson3d(source, xfaces, yfaces, zfaces, xtype, ytype, ztype, tolerance, check, itermax, text)
     else:
         pass
 
-@jit(nopython=True)
-def poisson2d(source, xfaces, yfaces, xtype, ytype, tolerance, check, itermax):
+#@jit(nopython=True)
+def poisson2d(source, xfaces, yfaces, xtype, ytype, tolerance, check, itermax, text):
 
     ny, nx = source.shape
     field = numpy.zeros(((ny + 2), (nx + 2)))
     xfac, xcnt, yfac, ycnt = grids2d(xfaces, yfaces)
     ddxe, ddxo, ddxw, ddyn, ddyo, ddys = metrics2d(xfac, xcnt, yfac, ycnt)
 
-    norm = relax2d(source, field, xtype, ytype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, tolerance, check, itermax)
+    norm = relax2d(source, field, xtype, ytype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, tolerance, check, itermax, text)
 
     if xtype in ('periodic', 'neumann') and ytype in ('periodic', 'neumann'):
         normalize2d(field, ddxo, ddyo)
@@ -346,15 +347,15 @@ def poisson2d(source, xfaces, yfaces, xtype, ytype, tolerance, check, itermax):
 
     return field[1:-1,1:-1], norm
 
-@jit(nopython=True)
-def poisson3d(source, xfaces, yfaces, zfaces, xtype, ytype, ztype, tolerance, check, itermax):
+#@jit(nopython=True)
+def poisson3d(source, xfaces, yfaces, zfaces, xtype, ytype, ztype, tolerance, check, itermax, text):
 
     nz, ny, nx = source.shape
     field = numpy.zeros(((nz + 2), (ny + 2), (nx + 2)))
     xfac, xcnt, yfac, ycnt, zfac, zcnt = grids3d(xfaces, yfaces, zfaces)
     ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb = metrics3d(xfac, xcnt, yfac, ycnt, zfac, zcnt)
 
-    norm = relax3d(source, field, xtype, ytype, ztype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb, tolerance, check, itermax)
+    norm = relax3d(source, field, xtype, ytype, ztype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb, tolerance, check, itermax, text)
 
     if xtype in ('periodic', 'neumann') and ytype in ('periodic', 'neumann') and ztype in ('periodic', 'neumann'):
         normalize3d(field, ddxo, ddyo, ddzo)
@@ -362,12 +363,13 @@ def poisson3d(source, xfaces, yfaces, zfaces, xtype, ytype, ztype, tolerance, ch
 
     return field[1:-1,1:-1,1:-1], norm
 
-@jit(nopython=True)
-def relax2d(source, field, xtype, ytype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, tolerance, check, itermax):
+#@jit(nopython=True)
+def relax2d(source, field, xtype, ytype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, tolerance, check, itermax, text):
 
     update2d(source, field, ddxe, ddxo, ddxw, ddyn, ddyo, ddys)
     boundary2d(field, xtype, ytype)
     copy = field.copy()
+    text('[Relaxed > 1 ... ]')
     
     norm = []
     count = 1
@@ -381,17 +383,19 @@ def relax2d(source, field, xtype, ytype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, tol
             delta = l2norm2d(field, copy, ddxo, ddyo)
             norm.append(delta)
             copy = field.copy()
+            text(f'[Relaxed > {count} ... ]')
             
         count += 1
 
     return norm 
 
-@jit(nopython=True)
-def relax3d(source, field, xtype, ytype, ztype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb, tolerance, check, itermax):
+#@jit(nopython=True)
+def relax3d(source, field, xtype, ytype, ztype, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb, tolerance, check, itermax, text):
 
     update3d(source, field, ddxe, ddxo, ddxw, ddyn, ddyo, ddys, ddzt, ddzo, ddzb)
     boundary3d(field, xtype, ytype, ztype)
     copy = field.copy()
+    text('[Relaxed > 1 ... ]')
     
     norm = []
     count = 1
@@ -405,6 +409,7 @@ def relax3d(source, field, xtype, ytype, ztype, ddxe, ddxo, ddxw, ddyn, ddyo, dd
             delta = l2norm3d(field, copy, ddxo, ddyo, ddzo)
             norm.append(delta)
             copy = field.copy()
+            text(f'[Relaxed > {count} ... ]')
             
         count += 1
 

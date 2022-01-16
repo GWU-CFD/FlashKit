@@ -186,6 +186,7 @@ def interp(**arguments: Any) -> Optional[Blocks]:
     cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
     correct = arguments.pop('correct', False) ## FUTURE
+    relax = arguments.pop('relax', None) ## FUTURE
     
     destination = SimulationData.from_options(coords=coords, ndim=ndim, path=dest, procs=procs, sizes=sizes)
     plot_source = SimulationData.from_plot_files(basename=basename, grid=gridname, path=path, plot=plotname, step=plotstep)
@@ -193,7 +194,8 @@ def interp(**arguments: Any) -> Optional[Blocks]:
 
     if correct:  ## FUTURE
         logger.info("\nCorrecting block data ...")
-        with args['context'](): correct_blocks(destination)
+        with args['context']() as progress:
+            correct_blocks(destination=destination, relax=relax, progress=progress)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)

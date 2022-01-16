@@ -102,7 +102,7 @@ class InterpCreateApp(Application):
 
     auto_interface = interface.add_mutually_exclusive_group()
     auto_interface.add_argument('-A', '--auto', action='store_const', const=True)
-    auto_interface.add_argument('--no_auto', dest='auto', action='store_const', const=False)
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_const', const=False)
 
     find_interface = interface.add_mutually_exclusive_group()
     find_interface.add_argument('-B', '--find', action='store_const', const=True)
@@ -114,6 +114,7 @@ class InterpCreateApp(Application):
     interface.add_argument('-O', '--options', action='store_true')
 
     interface.add_argument('--correct', action='store_true') ## FUTURE
+    interface.add_argument('--relax', type=int) ## FUTURE
 
     def run(self) -> None:
         """Buisness logic for creating block using interpolatione, from command line."""
@@ -124,10 +125,13 @@ class InterpCreateApp(Application):
 
         options ={'ndim', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource', 'step', 
                   'plot', 'grid', 'force', 'path', 'dest', 'auto', 'find', 'ignore', 'result', 'nofile'}
+
         if self.shared.future: ## FUTURE
             options.add('correct')
+            options.add('relax')
         elif self.correct:
-            logger.warn('Attempting to use option --correct without invoking --future.')
+            logger.warn('Attempting to use futures without invoking --future.')
+        
         local = {key: getattr(self, key) for key in options}
         logger.debug('Command -- Entry point for interp command.')
         interp(**local, cmdline=True)

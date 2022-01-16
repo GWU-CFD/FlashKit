@@ -140,7 +140,7 @@ class SimulationData:
         return cls(block=blockfile, blocks=blocks, boxes=boxes, centers=centers, coords=coords, grids=grids, ndim=ndim, path=path, procs=procs.tolist(), shapes=shapes, sizes=sizes)
 
 @single
-def correct_blocks(destination: SimulationData) -> None:
+def correct_blocks(*, destination: SimulationData, relax: int, progress) -> None:
     """Correct desired intial flow fields to be nearly divergence free using a simple stationary relaxation."""
 
     # ensure that we can load the needed library
@@ -149,6 +149,16 @@ def correct_blocks(destination: SimulationData) -> None:
     except pkg_resources.DistributionNotFound as error:
         raise LibraryError(f'Distribution, {JITDIST}, is not found!') from error
     from ..support.stationary import divergence, poisson, correct
+
+    # setup verbose messaging
+    text = None
+    if logging.getLogger('flashkit').level == logging.DEBUG:
+        text = progress.text  
+
+    # setup default relaxation parameters
+    xb, yb, zb = 'neumann', 'neumann', 'neumann'
+    if relax is None:
+        relax = 100
 
     # setup flattened (single block) fields
     logger.debug("Flattening simulation data ...")
@@ -162,16 +172,16 @@ def correct_blocks(destination: SimulationData) -> None:
     # correct field using poisson solve (low relax count)
     logger.debug('Solving Poisson equation ...')
     sliced = (0, 0, slice(None), slice(None)) if ndim == 2 else (0, slice(None), slice(None), slice(None))
-    xb, yb, zb = 'periodic', 'periodic', 'neumann'
     x, y, z = flat_source.coords
     u = flat_blocks['velx'][sliced]
     v = flat_blocks['vely'][sliced]
     w = None if ndim == 2 else flat_blocks['velz'][sliced]
     dust = divergence(ndim=ndim, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
-    delp, _ = poisson(ndim=ndim, source=dust, xfaces=x, yfaces=y, xtype=xb, ytype=yb, ztype=zb, check=100, itermax=100)
+    delp, _ = poisson(ndim=ndim, source=dust, xfaces=x, yfaces=y, xtype=xb, ytype=yb, ztype=zb, itermax=relax, text=text)
     correct(ndim=ndim, delp=delp, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z, xtype=xb, ytype=yb, ztype=zb)
     
     # write corrected fields back to flattened block file
+    noedge = (slice(1, -1), slice(1, -1)) if ndim == 2 else (slice(1, -1), slice(1, -1), slice(1, -1))
     divu = divergence(ndim=ndim, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
     with  h5py.File(flat_source.file, 'r+') as file:
         file['velx'][sliced]
@@ -181,7 +191,7 @@ def correct_blocks(destination: SimulationData) -> None:
     # redistribute corrected fields to intended block layout
     logger.debug('Block-ifying simulation data ...')
     interp_blocks(destination=destination, source=flat_source, flows=flows, nofile=False, context=get_bar(null=True))
-    logger.info(f'    dust ({dust.min():.2e}, {dust.max():.2e}) --> divu ({divu.min():.2e}, {divu.max():.2e})')
+    logger.info(f'    dust ({dust[noedge].min():.2e}, {dust[noedge].max():.2e}) --> divu ({divu[noedge].min():.2e}, {divu[noedge].max():.2e})')
 
 @safe
 def interp_blocks(*, destination: SimulationData, source: SimulationData, flows: dict[str, tuple[str, str, str]], nofile: bool, context: Bar) -> dict[str, N]:
