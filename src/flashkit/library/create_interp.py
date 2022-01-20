@@ -180,7 +180,7 @@ def correct_blocks(*, destination: SimulationData, relax: int, progress) -> None
     v = flat_blocks['vely'][sliced]
     w = None if ndim == 2 else flat_blocks['velz'][sliced]
     dust = divergence(ndim=ndim, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z)
-    delp, _ = poisson(ndim=ndim, source=dust, xfaces=x, yfaces=y, xtype=xb, ytype=yb, ztype=zb, itermax=relax, text=text)
+    delp, _ = poisson(ndim=ndim, source=dust, xfaces=x, yfaces=y, zfaces=z, xtype=xb, ytype=yb, ztype=zb, itermax=relax, text=text)
     correct(ndim=ndim, delp=delp, u=u, v=v, w=w, xfaces=x, yfaces=y, zfaces=z, xtype=xb, ytype=yb, ztype=zb)
     
     # write corrected fields back to flattened block file
