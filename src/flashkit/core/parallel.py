@@ -230,7 +230,8 @@ def is_lower(rank: F, limit: int) -> bool:
 def is_parallel() -> bool:
     """Attempt to identify if the python runtime was executed in parallel."""
     if this._parallel is not None: return this._parallel # type: ignore
-    return psutil.Process(os.getppid()).name() in MPICMDS
+    process = psutil.Process(os.getppid())
+    return process.name() in MPICMDS or any(command in MPICMDS for command in process.cmdline())
 
 @inject_property('rank')
 def is_root(rank: F) -> bool:

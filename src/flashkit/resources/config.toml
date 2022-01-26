@@ -78,8 +78,7 @@
   padmap = 4      # padding for mapping names
 
   [core.parallel]
-  commands     = ['mpirun', 'mpiexec',  # commands expected for launching mpi
-                  'hydra_pmi_proxy', ]  # other names for launched processes
+  commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi
   boundaries   = [['left', 'right'],   # labels assigned to indicate the 
                   ['back', 'front'],   #   particular boundary context of
                   ['bottom', 'top']]   #   a distributed task (only 3d atm)
