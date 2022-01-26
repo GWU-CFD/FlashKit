@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, NamedTuple, TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 # system libraries
 import logging
@@ -13,6 +13,7 @@ from functools import wraps
 
 # internal libraries
 from .error import ParallelError
+from .tools import first_true, first_until
 from ..resources import CONFIG
 
 # external libraries
@@ -43,6 +44,7 @@ __all__ = list(PROPERTIES) + ['Index',
         'is_loaded', 'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
 
 # default constants
+BOUNDS = CONFIG['core']['parallel']['boundaries']
 MPICMDS = CONFIG['core']['parallel']['commands']
 MPIDIST = CONFIG['core']['parallel']['distribution']
 ROOT = CONFIG['core']['parallel']['root']
@@ -61,51 +63,107 @@ def __getattr__(name: str) -> Any:
 
 class Index:
     """Support class for parallel process distribution."""
-    width: int
-    low: int
+    # local (all processes have different data)
     high: int
+    low: int
+    size: int
+    range: range
 
-    def __init__(self, *, high: int, low: int, size: int, width: int):
-        self.high = int(high)
-        self.low = int(low)
-        self.size = int(size)
-        self.width = int(width)
-        self.range = range(self.low, self.high + 1)
-        try:
-            assert(self.high - self.low + 1 == self.width)
-        except AssertionError:
-            raise ParallelError('Width of local tasks does not match local width!')
+    # global (all processess have same data)
+    _layout: Sequence[int]
+    _ranges: dict[int, range]
+    _tasks: int
+
+    def __init__(self, *, high: int, low: int, tasks: int, layout: Sequence[int]):
+        self.high = high
+        self.low = low
+        self.size = high - low + 1
+        self.range = range(low, high + 1)
+        self._layout = layout
+        self._ranges = {this.rank: self.range} if this.is_serial() else {k: v for k, v in this.COMM_WORLD.allgather((this.rank, self.range))}
+        self._tasks = tasks
+
+    def _invalid_task(self, task: Optional[int]) -> bool:
+        """Determine whether a given task is valid for the index."""
+        return task is None or not 0 <= task < self._tasks
+
+    def _invalid_where(self, where: Sequence[int]) -> bool:
+        """Determine whether the location is valid for the layout."""
+        return not all(0 <= local < extent for local, extent in zip(where, self._layout))
 
     @classmethod
-    def from_simple(cls, tasks: int = 1):
+    def from_simple(cls, *, tasks: int = 1, layout: Optional[Sequence[int]] = None):
         """Simple even distribution or processes across communicator."""
         rank: int = this.rank # type: ignore
         size: int = this.size # type: ignore
-        avg, res  = divmod(tasks, size)
-        width = avg + 1 if rank < res else avg 
-        low   =  rank      * (avg + 1)     if rank < res else res * (avg + 1) + (rank - res    ) * avg
-        high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
-        logger.debug(f'Parallel -- Created (Index) a simple distributed operation.')
-        return cls(width=width, low=low, high=high, size=tasks)
-
-    def _tasksMatchSize(self, axisTasks: Sequence[int]) -> None:
+        average, residual  = divmod(tasks, size)
+        low   =  rank      * (average + 1)     if rank < residual else residual * (average + 1) + (rank - residual    ) * average
+        high  = (rank + 1) * (average + 1) - 1 if rank < residual else residual * (average + 1) + (rank - residual + 1) * average - 1
+        if layout is None:
+            layout = [tasks, ]
         try:
-            assert(int(numpy.prod(axisTasks)) == self.size)
-        except AssertionError as error:
-            raise ParallelError('Total number of tasks (by axis) do not match parallel size!')
+            assert(int(numpy.prod(layout)) == tasks)
+            assert((high - low + 1) == (average + 1 if rank < residual else average))
+        except AssertionError:
+            raise ParallelError('Could not construct a valid local range of tasks!')
+        logger.debug(f'Parallel -- Created a simple distribution of tasks.')
+        return cls(high=high, layout=layout, low=low, tasks=tasks)
 
-    def mesh_low(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return tuple(int(self.low / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
+    def neighbor(self, *, task: Optional[int], which: str) -> Optional[int]:
+        """Provide the neighbor of a task in which direction."""
+        where = self.where(task)
+        if where is None:
+            return None
+        where = list(where)
+        for axis, (low, high) in enumerate(BOUNDS):
+            if which == low:
+                where[axis] -= 1
+            elif which == high:
+                where[axis] += 1
+        return self.task(where)
 
-    def mesh_high(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return tuple(int(self.high / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
+    def task(self, where: Sequence[int]) -> Optional[int]:
+        """Provide the task given the location of where it exists within the layout of all tasks."""
+        if self._invalid_where(where):
+            return None
+        return sum(local * int(numpy.prod(self._layout[:axis], initial=1)) for axis, local in enumerate(where))
 
-    def mesh_width(self, axisTasks: Sequence[int], *, force: bool = False) -> list[tuple[int, ...]]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return [tuple(int(n / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks)) for n in range(self.low, self.high+1)]
+    def where(self, task: Optional[int]) -> Optional[tuple[int, ...]]:
+        """Provide the location of where the task exists within the layout of all tasks."""
+        if self._invalid_task(task):
+            return None
+        return tuple(int(task / numpy.prod(self._layout[:axis], initial=1)) % extent for axis, extent in enumerate(self._layout))          
 
+    @property
+    def where_all(self) -> list[tuple[int, ...]]:
+        """Provide the locations (i.e., where) for all of the local tasks."""
+        return [self.where(n) for n in self.range]
+
+    def what(self, task: int) -> list[str]:
+        """Provide the boundary context of the task within the layout (e.g., the left, front task)."""
+        if self._invalid_task(task):
+            raise ParallelError('Provided task does not exist in any index!')
+        where = self.where(task)
+        ndim = first_until(self._layout, lambda n: n == 1)
+        what = []
+        for dist, bound, (low, high) in zip(where[:ndim], self._layout[:ndim], BOUNDS[:ndim]):
+            if dist == 0:
+                what.append(low)
+            if dist == bound - 1:
+                what.append(high)
+        return what
+
+    @property
+    def what_all(self) -> list[tuple[int, ...]]:
+        """Provide the locations (i.e., what) for all of the local tasks."""
+        return [self.what(n) for n in self.range]
+
+    def who(self, task: Optional[int]) -> Optional[int]:
+        """Provide the index (i.e., the mpi rank) who owns the task."""
+        if self._invalid_task(task):
+            return None
+        return first_true(self._ranges.items(), lambda item: item[1].start <= task < item[1].stop, (None, ))[0]
+        
 def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""
     def decorator(function: F) -> F:
