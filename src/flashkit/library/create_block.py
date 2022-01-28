@@ -17,7 +17,6 @@ from ..support.types import N, Blocks, Grids, Mesh, Shapes
 
 # external libraries
 import numpy
-import h5py # type: ignore
 
 # define public interface
 __all__ = ['calc_blocks', 'write_blocks', ]
@@ -31,13 +30,13 @@ def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 
-    gr_axisNumProcs, gr_axisMesh = axisMesh(*procs)
+    gr_axisNumProcs, _ = axisMesh(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
-    gr_lIndex = parallel.Index.from_simple(gr_numProcs)
+    gr_lIndex = parallel.Index.from_simple(taskes=gr_numProcs, layout=gr_axisNumProcs)
     gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)
 
     # create flow field method from parameters
-    gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (procs, *shape) in shapes.items()}
+    gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (_, *shape) in shapes.items()}
     gr_loc = {field: location for field, (location, _) in flows.items()}
     gr_mth = {field: method for field, (_, method) in flows.items()}
     gr_flw = Flowing(gr_mth, path, **params)
