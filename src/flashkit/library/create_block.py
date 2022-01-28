@@ -32,8 +32,8 @@ def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict
     # create grid init parameters for parallelizing blocks 
     gr_axisNumProcs, _ = axisMesh(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
-    gr_lIndex = parallel.Index.from_simple(taskes=gr_numProcs, layout=gr_axisNumProcs)
-    gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)
+    gr_lIndex = parallel.Index.from_simple(tasks=gr_numProcs, layout=gr_axisNumProcs)
+    gr_lMesh = gr_lIndex.where_all
 
     # create flow field method from parameters
     gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (_, *shape) in shapes.items()}
