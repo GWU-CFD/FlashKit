@@ -202,8 +202,7 @@ def interp_blocks(*, destination: SimulationData, source: SimulationData, flows:
     """Interpolate desired initial flow fields from a simulation output to another computional grid."""
     
     # create grid init parameters for parallelizing blocks 
-    index = Index.from_simple(destination.blocks)
-    mesh_width = index.mesh_width(destination.procs)
+    index = Index.from_simple(tasks=destination.blocks, layout=destination.procs)
 
     # check that source and destination are compatible
     if destination.ndim != source.ndim:
@@ -222,7 +221,7 @@ def interp_blocks(*, destination: SimulationData, source: SimulationData, flows:
             output[field] = numpy.empty((index.size, ) + destination.shapes[location][1:], numpy.double)
         
         # interpolate over assigned blocks
-        for step, (block, width, bbox) in enumerate(zip(index.range, mesh_width, destination.boxes[index.range])):
+        for step, (block, width, bbox) in enumerate(zip(index.range, index.where_all, destination.boxes[index.range])):
 
             # get blocks in the low grid that overlay the high grid
             blocks = source.blocks_from_bbox(bbox)
