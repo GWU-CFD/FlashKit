@@ -93,8 +93,8 @@ class Index:
         self.size = high - low + 1
         self.range = range(low, high + 1)
         self.rank = this.rank
-        self._block = create_directional_enum('Block', dimension=dimension)
-        self._boundary = create_directional_enum('Boundary', dimension=len(layout))
+        self._block = create_directional_enum(name='Block', dimension=dimension)
+        self._boundary = create_directional_enum(name='Boundary', dimension=len(layout))
         self._layout = layout
         self._mdim = dimension
         self._ndim = first_until(layout, lambda n: n == 1)
@@ -130,10 +130,10 @@ class Index:
         logger.debug(f'Parallel -- Created a simple distribution of tasks.')
         return cls(dimension=dimension, high=high, layout=layout, low=low, tasks=tasks)
 
-    def get_slice(self, *, task: int, bound: EnumMeta, reverse: bool = False) -> slice:
-        """Return the proper slice for a direction boundary into block data (e.g., data[task, left, ...])"""
+    def get_slices(self, *, task: int, face: EnumMeta, reverse: bool = False) -> tuple[slice, ...]:
+        """Return the proper tuple of slices for a boundary face of task data (e.g., data[task, ...])"""
         which = (lambda i: i - 1) if reverse else (lambda i: -i) 
-        return (slice(None) if bound not in pair else slice(which(pair.index(bound))) for pair in self._block.pairs())
+        return (task - self.low, ) + tuple(slice(None) if face not in pair else which(pair.index(face)) for pair in self._block.pairs())[::-1]
 
     def neighbor(self, *, task: Optional[int], which: EnumMeta, reverse: bool = False) -> Optional[int]:
         """Provide the neighbor of a task in which direction."""
@@ -173,12 +173,11 @@ class Index:
         if self._invalid_task(task):
             raise ParallelError('Provided task does not exist in any index!')
         where = self.where(task)
-        ndim = first_until(self._layout, lambda n: n == 1)
         what = []
-        for dist, bound, (low, high) in zip(where, self._layout[:ndim], self._boundary.pairs()):
-            if dist == 0:
+        for here, extent, (low, high) in zip(where, self._layout, self._boundary.pairs()):
+            if here == 0:
                 what.append(low)
-            if dist == bound - 1:
+            if here == extent - 1:
                 what.append(high)
         return what
 

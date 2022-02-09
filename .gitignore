@@ -10,6 +10,7 @@ __pycache__/
 # Python Build
 /bin
 /build
+/etc
 
 # Sphinx Build files
 doctrees/

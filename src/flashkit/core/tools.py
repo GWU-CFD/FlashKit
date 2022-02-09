@@ -46,6 +46,11 @@ def is_ipython() -> bool:
     except:
         return False
 
+def pairwise(iterable: Iterable) -> Iterable:
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    return zip(a, a)
+
 def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
     """Read the leaf at the end of the stem on the tree."""
     try:
