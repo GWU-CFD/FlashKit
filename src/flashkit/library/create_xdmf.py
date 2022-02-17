@@ -50,12 +50,16 @@ def author_xdmf(filenames: dict[str, str], filesteps: Sequence[int], context: Ba
 
     collection = ElementTree.SubElement(domain, *get_temporal_collection())
     with context(len(filesteps)) as progress:
+        gridsource = filenames['grid-source'] + '0000'
+        griddest = filenames['grid-dest'] + '0000'
         for step, number in enumerate(filesteps):
             plotsource = filenames['plot-source'] + f'{number:04}'
             plotdest = filenames['plot-dest'] + f'{number:04}'
             info = get_simulation_info(plotsource)
-            gridsource = filenames['grid-source'] + (f'{number:04}' if info.grid == 'pm' else '0000')
-            griddest = filenames['grid-dest'] + (f'{number:04}' if info.grid == 'pm' else '0000')
+            gridsource = (filenames['grid-source'] + f'{number:04}' if os.path.exists(filenames['grid-source'] + f'{number:04}')
+                                                      else gridsource)
+            griddest = (filenames['grid-dest'] + f'{number:04}' if os.path.exists(filenames['grid-dest'] + f'{number:04}') 
+                                                      else griddest)
             simulation = ElementTree.SubElement(collection, *get_spatial_collection(step))
             temporal = ElementTree.SubElement(simulation, *get_time_element(info.time))
 
