@@ -124,7 +124,7 @@ class Index:
             assert(int(numpy.prod(layout)) == tasks)
             assert((high - low + 1) == (average + 1 if rank < residual else average))
             assert(tasks >= size)
-            assert(dimension >= len(layout))
+            #assert(dimension >= len(layout))
         except AssertionError:
             raise ParallelError('Could not construct a valid local range of tasks!')
         logger.debug(f'Parallel -- Created a simple distribution of tasks.')
