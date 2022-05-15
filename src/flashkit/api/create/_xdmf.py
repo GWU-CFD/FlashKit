@@ -53,7 +53,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # create the basename
     if not bname_given:
         try:
-            args['basename'], *_ = next(filter(orig_cond, (file for file in listdir))).split(str_include.pattern)
+            args['basename'], *_ = next(filter(orig_cond, (file for file in sorted(listdir)))).split(str_include.pattern)
         except StopIteration:
             raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     full_cond = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
