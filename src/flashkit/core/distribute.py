@@ -2,10 +2,10 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Optional, Sequence
+from typing import Optional, Union, Sequence
 
 # system libraries
-from enum import Enum, EnumMeta
+from enum import Enum
 import logging
 
 # internal libraries
@@ -21,40 +21,34 @@ logger = logging.getLogger(__name__)
 # define library (public) interface
 __all__ = ['Index', ]
 
-def create_directional_enum(*, name: str, dimension: int) -> EnumMeta:
-    """Enumeration factory function for creating (directional) paired enum types."""
-    pairs = lambda cls: (pair for pair in pairwise(cls))
-    enum = Enum(name, {f'A{int(index / 2) + 1}{"HIGH" if index % 2 else "LOW"}': index + 1 for index in range(2 * dimension)})
-    setattr(enum, 'pairs', classmethod(pairs))
-    return enum
+class CompassEnum(Enum):
+    """Enumeration factory class for creating directional, paired enum types."""
+    
+    @classmethod
+    def pairs(cls):
+        """Provide the enumations as directional pairs."""
+        return (pair for pair in pairwise(cls))
+
+    @classmethod
+    def from_factory(cls, *, name: str, dimension: int):
+        """Enumeration factory function for the enum at runtime."""
+        return cls(name, {f'A{int(index / 2) + 1}{"HIGH" if index % 2 else "LOW"}': index + 1 for index in range(2 * dimension)})
 
 class Index:
     """Support class for parallel process distribution; based on a n-dimensional layout of m-dimensional blocks (or tasks)."""
-    # local (all processes have different data)
-    high: int
-    low: int
-    size: int
-    range: range
-    rank: int
-
-    # global (all processess have same data)
-    _directions: EnumMeta
-    _edges: EnumMeta
-    _layout: Sequence[int]
-    _mdim: int
-    _ndim: int
-    _ranges: dict[int, range]
-    _size: int
-    _tasks: int
 
     def __init__(self, *, dimension: int, high: int, layout: Sequence[int], low: int, tasks: int):
+
+        # local (all processes have different data)
         self.high = high
         self.low = low
         self.size = high - low + 1
         self.range = range(low, high + 1)
         self.rank = parallel.rank
-        self._directions = create_directional_enum(name='Direction', dimension=len(layout))
-        self._edges = create_directional_enum(name='Edge', dimension=dimension)
+    
+        # global (all processess have same data)
+        self.Direction = CompassEnum.from_factory(name='Direction', dimension=len(layout))
+        self.Edge = CompassEnum.from_factory(name='Edge', dimension=dimension)
         self._layout = layout
         self._mdim = dimension
         self._ndim = first_until(layout, lambda n: n == 1)
@@ -84,37 +78,24 @@ class Index:
             assert(int(numpy.prod(layout)) == tasks)
             assert((high - low + 1) == (average + 1 if rank < residual else average))
             assert(tasks >= size)
-            #assert(dimension >= len(layout))
         except AssertionError:
             raise ParallelError('Could not construct a valid local range of tasks!')
         logger.debug(f'Parallel -- Created a simple distribution of tasks.')
         return cls(dimension=dimension, high=high, layout=layout, low=low, tasks=tasks)
 
-    def get_slices(self, *, task: int, face: EnumMeta, reverse: bool = False) -> tuple[slice, ...]:
+    def get_slices(self, *, task: int, face: CompassEnum, reverse: bool = False) -> tuple[Union[int, slice], ...]:
         """Return the proper tuple of slices for a boundary face of task data (e.g., data[task, ...])"""
         which = (lambda i: i - 1) if reverse else (lambda i: -i) 
-        return (task - self.low, ) + tuple(slice(None) if face not in pair else which(pair.index(face)) for pair in self._edges.pairs())[::-1]
+        return (task - self.low, ) + tuple(slice(None) if face not in pair else which(pair.index(face)) for pair in self.Edge.pairs())[::-1]
 
-    def get_directions(self, *, pairs: bool = False) -> Union[EnumMeta, Tuple[Tuple[EnumMeta, EnumMeta], ...]]:
-        """Return the enumaration of (layout) directions used tasks in the index (e.g., for use in neighbor method)."""
-        if not pairs:
-            return self._directions
-        return tuple(pair for pair in self._directions.pairs())
-
-    def get_edges(self, *, pairs: bool = False) -> Union[EnumMeta, Tuple[Tuple[EnumMeta, EnumMeta], ...]]:
-        """Return the enumeration of (geometric) edges used by tasks in the index (e.g., for use in get_slices method)."""
-        if not pairs: 
-            return self._edges
-        return tuple(pair for pair in self._edges.pairs())
-
-    def neighbor(self, *, task: Optional[int], which: EnumMeta, reverse: bool = False) -> Optional[int]:
+    def neighbor(self, *, task: Optional[int], which: CompassEnum, reverse: bool = False) -> Optional[int]:
         """Provide the neighbor of a task in which direction."""
         here = self.where(task)
         if here is None:
             return None
         where = list(here)
         shift = 1 if not reverse else -1
-        for axis, (low, high) in enumerate(self._directions.pairs()):
+        for axis, (low, high) in enumerate(self.Direction.pairs()):
             if which == low:
                 where[axis] -= shift
                 break
@@ -136,7 +117,7 @@ class Index:
         return tuple(int(task / numpy.prod(self._layout[:axis], initial=1)) % extent for axis, extent in enumerate(self._layout))          
 
     @property
-    def where_all(self) -> list[tuple[int, ...]]:
+    def where_all(self) -> list[Optional[tuple[int, ...]]]:
         """Provide the locations (i.e., where) for all of the local tasks."""
         return [self.where(n) for n in self.range]
 
@@ -145,8 +126,10 @@ class Index:
         if self._invalid_task(task):
             raise ParallelError('Provided task does not exist in any index!')
         where = self.where(task)
+        if where is None:
+            return []
         what = []
-        for here, extent, (low, high) in zip(where, self._layout, self._directions.pairs()):
+        for here, extent, (low, high) in zip(where, self._layout, self.Direction.pairs()):
             if here == 0:
                 what.append(low)
             if here == extent - 1:
@@ -154,7 +137,7 @@ class Index:
         return what
 
     @property
-    def what_all(self) -> list[tuple[int, ...]]:
+    def what_all(self) -> list[list[str]]:
         """Provide the locations (i.e., what) for all of the local tasks."""
         return [self.what(n) for n in self.range]
 
