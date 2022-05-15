@@ -94,20 +94,20 @@ class SimulationBuildApp(Application):
     interface.add_argument('-j', '--jobs', type=int)
 
     parallelIO_interface = interface.add_mutually_exclusive_group()
-    parallelIO_interface.add_argument('-H', '--parallelIO', action='store_true')
-    parallelIO_interface.add_argument('--no-parallelIO', dest='parallelIO', action='store_false')
+    parallelIO_interface.add_argument('-H', '--parallelIO', action='store_const', const=True)
+    parallelIO_interface.add_argument('--no-parallelIO', dest='parallelIO', action='store_const', const=False)
 
     compile_interface = interface.add_mutually_exclusive_group()
-    compile_interface.add_argument('-C', '--compile', action='store_true')
-    compile_interface.add_argument('--no-compile', dest='compile', action='store_false')
+    compile_interface.add_argument('-C', '--compile', action='store_const', const=True)
+    compile_interface.add_argument('--no-compile', dest='compile', action='store_const', const=False)
 
     build_interface = interface.add_mutually_exclusive_group()
-    build_interface.add_argument('-B', '--build', action='store_true')
-    build_interface.add_argument('--no-build', dest='build', action='store_false')
+    build_interface.add_argument('-B', '--build', action='store_const', const=True)
+    build_interface.add_argument('--no-build', dest='build', action='store_const', const=False)
 
     force_interface = interface.add_mutually_exclusive_group()
-    force_interface.add_argument('-F', '--force', action='store_true')
-    force_interface.add_argument('--no-force', dest='force', action='store_false')
+    force_interface.add_argument('-F', '--force', action='store_const', const=True)
+    force_interface.add_argument('--no-force', dest='force', action='store_const', const=False)
 
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
@@ -123,5 +123,5 @@ class SimulationBuildApp(Application):
                    'optimize', 'shortcuts', 'flags', 'variables', 'subpath', 'source', 'jobs',
                    'parallelIO', 'compile', 'build', 'force', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for simulation command.')
         simulation(**local, cmdline=True)

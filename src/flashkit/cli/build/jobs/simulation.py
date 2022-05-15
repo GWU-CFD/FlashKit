@@ -68,5 +68,5 @@ class SimulationJobsApp(Application):
         
         options = {'simulation', 'directory', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for simulation command.')
         #simulation(**local, cmdline=True)

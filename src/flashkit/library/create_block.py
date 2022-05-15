@@ -8,7 +8,8 @@ from typing import Any, cast
 import os
 
 # internal libraries
-from ..core import parallel
+from ..core.distribute import Index
+from ..core.parallel import safe
 from ..resources import CONFIG 
 from ..support.grid import axisMesh
 from ..support.files import H5Manager
@@ -17,7 +18,6 @@ from ..support.types import N, Blocks, Grids, Mesh, Shapes
 
 # external libraries
 import numpy
-import h5py # type: ignore
 
 # define public interface
 __all__ = ['calc_blocks', 'write_blocks', ]
@@ -25,19 +25,19 @@ __all__ = ['calc_blocks', 'write_blocks', ]
 # define configuration constants (internal)
 NAME = CONFIG['create']['block']['name']
 
-@parallel.safe
+@safe
 def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict[str, Any], 
-                path: str, procs: tuple[int, int, int], shapes: Shapes) -> tuple[Blocks, parallel.Index]:
+                path: str, procs: tuple[int, int, int], shapes: Shapes) -> tuple[Blocks, Index]:
     """Calculate desired initial flow fields; dispatches appropriate method using local blocks."""
 
     # create grid init parameters for parallelizing blocks 
-    gr_axisNumProcs, gr_axisMesh = axisMesh(*procs)
+    gr_axisNumProcs, _ = axisMesh(*procs)
     gr_numProcs = int(numpy.prod(gr_axisNumProcs))
-    gr_lIndex = parallel.Index.from_simple(gr_numProcs)
-    gr_lMesh = gr_lIndex.mesh_width(gr_axisNumProcs)
+    gr_lIndex = Index.from_simple(tasks=gr_numProcs, layout=gr_axisNumProcs)
+    gr_lMesh = gr_lIndex.where_all
 
     # create flow field method from parameters
-    gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (procs, *shape) in shapes.items()}
+    gr_shp = {grid: (len(gr_lMesh), ) + tuple(shape) for grid, (_, *shape) in shapes.items()}
     gr_loc = {field: location for field, (location, _) in flows.items()}
     gr_mth = {field: method for field, (_, method) in flows.items()}
     gr_flw = Flowing(gr_mth, path, **params)
@@ -45,8 +45,8 @@ def calc_blocks(*, flows: dict[str, tuple[str, str]], grids: Grids, params: dict
     # create flow fields
     return get_filledBlocks(grids=grids, locations=gr_loc, mesh=gr_lMesh, methods=gr_flw, shapes=gr_shp), gr_lIndex
 
-@parallel.safe
-def write_blocks(*, blocks: Blocks, index: parallel.Index, path: str, shapes: Shapes) -> None:
+@safe
+def write_blocks(*, blocks: Blocks, index: Index, path: str, shapes: Shapes) -> None:
     filename = os.path.join(path, NAME)
     with H5Manager(filename, 'w-', clean=True) as h5file:
         for field, data in blocks.items():

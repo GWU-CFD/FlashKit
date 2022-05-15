@@ -3,6 +3,9 @@
 # type annotations
 from __future__ import annotations
 
+# standard libraries
+import logging
+
 # internal libraries
 from ...api.create import grid
 from ...core.configure import get_defaults
@@ -13,6 +16,8 @@ from ...core.parse import ListFloat, DictAny
 # external libraries
 from cmdkit.app import Application
 from cmdkit.cli import Interface 
+
+logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.grid
 
@@ -102,4 +107,5 @@ class GridCreateApp(Application):
                   'xmethod', 'ymethod', 'zmethod', 'xparam', 'yparam', 'zparam', 'path', 'dest', 
                   'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
+        logger.debug('Command -- Entry point for grid command.')
         grid(**local, cmdline=True)

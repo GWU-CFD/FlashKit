@@ -54,8 +54,8 @@ def author_xdmf(filenames: dict[str, str], filesteps: Sequence[int], context: Ba
             plotsource = filenames['plot-source'] + f'{number:04}'
             plotdest = filenames['plot-dest'] + f'{number:04}'
             info = get_simulation_info(plotsource)
-            gridsource = filenames['grid-source'] + (f'{number:04}' if info.grid == 'pm' else '0000')
-            griddest = filenames['grid-dest'] + (f'{number:04}' if info.grid == 'pm' else '0000')
+            gridsource = first_true((f'{filenames["grid-source"]}{file:04}' for file in reversed(filesteps[:step+1])), os.path.exists)
+            griddest = first_true((f'{filenames["grid-dest"]}{file:04}' for file in reversed(filesteps[:step+1])), os.path.exists)
             simulation = ElementTree.SubElement(collection, *get_spatial_collection(step))
             temporal = ElementTree.SubElement(simulation, *get_time_element(info.time))
 
@@ -106,7 +106,7 @@ def get_simulation_info(filename: str) -> SimulationInfo:
     blk_sizes = {i: first_true(int_scalars, lambda l: 'n' + i + 'b' in str(l[0]))[1] for i in ('x', 'y', 'z')}
     dimension = first_true(int_scalars, lambda l: 'dimensionality' in str(l[0]))[1]
     fields = [k.decode('utf-8') for k in unknown_names]
-    grid = [grid[1:] for grid in {'+pm', '+ug', '+rg'} if grid in setup_call][0]
+    grid = [grid[1:] for grid in {'+am', '+pm', '+ug', '+rg'} if grid in setup_call][0]
     return SimulationInfo(sim_time, grid, dimension, blk_num, node_type, blk_sizes, fields, velocity_names)
 
 def get_comment_element() -> str:

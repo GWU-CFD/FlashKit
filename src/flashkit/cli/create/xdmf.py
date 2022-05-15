@@ -3,6 +3,9 @@
 # type annotations
 from __future__ import annotations
 
+# standard libraries
+import logging
+
 # internal libraries
 from ...api.create import xdmf
 from ...core.configure import get_defaults
@@ -13,6 +16,8 @@ from ...core.parse import ListInt
 # external libraries
 from cmdkit.app import Application
 from cmdkit.cli import Interface 
+
+logger = logging.getLogger(__name__)
 
 DEF = get_defaults().create.xdmf
 
@@ -82,12 +87,12 @@ class XdmfCreateApp(Application):
     interface.add_argument('-q', '--force')
 
     auto_interface = interface.add_mutually_exclusive_group()
-    auto_interface.add_argument('-A', '--auto', action='store_true')
-    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+    auto_interface.add_argument('-A', '--auto', action='store_const', const=True)
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_const', const=False)
 
     find_interface = interface.add_mutually_exclusive_group()
-    find_interface.add_argument('-B', '--find', action='store_true')
-    find_interface.add_argument('--no-find', dest='find', action='store_false')
+    find_interface.add_argument('-B', '--find', action='store_const', const=True)
+    find_interface.add_argument('--no-find', dest='find', action='store_const', const=False)
 
     interface.add_argument('-I', '--ignore', action='store_true')
     interface.add_argument('-O', '--options', action='store_true')
@@ -102,4 +107,5 @@ class XdmfCreateApp(Application):
         options = {'basename', 'low', 'high', 'skip', 'files', 'path', 'dest', 
                    'out', 'plot', 'grid', 'force', 'auto', 'find', 'ignore'}
         local = {key: getattr(self, key) for key in options}
+        logger.debug('Command -- Entry point for xdmf command.')
         xdmf(**local)

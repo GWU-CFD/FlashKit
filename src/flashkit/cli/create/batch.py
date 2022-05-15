@@ -120,32 +120,32 @@ class BatchCreateApp(Application):
     interface.add_argument('-o', '--out')
 
     auto_interface = interface.add_mutually_exclusive_group()
-    auto_interface.add_argument('-A', '--auto', action='store_true')
-    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+    auto_interface.add_argument('-A', '--auto', action='store_const', const=True)
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_const', const=False)
 
     find_interface = interface.add_mutually_exclusive_group()
-    find_interface.add_argument('-B', '--find', action='store_true')
-    find_interface.add_argument('--no-find', dest='find', action='store_false')
+    find_interface.add_argument('-B', '--find', action='store_const', const=True)
+    find_interface.add_argument('--no-find', dest='find', action='store_const', const=False)
 
     redirect_interface = interface.add_mutually_exclusive_group()
-    redirect_interface.add_argument('-C', '--redirect', action='store_true')
-    redirect_interface.add_argument('--no-redirect', dest='redirect', action='store_false')
+    redirect_interface.add_argument('-C', '--redirect', action='store_const', const=True)
+    redirect_interface.add_argument('--no-redirect', dest='redirect', action='store_const', const=False)
 
     screen_interface = interface.add_mutually_exclusive_group()
-    screen_interface.add_argument('-T', '--screen', action='store_true')
-    screen_interface.add_argument('--no-screen', dest='screen', action='store_false')
+    screen_interface.add_argument('-T', '--screen', action='store_const', const=True)
+    screen_interface.add_argument('--no-screen', dest='screen', action='store_const', const=False)
 
     hostfile_interface = interface.add_mutually_exclusive_group()
-    hostfile_interface.add_argument('-H', '--hostfile', action='store_true')
-    hostfile_interface.add_argument('--no-hostfile', dest='hostfile', action='store_false')
+    hostfile_interface.add_argument('-H', '--hostfile', action='store_const', const=True)
+    hostfile_interface.add_argument('--no-hostfile', dest='hostfile', action='store_const', const=False)
 
     notasks_interface = interface.add_mutually_exclusive_group()
-    notasks_interface.add_argument('-M', '--notasks', action='store_true')
-    notasks_interface.add_argument('--no-notasks', dest='notasks', action='store_false')
+    notasks_interface.add_argument('-M', '--notasks', action='store_const', const=True)
+    notasks_interface.add_argument('--no-notasks', dest='notasks', action='store_const', const=False)
 
     nosources_interface = interface.add_mutually_exclusive_group()
-    nosources_interface.add_argument('-N', '--nosources', action='store_true')
-    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_false')
+    nosources_interface.add_argument('-N', '--nosources', action='store_const', const=True)
+    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_const', const=False)
 
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
@@ -169,5 +169,5 @@ class BatchCreateApp(Application):
                    'source', 'launch', 'sources', 'path', 'dest', 'hosts', 'plot', 'force', 'batch', 'out',
                    'auto', 'find', 'redirect', 'screen', 'hostfile', 'notasks', 'nosources', 'nofile', 'result', 'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for batch command')
         batch(**local, cmdline=True)

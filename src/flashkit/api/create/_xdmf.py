@@ -8,23 +8,18 @@ from typing import Any, Union
 import logging
 import os
 import re
-import sys
 
 # internal libraries
 from ...core.error import AutoError
 from ...core.parallel import safe, single 
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_xdmf import create_xdmf
-from ...resources import CONFIG, DEFAULTS
 
 # define public interface
 __all__ = ['xdmf', ]
 
 logger = logging.getLogger(__name__)
-
-# define configuration constants (internal)
-BAR_SWITCH = CONFIG['create']['xdmf']['switch']
 
 def adapt_arguments(**args: Any) -> dict[str, Any]:
     """Process arguments to implement behaviors; will throw if some defaults missing."""
@@ -58,7 +53,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # create the basename
     if not bname_given:
         try:
-            args['basename'], *_ = next(filter(orig_cond, (file for file in listdir))).split(str_include.pattern)
+            args['basename'], *_ = next(filter(orig_cond, (file for file in sorted(listdir)))).split(str_include.pattern)
         except StopIteration:
             raise AutoError(f'Cannot automatically parse basename for simulation files on path {source}')
     full_cond = lambda file: orig_cond(file) and re.search(re.compile(args['basename']), file)
@@ -85,12 +80,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     return args
 
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not len(args['files']) >= BAR_SWITCH and sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    return args
-
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     basename = args['basename']
@@ -102,7 +91,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     plot = args['plot']
     msg_files = args.pop('message')
     message = '\n'.join([
-        f'Creating xdmf file from {len(files)} simulation files',
+        f'\nCreating xdmf file from {len(files)} simulation files',
         f'  plotfiles = {source}/{basename}{plot}xxxx',
         f'  gridfiles = {source}/{basename}{grid}xxxx',
         f'  xdmf_file = {dest}/{basename}{out}.xmf',

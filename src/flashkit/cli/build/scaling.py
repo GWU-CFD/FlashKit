@@ -62,5 +62,5 @@ class ScalingBuildApp(Application):
 
         options = {'ignore'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for scaling command.')
         #scaling(**local, cmdline=True)

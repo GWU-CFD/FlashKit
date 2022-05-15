@@ -7,14 +7,13 @@ from typing import Any, Optional
 # standard libraries
 import logging
 import os
-import sys
 
 # internal libraries
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...library.create_grid import calc_coords, write_coords
-from ...resources import CONFIG, DEFAULTS
+from ...resources import CONFIG
 from ...support.types import Coords
 
 # external libraries
@@ -28,7 +27,6 @@ __all__ = ['grid', ]
 # define configuration constants (internal)
 AXES = CONFIG['create']['grid']['axes']
 COORDS = CONFIG['create']['grid']['coords']
-SWITCH = CONFIG['create']['grid']['switch']
 NAME = CONFIG['create']['grid']['name']
 LINEWIDTH = CONFIG['create']['grid']['linewidth']
 OPTIONPAD = CONFIG['create']['grid']['optionpad']
@@ -70,12 +68,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     return args
 
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    return args
-
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     user = {'ascii'}
@@ -90,7 +82,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     highs = tuple(h if m not in user else '?' for h, m in zip(args['ranges_high'], methods))
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating initial grid file from specification:',
+        f'\nCreating initial grid file from specification:',
         f'  grid_pnts = {grids}',
         f'  sim_range = {lows} -> {highs}',
         f'  algorythm = {methods}',
@@ -164,7 +156,7 @@ def grid(**arguments: Any) -> Optional[Coords]:
     nofile = args.pop('nofile')
     cmdline = args.pop('cmdline', False)
     
-    with args.pop('context')() as progress:
+    with args.pop('context')():
         coords = calc_coords(**args)
         if not nofile: write_coords(coords=coords, ndim=ndim, path=path)
     

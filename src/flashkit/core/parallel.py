@@ -2,7 +2,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import cast, NamedTuple, TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 # system libraries
 import logging
@@ -16,12 +16,11 @@ from .error import ParallelError
 from ..resources import CONFIG
 
 # external libraries
-import numpy
 import psutil # type: ignore
 
 # static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, TypeVar
+    from typing import Any, Callable, Optional, TypeVar
     from types import ModuleType
     Intracomm = TypeVar('Intracomm', bound=Any)
     F = TypeVar('F', bound = Callable[..., Any])
@@ -38,7 +37,7 @@ this = sys.modules[__name__]
 PROPERTIES = ('MPI', 'COMM_WORLD', 'rank', 'size', ) 
 
 # define library (public) interface
-__all__ = list(PROPERTIES) + ['Index', 
+__all__ = list(PROPERTIES) + [
         'guard', 'guarantee', 'limit', 'safe', 'squash', 'single',
         'is_loaded', 'is_lower', 'is_parallel', 'is_root', 'is_serial', 'is_supported', ]
 
@@ -58,53 +57,6 @@ def __getattr__(name: str) -> Any:
     """Provide module level @property behavior."""
     if name in PROPERTIES: return globals()[get_property(name)]()
     raise AttributeError(f'module {__name__} has no attribute {name}')
-
-class Index:
-    """Support class for parallel process distribution."""
-    width: int
-    low: int
-    high: int
-
-    def __init__(self, *, high: int, low: int, size: int, width: int):
-        self.high = int(high)
-        self.low = int(low)
-        self.size = int(size)
-        self.width = int(width)
-        self.range = range(self.low, self.high + 1)
-        try:
-            assert(self.high - self.low + 1 == self.width)
-        except AssertionError:
-            raise ParallelError('Width of local tasks does not match local width!')
-
-    @classmethod
-    def from_simple(cls, tasks: int = 1):
-        """Simple even distribution or processes across communicator."""
-        rank: int = this.rank # type: ignore
-        size: int = this.size # type: ignore
-        avg, res  = divmod(tasks, size)
-        width = avg + 1 if rank < res else avg 
-        low   =  rank      * (avg + 1)     if rank < res else res * (avg + 1) + (rank - res    ) * avg
-        high  = (rank + 1) * (avg + 1) - 1 if rank < res else res * (avg + 1) + (rank - res + 1) * avg - 1
-        logger.debug(f'Index -- Created a simple Index for distributed operations.')
-        return cls(width=width, low=low, high=high, size=tasks)
-
-    def _tasksMatchSize(self, axisTasks: Sequence[int]) -> None:
-        try:
-            assert(int(numpy.prod(axisTasks)) == self.size)
-        except AssertionError as error:
-            raise ParallelError('Total number of tasks (by axis) do not match parallel size!')
-
-    def mesh_low(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return tuple(int(self.low / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
-
-    def mesh_high(self, axisTasks: Sequence[int], *, force: bool = False) -> tuple[int, ...]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return tuple(int(self.high / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks))
-
-    def mesh_width(self, axisTasks: Sequence[int], *, force: bool = False) -> list[tuple[int, ...]]:
-        if not force: self._tasksMatchSize(axisTasks)
-        return [tuple(int(n / numpy.prod(axisTasks[:a], initial=1)) % t for a, t in enumerate(axisTasks)) for n in range(self.low, self.high+1)]
 
 def assertion(method: str, message: str) -> D:
     """Usefull decorater factory to implement supported assertions."""
@@ -151,6 +103,11 @@ def assert_supported() -> None:
 def assert_unloaded() -> None:
     pass
 
+@inject_property('COMM_WORLD')
+def barrier(comm: Intracomm) -> None:
+    """MPI python interface world communicator."""
+    if is_parallel(): comm().Barrier()
+
 def force_parallel(state: bool = True) -> None:
     """Force the assumption of a parallel or serial state."""
     this._parallel = state # type: ignore
@@ -172,7 +129,8 @@ def is_lower(rank: F, limit: int) -> bool:
 def is_parallel() -> bool:
     """Attempt to identify if the python runtime was executed in parallel."""
     if this._parallel is not None: return this._parallel # type: ignore
-    return psutil.Process(os.getppid()).name() in MPICMDS
+    process = psutil.Process(os.getppid())
+    return process.name() in MPICMDS or any(command in MPICMDS for command in process.cmdline())
 
 @inject_property('rank')
 def is_root(rank: F) -> bool:
@@ -239,7 +197,7 @@ def guard(function: F) -> F:
     def wrapper(*args, **kwargs):
         assert_unloaded()
         assert_serial()
-        logger.debug(f'Guard -- Guarded a call into <{function.__name__}>.')
+        logger.debug(f'Parallel -- Guarded (Guard) a call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -253,7 +211,7 @@ def guarantee(*, strict: bool = False) -> D:
         def wrapper(*args, **kwargs):
             if strict: assert_parallel()
             load()
-            logger.debug(f'Guarantee -- Guarded a call into <{function.__name__}>.')
+            logger.debug(f'Parallel -- Guarded (Guarantee) a call into <{function.__name__}>.')
             return function(*args, **kwargs)
         return cast(F, wrapper)
     return decorator
@@ -267,7 +225,7 @@ def limit(number: int) -> D:
         @wraps(function)
         def wrapper(*args, **kwargs):
             if not is_lower(number): return 
-            logger.debug(f'Limit -- Guarded a call into <{function.__name__}>.')
+            logger.debug(f'Parallel -- Guarded (limit) a call into <{function.__name__}>.')
             return function(*args, **kwargs)
         return cast(F, wrapper)
     return decorator
@@ -282,12 +240,12 @@ def many(number: Optional[int] = None, *, root: bool = True) -> D:
             if is_serial(): return function(*args, **kwargs)
             load()
             if number is None or is_lower(number):
-                logger.debug(f'Many -- Guarded a call into <{function.__name__}>.')
+                logger.debug(f'Parallel -- Guarded (many) a call into <{function.__name__}>.')
                 result = function(*args, **kwargs)
             else:
                 result = None
             if root: return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
-            logger.debug(f'Many -- Gathering results of a call into <{function.__name__}>.')
+            logger.debug(f'Parallel -- Gathering (many) results of a call into <{function.__name__}>.')
             return this._MPI.COMM_WORLD.allgather(result)
         return cast(F, wrapper)
     return decorator
@@ -298,7 +256,7 @@ def safe(function: F) -> F:
     safe (and sensical) to call in both parallel and serial enviornments."""
     @wraps(function)
     def wrapper(*args, **kwargs):
-        logger.debug(f'Safe -- Passing through the call into <{function.__name__}>.')
+        logger.debug(f'Parallel -- Passing (safe) through the call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -309,7 +267,7 @@ def squash(function: F) -> F:
     @wraps(function)
     def wrapper(*args, **kwargs):
         if not is_root(): return
-        logger.debug(f'Squash -- Guarded the call into <{function.__name__}>.')
+        logger.debug(f'Parallel -- Guarded (squash) the call into <{function.__name__}>.')
         return function(*args, **kwargs)
     return cast(F, wrapper)
 
@@ -320,10 +278,10 @@ def single(function: F) -> F:
         if is_serial(): return function(*args, **kwargs)
         load()
         if is_root():
-            logger.debug(f'Single -- Guarded the call into <{function.__name__}>.')
+            logger.debug(f'Parallel -- Guarded (single) the call into <{function.__name__}>.')
             result = function(*args, **kwargs)
         else:
             result = None
-        logger.debug(f'Single -- Distributing result of a call into <{function.__name__}>.')
+        logger.debug(f'Parallel -- Distributing (single) result of a call into <{function.__name__}>.')
         return this._MPI.COMM_WORLD.bcast(result, root=ROOT)
     return cast(F, wrapper)

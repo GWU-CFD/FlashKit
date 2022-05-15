@@ -91,16 +91,16 @@ class ParCreateApp(Application):
     interface.add_argument('-d', '--dest')
 
     auto_interface = interface.add_mutually_exclusive_group()
-    auto_interface.add_argument('-A', '--auto', action='store_true')
-    auto_interface.add_argument('--no-auto', dest='auto', action='store_false')
+    auto_interface.add_argument('-A', '--auto', action='store_const', const=True)
+    auto_interface.add_argument('--no-auto', dest='auto', action='store_const', const=False)
  
     nosources_interface = interface.add_mutually_exclusive_group()
-    nosources_interface.add_argument('-N', '--nosources', action='store_true')
-    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_false')
+    nosources_interface.add_argument('-N', '--nosources', action='store_const', const=True)
+    nosources_interface.add_argument('--no-nosources', dest='nosources', action='store_const', const=False)
 
     duplicates_interface = interface.add_mutually_exclusive_group()
-    duplicates_interface.add_argument('-D', '--duplicates', action='store_true')
-    duplicates_interface.add_argument('--no-duplicates', dest='duplicates', action='store_false')
+    duplicates_interface.add_argument('-D', '--duplicates', action='store_const', const=True)
+    duplicates_interface.add_argument('--no-duplicates', dest='duplicates', action='store_const', const=False)
 
     interface.add_argument('-F', '--nofile', action='store_true')
     interface.add_argument('-R', '--result', action='store_true')
@@ -126,5 +126,5 @@ class ParCreateApp(Application):
         options = {'templates', 'params', 'sources', 'dest', 'auto',
                    'nosources', 'duplicates', 'ignore', 'result', 'nofile'}
         local = {key: getattr(self, key) for key in options}
-        logger.debug(f'cli -- Returned: {local}')
+        logger.debug(f'Command -- Entry point for par command.')
         par(**local, cmdline=True)

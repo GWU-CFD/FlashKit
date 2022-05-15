@@ -8,17 +8,16 @@ from typing import Any, Optional
 import logging
 import os
 import re
-import sys
+
+from flashkit.library.create_grid import calc_coords
 
 # internal libraries
 from ...core.error import AutoError
 from ...core.parallel import safe, single, squash
-from ...core.progress import get_bar
+from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
-from ...library.create_grid import read_coords
-from ...library.create_interp import interp_blocks
-from ...resources import CONFIG, DEFAULTS
-from ...support.grid import get_blocks, get_grids, get_shapes
+from ...library.create_interp import SimulationData, correct_blocks, interp_blocks
+from ...resources import CONFIG
 from ...support.types import Blocks
 
 # external libraries
@@ -32,7 +31,6 @@ __all__ = ['interp', ]
 # define configuration constants (internal)
 GRIDS = CONFIG['create']['block']['grids']
 NAME = CONFIG['create']['block']['name']
-SWITCH = CONFIG['create']['interp']['switch']
 LINEWIDTH = CONFIG['create']['interp']['linewidth']
 TABLESPAD = CONFIG['create']['interp']['tablespad']
 PRECISION = CONFIG['create']['interp']['precision']
@@ -87,12 +85,6 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
 
     return args
 
-def attach_context(**args: Any) -> dict[str, Any]:
-    """Provide a usefull progress bar if appropriate; with throw if some defaults missing."""
-    noattach = not any(s * p >= SWITCH for s, p in zip(args['sizes'], args['procs'])) and sys.stdout.isatty()
-    args['context'] = get_bar(null=noattach)
-    return args
-
 def log_messages(**args: Any) -> dict[str, Any]:
     """Log screen messages to logger; will throw if some defaults missing."""
     basename = args['basename']
@@ -108,7 +100,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     row = lambda r: '  '.join(f'{e:>{TABLESPAD}}' for e in r) 
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating block file by interpolationg simulation files:',
+        f'\nCreating block file by interpolationg simulation files:',
         f'                  {row(fields)}',
         f'  locations     = {row(locations)}',
         f'  sources       = {row(f_sources)}',
@@ -129,7 +121,7 @@ ROUTE = ('create', 'interp')
 PRIORITY = {'ignore', 'cmdline', 'coords'}
 CRATES = (adapt_arguments, log_messages, attach_context)
 DROPS = {'ignore', 'auto', 'find', 'force', 'nxb', 'nyb', 'nzb', 'iprocs', 'jprocs', 'kprocs', 'fields', 'fsource'}
-MAPPING = {'grid': 'gridname', 'plot': 'filename'}
+MAPPING = {'grid': 'gridname', 'plot': 'plotname', 'step': 'plotstep'}
 INSTRUCTIONS = Instructions(packages=PACKAGES, route=ROUTE, priority=PRIORITY, crates=CRATES, drops=DROPS, mapping=MAPPING)
 
 @single
@@ -181,19 +173,29 @@ def interp(**arguments: Any) -> Optional[Blocks]:
         you can provide the result from grid creation directly by using an optional keyword -- coords: (ndarray, ...).
     """
     args = process_arguments(**arguments)
-    path = args.pop('dest')
+    path = args.pop('path')
+    dest = args.pop('dest')
     ndim = args.pop('ndim')
     procs = args.pop('procs')
     sizes = args.pop('sizes')
+    basename = args.pop('basename')
+    gridname = args.pop('gridname')
+    plotname = args.pop('plotname')
+    plotstep = args.pop('plotstep')
     result = args.pop('result')
     cmdline = args.pop('cmdline', False)
     coords = args.pop('coords', None)
+    correct = arguments.pop('correct', False) ## FUTURE
+    relax = arguments.pop('relax', None) ## FUTURE
     
-    if coords is None: coords = read_coords(path=path, ndim=ndim)
-    shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
-    grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    centers, boxes = get_blocks(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
-    blocks = interp_blocks(bndboxes=boxes, centers=centers, dest=path, grids=grids, ndim=ndim, procs=procs, shapes=shapes, **args)
+    destination = SimulationData.from_options(coords=coords, ndim=ndim, path=dest, procs=procs, sizes=sizes)
+    plot_source = SimulationData.from_plot_files(basename=basename, grid=gridname, path=path, plot=plotname, step=plotstep)
+    blocks = interp_blocks(destination=destination, source=plot_source, **args)
+
+    if correct:  ## FUTURE
+        logger.info("\nCorrecting block data ...")
+        with args['context']() as progress:
+            correct_blocks(destination=destination, relax=relax, progress=progress)
     
     if not result: return None
     if cmdline: screen_out(blocks=blocks)

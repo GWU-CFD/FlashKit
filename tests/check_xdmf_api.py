@@ -21,7 +21,6 @@ from flashkit.resources import CONFIG, DEFAULTS
 # define default and config constants
 FILES = DEFAULTS['general']['files']
 XDMF = DEFAULTS['create']['xdmf']
-SWITCH = CONFIG['create']['xdmf']['switch']
 
 class Case(NamedTuple):
     """Useful tuple of test cases definition."""
@@ -246,25 +245,6 @@ def case_paths(working):
                 'source': str(working.joinpath('source')),
                 })
 
-@pytest.fixture()
-def case_context(working):
-    """Define the context case for the xdmf api."""
-    return Case(
-            provided={
-                'ignore': True,
-                'files': list(range(0, SWITCH+2)),
-                },
-            expected={
-                'dest': str(working),
-                'files': list(range(0, SWITCH+2)),
-                'basename': 'INS_LidDr_Cavity',
-                'context': get_bar(),
-                'gridname': FILES['grid'],
-                'filename': FILES['output'],
-                'plotname': FILES['plot'],
-                'source': str(working),
-                })
-
 @pytest.fixture(params=[
     pytest.lazy_fixture('single_toml'),
     pytest.lazy_fixture('nested_toml')
@@ -293,7 +273,6 @@ def case_config(working):
     pytest.lazy_fixture('case_forcename'),
     pytest.lazy_fixture('case_autoname'),
     pytest.lazy_fixture('case_paths'),
-    pytest.lazy_fixture('case_context'),
     pytest.lazy_fixture('case_config'),
     ])
 def data(request):
@@ -311,7 +290,7 @@ def check_xdmf(working, data, mocker):
     # don't run library function or logging
     mocker.patch('flashkit.api.create._xdmf.create_xdmf', return_value=None)
     mocker.patch('flashkit.api.create._xdmf.logger.info', return_value=None)
-    mocker.patch('flashkit.api.create._xdmf.sys.stdout.isatty', return_value=True)
+    #mocker.patch('flashkit.api.create._xdmf.sys.stdout.isatty', return_value=True)
 
     # instrument desired functions
     mocker.spy(_xdmf, 'create_xdmf')

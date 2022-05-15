@@ -8,9 +8,7 @@ import sys
 
 # internal libraries
 from ..__meta__ import __version__, __website__
-from ..core import logging
 from ..core.options import DebugLogging, ForceParallel
-from ..core import custom
 from ..core.custom import DictApp
 
 # external libraries
@@ -78,6 +76,7 @@ class FlashKit(ApplicationGroup):
     interface.add_argument('-v', '--version', version=__version__, action='version')
     interface.add_argument('-P', '--parallel', nargs=0, action=ForceParallel)
     interface.add_argument('-V', '--verbose', nargs=0, action=DebugLogging)
+    interface.add_argument('--future', action='store_true')
 
 def main() -> int:
     """Entry-point for flaskkit command-line interface."""

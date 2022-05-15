@@ -23,6 +23,7 @@ class H5Manager:
     def __init__(self, filename: str, mode: str = 'r', *, 
                  clean: bool = False, force: bool = False, nofile: bool = False):
         
+        self.h5file = None
         self.filename = filename
         self.mode = mode
         
@@ -46,15 +47,21 @@ class H5Manager:
     def __exit__(self, *args):
         self.close()
 
+    def __contains__(self, key):
+        if self.h5file is None:
+            LibraryError('Hdf5 File has not been opened!')
+        return key in self.h5file.keys()
+
     def close(self) -> None:
         """Ensures proper closing of hdf5 file based on runtime enviornment."""
         if self.safe:
             self.h5file.close()
 
-    def create_dataset(self, dataset: str, *, shape: tuple, dtype: type) -> None:
+    def create_dataset(self, dataset: str, *, shape: tuple, dtype: type, force: bool = False) -> None:
         """Ensure proper creation of hdf5 dataset based on runtime enviornment."""
         if self.safe:
-            self.h5file.create_dataset(dataset, shape, dtype=dtype)
+            if force or dataset not in self:
+                self.h5file.create_dataset(dataset, shape, dtype=dtype)
 
     def open(self) -> None:
         """Ensures proper opening of hdf5 file based on runtime enviornment."""

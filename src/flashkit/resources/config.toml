@@ -19,7 +19,6 @@
   grids  = ['center', 'facex', 'facey', 'facez'] # defined staggered grids
   method = 'uniform'      # default intialization method
   name   = 'initBlock.h5' # filename holding initial block data
-  switch = 1024           # number of points before show progress  
   linewidth = 120         # line width if ouput to screen
   optionpad = 5           # padding for option printing
   tablespad = 10          # padding for table printing
@@ -30,17 +29,17 @@
   coords = ['x', 'y', 'z'] # defined coordinate directions
   label  = 'Faces'       # directional label (e.g., xfaces)
   name   = 'initGrid.h5' # filename holding initial grid data
-  switch = 1000000       # number of points before show progress
   linewidth = 120        # line width if ouput to screen
   optionpad = 5          # padding for option printing
   precision = 6          # precision if output to screen
 
   [create.interp]
-  method = 'linear' # interpolation kernal
-  switch = 1        # number of points before show progress  
-  linewidth = 120   # line width if ouput to screen
-  tablespad = 10    # padding for table printing
-  precision = 6     # precision if output to screen
+  blkmsg    = 20       # width of verbose block list
+  jitdist   = 'numba'  #  python distribuation supporting jit
+  linewidth = 120      # line width if ouput to screen
+  method    = 'linear' # interpolation kernal 
+  precision = 6        # precision if output to screen
+  tablespad = 10       # padding for table printing
 
   [create.par]
   filename = 'flash.par'  # name of file holding runtime parameters
@@ -51,7 +50,6 @@
   nosource = ['2d']       # library templates (parameter) keys ignored
 
   [create.xdmf]
-  switch = 10   # number of files before showing progress
 
 [core]
 
@@ -65,10 +63,11 @@
   user  = 'user'       # label prefix for trees in Configuration
 
   [core.logger]
-  console  = '%(message)s'  # console logging handler format
-  error = '%(levelname)s - %(message)s' # stderr logging handler format
-  record = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
-  trace = '%(asctime)s - %(message)s' # traceback logging handler format
+  console = '%(message)s'  # console logging handler format
+  error   = '%(levelname)s - %(message)s' # stderr logging handler format
+  record  = '%(asctime)s - %(levelname)s - %(module)s %(funcName)s - %(message)s' # stderr logging handler format
+  filter  = ['library', 'logging'] # verbose filter (inclusive) based on module path
+  trace   = '%(asctime)s - %(message)s' # traceback logging handler format
   logfile = 'flashkit.log' # name of the standard logging file
   excfile = 'traceback.log' # name of the traceback logging file
 
@@ -80,6 +79,9 @@
 
   [core.parallel]
   commands     = ['mpirun', 'mpiexec'] # commands expected for launching mpi
+  boundaries   = [['left', 'right'],   # labels assigned to indicate the 
+                  ['back', 'front'],   #   particular boundary context of
+                  ['bottom', 'top']]   #   a distributed task (only 3d atm)
   distribution = 'mpi4py' # python distribution supporting mpi
   root         = 0        # root process number
   size         = 1        # number of processes in serial execution 			
@@ -90,6 +92,7 @@
   entrance = '    ' # entrance characters prior to bar
   progress = 36     # width of progress bar itself
   sentinal = '█'    # filled character for bar
+  forcebar = true   # use simple progress bar vs alive-bar
   terminal = 120    # width of progress bar message
   updating = 30     # fps for updating the progress bar
 

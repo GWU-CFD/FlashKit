@@ -7,7 +7,6 @@ from typing import Any, Optional
 # standard libraries
 import logging
 import os
-import sys
 from functools import partial
 
 # internal libraries
@@ -18,9 +17,8 @@ from ...core.progress import attach_context
 from ...core.stream import Instructions, mail
 from ...core.tools import read_a_leaf
 from ...library.create_par import author_par, write_par
-from ...resources import CONFIG, TEMPLATES
+from ...resources import CONFIG
 from ...support.template import filter_tags, sort_templates
-from ...support.types import Template, Tree
 
 # external libraries
 from cmdkit.config import Namespace
@@ -41,18 +39,18 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     # determine arguments passed
     if args.get('auto', False):
         templates_given = False
-        logger.debug(f'api -- Forced auto behavior for templates.')
+        logger.debug(f'Application -- Forced auto behavior for templates.')
     else:    
         templates_given = 'templates' in args.keys()
         if not templates_given:
             raise AutoError('Templates must be given, or use --auto.')  
     if args.get('nosources', False):
         args['sources'] = list()
-        logger.debug(f'api -- Forced ignore behavior for sources.')
+        logger.debug(f'Application -- Forced ignore behavior for sources.')
 
     # resolve proper absolute directory paths
     args['dest'] = os.path.realpath(os.path.expanduser(args['dest']))
-    logger.debug(f'api -- Fully resolved the destination path.')
+    logger.debug(f'Application -- Fully resolved the destination path.')
 
     # find the templates 
     if not templates_given:
@@ -62,7 +60,7 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
             for path in paths 
             for template in read_a_leaf([space, TEMPLATE], arguments.namespaces) # type: ignore
             ]))
-        logger.debug(f'api -- Identified templates using all configuration files.')
+        logger.debug(f'Application -- Identified templates using all configuration files.')
 
     # find the lookup for sources
     args['tree'] = get_defaults() if args.get('ignore', False) else get_arguments()
@@ -72,17 +70,17 @@ def adapt_arguments(**args: Any) -> dict[str, Any]:
     if 'params' in args:
         local = Namespace({'local': args['params']})
         local['local'][TAGGING] = {'header': 'Command Line Provided Parameters'}
-        logger.debug(f'api -- Appended local parameters provided.')
+        logger.debug(f'Application -- Appended local parameters provided.')
     else:
         local = Namespace()
     sources = ['parameter', ] + args['sources']
     construct = get_templates(local=local, sources=sources, templates=files)
-    logger.debug(f'api -- Constructed combined templated info.')
+    logger.debug(f'Application -- Constructed combined templated info.')
 
     # filter the templates
     if not args.get('duplicates', False):
         construct = construct.trim(filter_tags, key=partial(sort_templates, args['templates']))
-        logger.debug(f'api -- Combined template was trimmed.')
+        logger.debug(f'Application -- Combined template was trimmed.')
     args['construct'] = construct
 
     return args
@@ -95,7 +93,7 @@ def log_messages(**args: Any) -> dict[str, Any]:
     dest = os.path.relpath(args['dest'])
     nofile = ' (no file out)' if args['nofile'] else ''
     message = '\n'.join([
-        f'Creating FLASH parameter file by processing the following:',
+        f'\nCreating FLASH parameter file by processing the following:',
         f'  templates     = {templates}',
         f'  sources       = {sources}',
         f'  parameters    = {params}',
@@ -170,7 +168,7 @@ def par(**arguments: Any) -> Optional[Any]:
     nofile = args.pop('nofile')
     cmdline = args.pop('cmdline', False)
     
-    with args.pop('context')() as progress:
+    with args.pop('context')():
         lines = author_par(**args)
         if not nofile: write_par(lines=lines, path=path)
     

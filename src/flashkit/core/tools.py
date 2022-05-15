@@ -2,7 +2,8 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Any, Iterator, Optional, Union
+from ast import Call
+from typing import Any, Callable, Iterator, Iterable, Optional, Union
 from collections.abc import MutableMapping
 
 # standard libraries
@@ -22,15 +23,20 @@ def change_directory(path: Union[Path, str]) -> Iterator[None]:
     """Changes working directory and returns to previous on exit."""
     previous = Path.cwd()
     chdir(Path(path).expanduser().resolve(strict=True))
-    logger.debug(f'core -- Working dir changed to: {path}')
+    logger.debug(f'Core -- Working dir changed to: {path}.')
     try:
         yield
     finally:
         chdir(previous)
-        logger.debug(f'core -- Returned back to dir: {previous}')
+        logger.debug(f'Core -- Returned back to dir: {previous}.')
 
-def first_true(iterable, predictor):
-    return next(filter(predictor, iterable))
+def first_true(iterable: Iterable, predictor: Callable, default: Optional[Any] = None) -> Any:
+    """Given an iterable, provide the first element where the predicate is true."""
+    return next(filter(predictor, iterable), default)
+
+def first_until(iterable: Iterable, predictor: Callable) -> int:
+    """Given an iterable, provide the size (i.e., stop index) until the predicate is always true."""
+    return len(iterable) - next((index for index, it in enumerate(reversed(iterable)) if not predictor(it)), len(iterable))
 
 def is_ipython() -> bool:
     """Determine if in interactive session."""
@@ -39,6 +45,11 @@ def is_ipython() -> bool:
         return True
     except:
         return False
+
+def pairwise(iterable: Iterable) -> Iterable:
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    return zip(a, a)
 
 def read_a_leaf(stem: list[str], tree: MutableMapping[str, Any]) -> Optional[Any]:
     """Read the leaf at the end of the stem on the tree."""
