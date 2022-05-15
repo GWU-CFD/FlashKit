@@ -8,7 +8,7 @@ from typing import Any, cast
 import os
 
 # internal libraries
-from ..core.parallel import Index, safe, single, squash
+from ..core.parallel import safe, single, squash
 from ..resources import CONFIG 
 from ..support.grid import axisMesh, indexSize_fromLocal
 from ..support.stretch import Stretching

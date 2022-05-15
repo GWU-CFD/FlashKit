@@ -11,8 +11,9 @@ import os
 import pkg_resources
 
 # internal libraries
+from ..core.distribute import Index
 from ..core.error import LibraryError
-from ..core.parallel import Index, safe, single
+from ..core.parallel import safe, single
 from ..core.progress import Bar, get_bar
 from ..core.tools import first_true
 from ..library.create_grid import read_coords
@@ -37,6 +38,7 @@ FACES = CONFIG['create']['block']['grids'][1:]
 BLKMSG = CONFIG['create']['interp']['blkmsg']
 JITDIST = CONFIG['create']['interp']['jitdist']
 METHOD = CONFIG['create']['interp']['method']
+
 class SimulationData:
     blocks: int
     boxes: N
