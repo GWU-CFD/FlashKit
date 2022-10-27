@@ -54,8 +54,8 @@ def author_xdmf(filenames: dict[str, str], filesteps: Sequence[int], context: Ba
             plotsource = filenames['plot-source'] + f'{number:04}'
             plotdest = filenames['plot-dest'] + f'{number:04}'
             info = get_simulation_info(plotsource)
-            gridsource = first_true((f'{filenames["grid-source"]}{file:04}' for file in reversed(filesteps[:step+1])), os.path.exists)
-            griddest = first_true((f'{filenames["grid-dest"]}{file:04}' for file in reversed(filesteps[:step+1])), os.path.exists)
+            gridsource = first_true((f'{filenames["grid-source"]}{file:04}' for file in reversed(range(step+1))), os.path.exists)
+            griddest = first_true((f'{filenames["grid-dest"]}{file:04}' for file in reversed(range(step+1))), os.path.exists)
             simulation = ElementTree.SubElement(collection, *get_spatial_collection(step))
             temporal = ElementTree.SubElement(simulation, *get_time_element(info.time))
 
