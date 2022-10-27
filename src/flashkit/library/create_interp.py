@@ -125,7 +125,7 @@ class SimulationData:
         with h5py.File(gridfile, 'r') as file:
             faxes = (file[axis][()] for axis in ('xxxf', 'yyyf', 'zzzf'))
             uinds = axisUniqueIndex(*procs)
-            coords = cast(Coords, tuple(numpy.append(a[i][:,:-1].flatten(), a[-1,-1]) if a is not None else None for a, i in zip(faxes, uinds)))
+            coords = cast(Coords, tuple(numpy.append(a[i][:,:-1].flatten(), a[-1,-1]) if n < ndim else None for n, (a, i) in enumerate(zip(faxes, uinds))))
             grids = get_grids(coords=coords, ndim=ndim, procs=procs, sizes=sizes)
             shapes = get_shapes(ndim=ndim, procs=procs, sizes=sizes)
 
